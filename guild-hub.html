@@ -720,7 +720,7 @@ function pgMap(){
   // Map viewport
   h+=`<div class="map-viewport" id="map-viewport">`;
   h+=`<div class="map-image-wrapper" id="map-wrapper">`;
-  h+=`<div id="map-loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--tm);z-index:5"><div style="font-size:32px;margin-bottom:8px">🗺️</div><div style="font-size:13px">Loading map...</div></div><img src="map.jpg" class="map-image" id="map-image" draggable="false" onload="document.getElementById('map-loading')&&(document.getElementById('map-loading').style.display='none')" onerror="document.getElementById('map-loading').innerHTML='<div style=\'font-size:24px;margin-bottom:8px\'>⚠️</div><div>Map image not found.<br><small>Make sure map.jpg is in the same folder.</small></div>'">`;
+  h+=`<div id="map-loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--tm);z-index:5"><div style="font-size:32px;margin-bottom:8px">🗺️</div><div style="font-size:13px">Loading map...</div></div><img src="https://files.catbox.moe/h2lxfi.jpg" class="map-image" id="map-image" draggable="false" onload="document.getElementById('map-loading')&&(document.getElementById('map-loading').style.display='none')" onerror="document.getElementById('map-loading').innerHTML='<div style=\'font-size:24px;margin-bottom:8px\'>⚠️</div><div>Map image could not be loaded.<br><small>Check your internet connection.</small></div>'">`;
   // Markers overlay
   h+=`<div class="map-markers" id="map-markers">`;
   markers.forEach((m,i)=>{
