@@ -812,38 +812,32 @@ const MAP_INITIAL_ZOOM = 3.3;
 function pgMap(){
   const markers=D.mapData||[];
   const catCounts={};MAP_CATEGORIES.forEach(c=>catCounts[c.id]=markers.filter(m=>m.category===c.id).length);
-
+  
   let h=`<div class="map-container" id="map-container">`;
-  h+=`<div class="map-main">`;
-  h+=`<aside class="map-side-panel">`;
-  h+=`<div class="map-side-head"><div class="map-side-kicker">Gloria Victis</div><div class="map-side-title">Interactive Map</div><div class="map-side-sub">Search locations, manage visibility, and inspect marker details without leaving the map.</div></div>`;
-  h+=`<div class="map-side-card"><div class="map-side-card-title">Map Controls</div>`;
-  h+=`<div class="map-side-label">Viewer Session</div>`;
-  h+=`<div class="map-action-row">`;
-  h+=`<button class="map-action-btn" id="map-zoom-in" title="Zoom In">Zoom In</button>`;
-  h+=`<button class="map-action-btn" id="map-zoom-out" title="Zoom Out">Zoom Out</button>`;
-  h+=`<button class="map-action-btn" id="map-reset" title="Reset View">Reset</button>`;
+  // Toolbar
+  h+=`<div class="map-toolbar">`;
+  h+=`<div class="map-tb-group"><button class="map-tb-btn" id="map-zoom-in" title="Zoom In">+</button><span class="map-zoom-level" id="map-zoom-level">100%</span><button class="map-tb-btn" id="map-zoom-out" title="Zoom Out">−</button><button class="map-tb-btn" id="map-reset" title="Fit to View">⟲</button></div>`;
+  // Search box
+  h+=`<div class="map-tb-group map-search-group"><span class="map-search-icon">🔍</span><input type="text" class="map-search" id="map-search" placeholder="Search markers..." autocomplete="off"><button class="map-search-clear" id="map-search-clear" title="Clear" style="display:none">✕</button></div>`;
   if(isContributor()){
-    h+=`<button class="map-action-btn map-action-btn-primary" id="map-add-marker" title="Add Marker">Add Marker</button>`;
+    h+=`<div class="map-tb-group"><button class="map-tb-btn map-tb-add" id="map-add-marker" title="Add Marker">+ Add Marker</button></div>`;
   }
+  h+=`<div class="map-coords" id="map-coords">Scroll to zoom • Drag to pan</div>`;
   h+=`</div>`;
-  h+=`<div class="map-coords-display"><span id="map-zoom-level">100%</span><span id="map-coords">Scroll to zoom � Drag to pan</span></div>`;
-  h+=`<div class="map-side-label" style="margin-top:14px">Search Locations</div>`;
-  h+=`<div class="map-search-wrap"><span class="map-search-icon">??</span><input type="text" class="map-search" id="map-search" placeholder="Search markers, regions, notes..." autocomplete="off"><button class="map-search-clear" id="map-search-clear" title="Clear" style="display:none">�</button></div>`;
-  h+=`<div class="map-search-results map-search-results-inline" id="map-search-results" style="display:none"></div>`;
-  h+=`<div class="map-side-label" style="margin-top:14px">Visibility</div>`;
-  h+=`<div class="map-action-row"><button class="map-action-btn" id="map-show-all">Show All</button><button class="map-action-btn" id="map-hide-all">Hide All</button></div>`;
-  h+=`</div>`;
-  h+=`<div class="map-side-card"><div class="map-side-card-title">Zones</div><div class="map-side-grid">`;
-  MAP_CATEGORIES.forEach(c=>{
-    const hidden=mapState.hiddenCats[c.id];
-    h+=`<button class="map-zone-chip${hidden?" off":""} map-leg-row" data-cat="${c.id}" type="button"><span class="map-zone-dot" style="background:${c.color}"></span><span class="map-zone-name">${c.name}</span><span class="map-zone-count">${catCounts[c.id]||0}</span></button>`;
-  });
-  h+=`</div></div>`;
-  h+=`<div class="map-side-card"><div class="map-side-card-title">Selected Location</div><div class="map-selected-empty" id="map-info-empty">Select a marker on the map to view details here.</div><div class="map-info-panel" id="map-info" style="display:none"></div></div>`;
-  h+=`</aside>`;
-  h+=`<div class="map-canvas-wrap"><div id="leaflet-map" style="flex:1;width:100%;height:100%;background:#1a1f25;z-index:1"></div></div>`;
-
+  
+  // Main content area with map
+  h+=`<div class="map-main">`;
+  
+  // Leaflet map container
+  h+=`<div id="leaflet-map" style="flex:1;width:100%;height:100%;background:#1a1f25;z-index:1"></div>`;
+  
+  // Marker info panel (hidden by default)
+  h+=`<div class="map-info-panel" id="map-info" style="display:none"></div>`;
+  
+  // Search results panel (hidden by default)
+  h+=`<div class="map-search-results" id="map-search-results" style="display:none"></div>`;
+  
+  // Add marker panel (hidden by default)
   if(isContributor()){
     const firstCat=MAP_CATEGORIES[0];
     const firstTypes=GV_MARKER_TYPES[firstCat.id]||["Other"];
@@ -856,13 +850,14 @@ function pgMap(){
     firstTypes.forEach(t=>{h+=`<option>${t}</option>`});
     h+=`</select></div>`;
     h+=`<div class="fg"><label class="fl">Name / Location</label><input class="inp" id="map-new-name" placeholder="e.g. Dunfen, Iron Keep..."></div>`;
-    h+=`<div class="fg"><label class="fl">Region</label><select class="inp" id="map-new-region"><option value="">� Any �</option>`;
+    h+=`<div class="fg"><label class="fl">Region</label><select class="inp" id="map-new-region"><option value="">— Any —</option>`;
     GV_REGIONS.forEach(r=>{h+=`<option>${r}</option>`});
     h+=`</select></div>`;
+    // Nation location extras — shown only when guild category selected
     h+=`<div id="map-nation-extras" style="display:none">`;
     h+=`<div style="font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 6px">Location Features</div>`;
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px">`;
-    [{id:"has_market",l:"Market"},{id:"has_logistician",l:"Logistician"},{id:"has_depot",l:"Depot"},{id:"has_crafting_district",l:"Crafting District"}].forEach(f=>{
+    [{id:"has_market",l:"🛒 Market"},{id:"has_logistician",l:"📦 Logistician"},{id:"has_depot",l:"🏬 Depot"},{id:"has_crafting_district",l:"⚒ Crafting District"}].forEach(f=>{
       h+=`<label style="display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:11px;user-select:none"><input type="checkbox" class="map-nation-feat" id="${f.id}" style="accent-color:var(--ac)"> ${f.l}</label>`;
     });
     h+=`</div>`;
@@ -875,7 +870,7 @@ function pgMap(){
       <div id="map-loc-resource-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;margin-bottom:6px"></div>
       <button type="button" class="btn bg bs" id="map-add-resource-row" style="width:100%;justify-content:center;font-size:11px">+ Add Row</button>
     </div>`;
-    h+=`<div class="fg"><label class="fl">Linked City (Item Search)</label><select class="inp" id="map-new-city-link"><option value="">� None �</option>${D.cities.map(c=>`<option value="${c.id}">${c.name}</option>`).join("")}</select></div>`;
+    h+=`<div class="fg"><label class="fl">Linked City (Item Search)</label><select class="inp" id="map-new-city-link"><option value="">— None —</option>${D.cities.map(c=>`<option value="${c.id}">${c.name}</option>`).join("")}</select></div>`;
     h+=`</div>`;
     h+=`<div class="fg"><label class="fl">Notes</label><textarea class="inp" id="map-new-notes" rows="2" placeholder="Optional details..."></textarea></div>`;
     h+=`<div class="map-panel-hint">Click on the map to place the marker</div>`;
@@ -883,53 +878,40 @@ function pgMap(){
     h+=`<div style="display:flex;gap:6px;margin-top:10px"><button class="btn bg" id="map-cancel-add">Cancel</button><button class="btn bp" id="map-confirm-add" disabled>Place Marker</button></div>`;
     h+=`</div>`;
   }
-
+  
   h+=`</div>`;
+  
+  // CSS for map
   h+=`<style>
 .map-container{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#314b62;overflow:hidden;border-radius:0}
-.map-main{display:grid;grid-template-columns:360px minmax(0,1fr);flex:1;overflow:hidden;position:relative}
-.map-side-panel{background:linear-gradient(180deg,#20251b,#171b13);border-right:1px solid rgba(199,161,89,.18);padding:18px 16px;overflow-y:auto}
-.map-side-head{padding-bottom:14px;border-bottom:1px solid rgba(199,161,89,.18);margin-bottom:14px}
-.map-side-kicker{font-size:11px;color:#c7a159;letter-spacing:.26em;text-transform:uppercase;margin-bottom:6px}
-.map-side-title{font-size:28px;font-weight:800;color:#efe1bf;letter-spacing:.04em;text-transform:uppercase;line-height:1}
-.map-side-sub{font-size:12px;color:#b6ae90;line-height:1.6;margin-top:10px}
-.map-side-card{background:linear-gradient(180deg,rgba(36,42,28,.96),rgba(23,27,19,.98));border:1px solid rgba(199,161,89,.18);border-radius:14px;padding:14px 14px 12px;margin-bottom:12px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
-.map-side-card-title{font-size:11px;color:#8f845f;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:10px}
-.map-side-label{font-size:10px;color:#c7a159;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
-.map-action-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.map-action-btn{padding:10px 12px;background:#24291d;border:1px solid rgba(199,161,89,.22);border-radius:8px;color:#d0ae69;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.04em;transition:all .15s}
-.map-action-btn:hover{background:#2c3223;border-color:#c7a159;color:#efe1bf}
-.map-action-btn-primary{background:linear-gradient(180deg,#4c4022,#3b311a);color:#f5ddab;border-color:#c7a159}
-.map-action-btn-primary.active{background:linear-gradient(180deg,#665224,#4b3d1a);color:#fff4d1}
-.map-coords-display{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;background:#141810;border:1px solid rgba(199,161,89,.12);border-radius:10px}
-.map-coords-display #map-coords{font-size:11px;color:#a99f81;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.map-coords-display #map-zoom-level{font-size:11px;color:#f1d28a;font-family:monospace;background:rgba(199,161,89,.12);padding:4px 8px;border-radius:999px}
-.map-search-wrap{position:relative}
-.map-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.75;z-index:1}
-.map-search{width:100%;padding:10px 34px 10px 31px;background:#1b1f17;border:1px solid rgba(199,161,89,.22);border-radius:10px;color:#efe1bf;font-size:13px}
-.map-search:focus{border-color:#d0ae69;outline:none}
-.map-search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#a99f81;cursor:pointer;font-size:14px;padding:4px 6px;opacity:.7}
-.map-search-clear:hover{opacity:1;color:#efe1bf}
-.map-search-results-inline{margin-top:8px;max-height:220px;overflow-y:auto;background:#141810;border:1px solid rgba(199,161,89,.16);border-radius:10px}
-.map-search-results .sr-header{padding:10px 12px;border-bottom:1px solid rgba(199,161,89,.12);font-size:11px;color:#a99f81;display:flex;justify-content:space-between}
-.map-search-results .sr-item{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(199,161,89,.10);transition:background .15s}
+.map-toolbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-wrap:nowrap;z-index:1000;overflow:hidden}
+.map-tb-group{display:flex;gap:4px;align-items:center}
+.map-tb-btn{padding:6px 10px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;color:var(--t1);cursor:pointer;font-size:14px;transition:all .15s}
+.map-tb-btn:hover{background:var(--bd);border-color:var(--ac)}
+.map-tb-add{background:var(--acs);border-color:var(--ac);color:var(--ac);font-size:12px}
+.map-tb-add:hover{background:var(--ac);color:#000}
+.map-tb-add.active{background:var(--ac);color:#000}
+.map-coords{margin-left:auto;font-size:11px;color:var(--tm);font-family:monospace}
+.map-zoom-level{font-size:11px;color:var(--ac);font-family:monospace;padding:0 8px;min-width:40px;text-align:center}
+.map-main{display:flex;flex:1;overflow:hidden;position:relative}
+.map-search-group{position:relative;flex:1;max-width:280px}
+.map-search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6;z-index:1}
+.map-search{width:100%;padding:6px 28px 6px 28px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;color:var(--t1);font-size:12px}
+.map-search:focus{border-color:var(--ac);outline:none}
+.map-search-clear{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tm);cursor:pointer;font-size:12px;padding:4px 6px;opacity:.6}
+.map-search-clear:hover{opacity:1;color:var(--t1)}
+.map-search-results{position:absolute;top:50px;left:12px;width:300px;max-height:350px;overflow-y:auto;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:1100}
+.map-search-results .sr-header{padding:10px 12px;border-bottom:1px solid var(--bd);font-size:11px;color:var(--tm);display:flex;justify-content:space-between}
+.map-search-results .sr-item{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bd);transition:background .15s}
 .map-search-results .sr-item:last-child{border-bottom:none}
-.map-search-results .sr-item:hover{background:#24291d}
+.map-search-results .sr-item:hover{background:var(--bgi)}
 .map-search-results .sr-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
 .map-search-results .sr-info{flex:1;min-width:0}
-.map-search-results .sr-name{font-size:13px;color:#efe1bf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.map-search-results .sr-cat{font-size:10px;color:#a99f81}
-.map-search-results .sr-empty{padding:18px 12px;text-align:center;color:#a99f81;font-size:12px}
-.map-side-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.map-zone-chip{display:flex;align-items:center;gap:8px;min-width:0;padding:10px 10px;background:#24291d;border:1px solid rgba(199,161,89,.16);border-radius:10px;color:#efe1bf;cursor:pointer;text-align:left}
-.map-zone-chip:hover{background:#2b3123;border-color:#c7a159}
-.map-zone-chip.off{opacity:.45}
-.map-zone-dot{width:10px;height:10px;border-radius:999px;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.2)}
-.map-zone-name{flex:1;min-width:0;font-size:11px;font-weight:700;line-height:1.2}
-.map-zone-count{font-size:10px;color:#d0ae69;background:rgba(199,161,89,.12);padding:3px 6px;border-radius:999px}
-.map-selected-empty{font-size:12px;color:#a99f81;line-height:1.6;padding:10px 2px 2px}
-.map-info-panel{position:static;width:auto;max-width:none;background:#141810;border:1px solid rgba(199,161,89,.16);border-radius:12px;padding:12px;box-shadow:none;z-index:auto}
-.map-add-panel{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:300px;background:var(--bg2);border:1px solid var(--ac);border-radius:8px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:1000}
+.map-search-results .sr-name{font-size:13px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-search-results .sr-cat{font-size:10px;color:var(--tm)}
+.map-search-results .sr-empty{padding:20px;text-align:center;color:var(--tm);font-size:12px}
+.map-info-panel{position:absolute;bottom:16px;left:16px;width:280px;max-width:340px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000}
+.map-add-panel{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:280px;background:var(--bg2);border:1px solid var(--ac);border-radius:6px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000}
 .map-panel-title{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
 .map-panel-hint{font-size:11px;color:var(--tm);margin-top:8px;padding:6px 8px;background:var(--bgi);border-radius:4px}
 .map-panel-coords{font-size:11px;color:var(--ac);margin-top:6px;font-family:monospace}
@@ -937,8 +919,8 @@ function pgMap(){
 .map-info-cat{font-size:11px;color:var(--tm);margin-bottom:8px}
 .map-info-notes{font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.4}
 .map-info-meta{font-size:10px;color:var(--tm);border-top:1px solid var(--bd);padding-top:8px;margin-top:8px}
-.map-info-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.map-canvas-wrap{position:relative;min-width:0}
+.map-info-actions{display:flex;gap:6px;margin-top:10px}
+/* Leaflet custom styling */
 #leaflet-map{background:#314b62;width:100%;height:100%;display:block}.map-tiles{background:#314b62}.map-tiles img{background:#314b62}
 .leaflet-container{background:#314b62!important;font-family:inherit}
 .leaflet-tile-pane{background:#314b62}
@@ -959,6 +941,7 @@ img.leaflet-tile{outline:none;border:none;image-rendering:auto;display:block}
 .leaflet-control-zoom a:last-child{border-bottom:none!important}
 .leaflet-control-attribution{background:rgba(26,31,37,.8)!important;color:var(--tm)!important;font-size:10px!important}
 .leaflet-control-attribution a{color:var(--ac)!important}
+/* Custom marker styling for Leaflet */
 .leaflet-marker-icon.custom-marker{background:none;border:none}
 .custom-marker-inner{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #fff;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:pointer;transition:transform .15s}
 .custom-marker-inner:hover{transform:scale(1.2)}
@@ -967,11 +950,8 @@ img.leaflet-tile{outline:none;border:none;image-rendering:auto;display:block}
 .custom-marker-inner.hidden{display:none}
 .temp-marker-inner{display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--ac);border:3px dashed #fff;border-radius:50%;font-size:16px;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.1)}}
-@media(max-width:1100px){.map-main{grid-template-columns:320px minmax(0,1fr)}}
-@media(max-width:900px){.map-main{grid-template-columns:1fr}.map-side-panel{max-height:46vh;border-right:none;border-bottom:1px solid rgba(199,161,89,.18)}.map-canvas-wrap{min-height:54vh}.map-side-grid,.map-action-row{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.map-side-panel{padding:14px 12px}.map-side-title{font-size:22px}.map-side-grid,.map-action-row{grid-template-columns:1fr}.map-coords-display{flex-direction:column;align-items:flex-start}}
 </style>`;
-
+  
   return h;
 }
 
@@ -1333,28 +1313,13 @@ function initMapBindings(){
     });
     const el = marker.getElement()?.querySelector('.custom-marker-inner');
     if(el) el.classList.add('selected');
-    mapState.selectedMarker = idx;
     
     const cat = MAP_CATEGORIES.find(c => c.id === m.category) || MAP_CATEGORIES[MAP_CATEGORIES.length-1];
     const panel = document.getElementById("map-info");
-    const emptyState = document.getElementById("map-info-empty");
     const regionTag = m.region ? `<span style="font-size:10px;color:var(--ac);background:var(--acg);padding:1px 6px;border-radius:10px">${m.region}</span>` : "";
     
     // Nation location — open full modal window instead of side panel
     if(m.category === "guild") {
-      panel.innerHTML = `
-        <div class="map-info-name"><span>${cat.icon}</span>${m.locationName||m.name||m.markerType||"Location"}${regionTag}</div>
-        <div class="map-info-cat">${cat.name}</div>
-        ${m.notes ? `<div class="map-info-notes">${m.notes}</div>` : `<div class="map-info-notes">This location has expanded vendor and settlement details available.</div>`}
-        <div class="map-info-actions">
-          <button class="btn bp bs" id="map-open-location-details">Open Full Details</button>
-          ${isContributor() ? `<button class="btn bg bs" id="map-edit-marker" data-idx="${idx}">Edit</button>` : ``}
-        </div>
-      `;
-      if(emptyState) emptyState.style.display = "none";
-      panel.style.display = "block";
-      document.getElementById("map-open-location-details")?.addEventListener("click", () => modalNationLocation(m, idx));
-      document.getElementById("map-edit-marker")?.addEventListener("click", () => modalEditMarker(idx));
       modalNationLocation(m, idx);
       return;
     } else {
@@ -1370,8 +1335,6 @@ function initMapBindings(){
       `;
     }
     
-    if(emptyState) emptyState.style.display = "none";
-    if(emptyState) emptyState.style.display = "none";
     panel.style.display = "block";
     
     document.getElementById("map-edit-marker")?.addEventListener("click", () => modalEditMarker(idx));
@@ -1421,9 +1384,7 @@ function initMapBindings(){
         const el = mk.getElement()?.querySelector('.custom-marker-inner');
         if(el) el.classList.remove('selected');
       });
-      mapState.selectedMarker = null;
       document.getElementById("map-info").style.display = "none";
-      document.getElementById("map-info-empty").style.display = "block";
       document.getElementById("map-search-results").style.display = "none";
     }
   });
@@ -1441,22 +1402,6 @@ function initMapBindings(){
     const center = crs.unproject(L.point(5000, -5000));
     leafletMap.panTo(center, {animate:true, duration:0.25});
     animateZoomTo(MAP_INITIAL_ZOOM, center, 260);
-  });
-  
-  document.getElementById("map-show-all")?.addEventListener("click", () => {
-    MAP_CATEGORIES.forEach(c => {
-      mapState.hiddenCats[c.id] = false;
-    });
-    document.querySelectorAll(".map-leg-row").forEach(row => row.classList.remove("off"));
-    updateMarkerVisibility();
-  });
-  
-  document.getElementById("map-hide-all")?.addEventListener("click", () => {
-    MAP_CATEGORIES.forEach(c => {
-      mapState.hiddenCats[c.id] = true;
-    });
-    document.querySelectorAll(".map-leg-row").forEach(row => row.classList.add("off"));
-    updateMarkerVisibility();
   });
   
   // Search functionality
@@ -5015,9 +4960,19 @@ function renderSidebar(){
   } else if(activeTool==="announcements"){
     h+=`<div class="ns"><div class="nst">Announcements</div><div class="ni a" data-page="ann-home"><span style="font-size:13px;width:16px;text-align:center">📢</span>All Posts${annC?`<span class="cnt">${annC}</span>`:""}</div></div>`;
   } else if(activeTool==="map"){
-    const markerCount=(D.mapData||[]).length;
-    h+=`<div class="ns"><div class="nst">Map</div><div class="ni a" data-page="map-home"><span style="font-size:13px;width:16px;text-align:center">🗺️</span>View Map${markerCount?`<span class="cnt">${markerCount}</span>`:""}</div></div>`;
-    h+=`<div class="ns"><div class="nst">Workspace</div><div style="font-size:11px;color:var(--tm);line-height:1.6;padding:0 4px 8px">Map search, visibility filters, and selected-location details now live inside the map screen.</div>`;
+    const markers=D.mapData||[];
+    const catCounts={};MAP_CATEGORIES.forEach(c=>catCounts[c.id]=markers.filter(m=>m.category===c.id).length);
+    h+=`<div class="ns"><div class="nst">Map</div><div class="ni a" data-page="map-home"><span style="font-size:13px;width:16px;text-align:center">🗺️</span>View Map</div></div>`;
+    h+=`<div class="ns"><div class="nst" style="display:flex;justify-content:space-between;align-items:center">Legend<button class="map-leg-toggle" id="map-toggle-all" title="Toggle All">👁️</button></div>`;
+    MAP_CATEGORIES.forEach(c=>{
+      const count=catCounts[c.id]||0;
+      const hidden=mapState.hiddenCats[c.id];
+      h+=`<div class="map-leg-row${hidden?" off":""}" data-cat="${c.id}">`;
+      h+=`<span class="map-leg-icon" style="background:${c.color}">${c.icon}</span>`;
+      h+=`<span class="map-leg-name">${c.name}</span>`;
+      h+=`<span class="map-leg-count">${count}</span>`;
+      h+=`</div>`;
+    });
     h+=`</div>`;
   } else if(activeTool==="itemsearch"){
     const cityCount=D.cities.length,vendorCount=D.vendors.length,itemCount=D.vendorItems.length;
@@ -5551,6 +5506,5 @@ render();
 </script>
 </body>
 </html>
-
 
 
