@@ -184,8 +184,83 @@ tbody td{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:middl
 // ═══════════════════════════════════════════════════════════
 const SK="gv_platform_v1";
 const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds"];
-function load(){try{return JSON.parse(localStorage.getItem(SK))||null}catch(e){return null}}
-function persist(){try{const o={};DKEYS.forEach(k=>o[k]=D[k]);localStorage.setItem(SK,JSON.stringify(o))}catch(e){}}
+
+// ── Cloudflare KV backend ──────────────────────────────────
+// Set this to the URL of your deployed Cloudflare Worker.
+// Example: "https://guild-hub-api.YOUR-SUBDOMAIN.workers.dev"
+const CF_WORKER_URL = "https://guild-hub-api.caleb-tomlinson16.workers.dev";
+
+// All KV keys the app uses
+const ALL_KV_KEYS = [SK,"gv_custom_items","gv_resources","gv_skill_xp_tables","gv_player_xp_table","gv_potion_effects"];
+
+// Debounce timer so rapid calls collapse into one write
+let _persistTimer=null;
+let _persistPending=false;
+
+function load(){
+  // Return localStorage cache immediately so the app boots fast.
+  // A background sync from KV fires after boot (see initKvSync).
+  try{return JSON.parse(localStorage.getItem(SK))||null}catch(e){return null}
+}
+
+async function _pushToKV(key,value){
+  try{
+    await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`,{
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({value})
+    });
+  }catch(e){/* offline — localStorage already updated, will drift until next push */}
+}
+
+async function _pullFromKV(key){
+  try{
+    const r=await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`);
+    if(!r.ok)return null;
+    const j=await r.json();
+    return j.value??null;
+  }catch(e){return null}
+}
+
+function persist(){
+  // 1. Write to localStorage immediately (keeps UI snappy)
+  try{const o={};DKEYS.forEach(k=>o[k]=D[k]);localStorage.setItem(SK,JSON.stringify(o))}catch(e){}
+  // 2. Debounce the KV write (500 ms) to avoid hammering on rapid changes
+  _persistPending=true;
+  if(_persistTimer)clearTimeout(_persistTimer);
+  _persistTimer=setTimeout(async()=>{
+    _persistPending=false;
+    try{
+      const o={};DKEYS.forEach(k=>o[k]=D[k]);
+      await _pushToKV(SK,o);
+    }catch(e){}
+  },500);
+}
+
+// Pull all keys from KV on first load, merge into app state, then re-render.
+async function initKvSync(){
+  try{
+    // Pull main data
+    const main=await _pullFromKV(SK);
+    if(main&&typeof main==="object"){
+      DKEYS.forEach(k=>{if(main[k]!==undefined)D[k]=main[k];});
+      try{localStorage.setItem(SK,JSON.stringify(main));}catch(e){}
+    }
+    // Pull craft sub-keys
+    const ciRaw=await _pullFromKV("gv_custom_items");
+    if(ciRaw){craftItems=Array.isArray(ciRaw)?ciRaw:JSON.parse(ciRaw);try{localStorage.setItem("gv_custom_items",JSON.stringify(craftItems))}catch(e){}}
+    const crRaw=await _pullFromKV("gv_resources");
+    if(crRaw){craftResources=Array.isArray(crRaw)?crRaw:JSON.parse(crRaw);try{localStorage.setItem("gv_resources",JSON.stringify(craftResources))}catch(e){}}
+    const xtRaw=await _pullFromKV("gv_skill_xp_tables");
+    if(xtRaw){craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);try{localStorage.setItem("gv_skill_xp_tables",JSON.stringify(craftSkillXpTables))}catch(e){}}
+    const ptRaw=await _pullFromKV("gv_player_xp_table");
+    if(ptRaw){playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){}}
+    const peRaw=await _pullFromKV("gv_potion_effects");
+    if(peRaw){try{localStorage.setItem("gv_potion_effects",JSON.stringify(Array.isArray(peRaw)?peRaw:JSON.parse(peRaw)))}catch(e){}}
+    rebuildG();
+    render();
+  }catch(e){console.warn("KV sync failed, running from local cache:",e);}
+}
 function toast(m,t){const el=document.getElementById("toast");el.textContent=m;el.style.display="block";el.style.background=t==="error"?"var(--redd)":t==="warn"?"var(--orgd)":"var(--grnd)";el.style.color=t==="error"?"var(--red)":t==="warn"?"var(--org)":"var(--grn)";el.style.border="1px solid "+(t==="error"?"rgba(229,83,75,.25)":t==="warn"?"rgba(210,153,34,.25)":"rgba(86,211,100,.25)");setTimeout(()=>el.style.display="none",2200)}
 function exportJSON(){const o={};DKEYS.forEach(k=>o[k]=D[k]);o._craftItems=craftItems;o._craftResources=craftResources;o._craftSkillXpTables=craftSkillXpTables;const b=new Blob([JSON.stringify(o,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="guild-hub-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Exported!")}
 function exportCSV(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fn;a.click();toast("CSV exported!")}
@@ -2254,10 +2329,10 @@ if(!craftItems.length){
   if(added)saveCraftItems();
 }
 })();
-function saveCraftItems(){try{localStorage.setItem("gv_custom_items",JSON.stringify(craftItems))}catch(e){}}
-function saveCraftSkillXpTables(){try{localStorage.setItem("gv_skill_xp_tables",JSON.stringify(craftSkillXpTables))}catch(e){}}
-function savePlayerXpTable(){try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){}}
-function saveCraftResources(){try{localStorage.setItem("gv_resources",JSON.stringify(craftResources))}catch(e){}}
+function saveCraftItems(){try{localStorage.setItem("gv_custom_items",JSON.stringify(craftItems))}catch(e){}  _pushToKV("gv_custom_items",craftItems);}
+function saveCraftSkillXpTables(){try{localStorage.setItem("gv_skill_xp_tables",JSON.stringify(craftSkillXpTables))}catch(e){} _pushToKV("gv_skill_xp_tables",craftSkillXpTables);}
+function savePlayerXpTable(){try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){} _pushToKV("gv_player_xp_table",playerXpTable);}
+function saveCraftResources(){try{localStorage.setItem("gv_resources",JSON.stringify(craftResources))}catch(e){} _pushToKV("gv_resources",craftResources);}
 const normRecipeName=name=>(name||"").trim().toLowerCase();
 function removeRecipeIdsFromPlayers(ids){
   const idSet=new Set((ids||[]).map(String));
@@ -4151,6 +4226,7 @@ function initCraftBindings(){
       if(!existing.includes(effName)){
         existing.push(effName);existing.sort();
         localStorage.setItem('gv_potion_effects',JSON.stringify(existing));
+        _pushToKV('gv_potion_effects',existing);
         const dl=document.getElementById("cdb-eff-list");
         if(dl){const opt=document.createElement("option");opt.value=effName;dl.appendChild(opt);}
       }
@@ -5503,6 +5579,8 @@ function bindAll(){
 // BOOT
 // ═══════════════════════════════════════════════════════════
 render();
+// Pull latest data from Cloudflare KV (runs after first render so the page isn't blank while fetching)
+initKvSync();
 </script>
 </body>
 </html>
