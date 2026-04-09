@@ -26,7 +26,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 
 /* Layout */
 #app{display:flex;height:100%;min-height:0;overflow:hidden}
-#sidebar{width:230px;min-width:230px;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;transition:transform .25s;overflow:hidden}
+#sidebar{width:230px;min-width:230px;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;transition:width .2s, transform .25s;overflow:hidden}
+#sidebar.map-wide{width:320px;min-width:320px}
 #sidebar.hide{transform:translateX(-240px);position:absolute;z-index:50;height:100%}
 #main{flex:1;min-height:0;overflow-y:auto;padding:20px 28px;background:var(--bg0)}#main.map-mode{padding:0!important;overflow:hidden!important;height:100vh!important;width:100%!important;max-height:100vh!important;background:#314b62!important;position:relative!important;box-sizing:border-box!important;}
 
@@ -46,16 +47,85 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 .ni .cnt{margin-left:auto;font-size:10px;color:var(--tm);background:var(--bgi);padding:1px 5px;border-radius:3px}
 
 /* Map legend in sidebar */
+/* ── Map Sidebar ─────────────────────────────────────── */
+.map-sb{display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0}
+.map-sb-header{padding:10px 10px 6px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.map-sb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ac);margin-bottom:8px}
+.map-sb-search{display:flex;align-items:center;gap:5px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;padding:0 8px;margin-bottom:7px}
+.map-sb-search:focus-within{border-color:var(--ac);box-shadow:0 0 0 2px var(--acg)}
+.map-sb-search input{border:none;background:transparent;color:var(--t1);padding:5px 0;font-size:12px;flex:1;outline:none;font-family:inherit}
+.map-sb-search input::placeholder{color:var(--tm)}
+.map-sb-search-icon{font-size:11px;color:var(--tm)}
+.map-sb-search-clear{background:none;border:none;color:var(--tm);cursor:pointer;font-size:11px;padding:0;line-height:1}
+.map-sb-search-clear:hover{color:var(--t1)}
+.map-sb-btns{display:flex;gap:4px}
+.map-sb-btn{flex:1;padding:4px 0;font-size:10px;font-weight:600;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t2);cursor:pointer;transition:all .12s;font-family:inherit;text-transform:uppercase;letter-spacing:.04em}
+.map-sb-btn:hover{color:var(--t1);background:var(--bgh);border-color:var(--bd2)}
+
+/* Location list body */
+.map-sb-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 8px;min-height:0}
+
+/* Category group */
+.map-loc-group{margin-bottom:10px}
+.map-loc-group-header{display:flex;align-items:center;gap:7px;padding:5px 4px 5px;cursor:pointer;user-select:none;border-radius:4px;transition:background .1s}
+.map-loc-group-header:hover{background:var(--bgh)}
+.map-loc-group-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.map-loc-group-name{flex:1;font-size:11px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.07em}
+.map-loc-group-meta{display:flex;align-items:center;gap:6px}
+.map-loc-hide-btn{font-size:10px;color:var(--tm);background:none;border:none;cursor:pointer;padding:0;font-family:inherit;transition:color .1s}
+.map-loc-hide-btn:hover{color:var(--t1)}
+.map-loc-count{font-size:10px;color:var(--tm)}
+.map-loc-arrow{font-size:9px;color:var(--tm);transition:transform .15s}
+.map-loc-group.collapsed .map-loc-arrow{transform:rotate(-90deg)}
+.map-loc-group.off .map-loc-group-name{opacity:.4}
+.map-loc-group.off .map-loc-group-dot{filter:grayscale(1);opacity:.4}
+
+/* Location cards — single column full width */
+.map-loc-cards{display:flex;flex-direction:column;gap:4px;padding:2px 0 6px 10px}
+.map-loc-card{background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:7px 28px 7px 10px;cursor:pointer;transition:all .13s;position:relative;min-width:0}
+.map-loc-card:hover{border-color:var(--bd2);background:var(--bgh)}
+.map-loc-card.selected{border-color:var(--ac);background:var(--acg)}
+.map-loc-card-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-loc-card-sub{font-size:10px;color:var(--tm);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-loc-card-tags{display:flex;flex-wrap:wrap;gap:2px}
+.map-loc-tag{font-size:9px;font-weight:500;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.map-loc-fly{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:1px solid var(--bd);background:var(--bg1);display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;opacity:0;transition:opacity .12s;color:var(--t2);line-height:1}
+.map-loc-card:hover .map-loc-fly{opacity:1}
+.map-loc-fly:hover{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+
+/* Marker type sub-groups */
+.map-loc-type-sections{padding-bottom:4px}
+.map-loc-type-group{margin-bottom:2px}
+.map-loc-type-group.off .map-loc-cards{opacity:.3;pointer-events:none}
+.map-loc-type-group.collapsed .map-loc-cards{display:none}
+.map-loc-type-header{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 8px;cursor:pointer;border-radius:3px;transition:background .1s}
+.map-loc-type-header:hover{background:var(--bgh)}
+.map-loc-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.map-loc-type-name{flex:1;font-size:11px;color:var(--t2);font-weight:500}
+.map-loc-type-header:hover .map-loc-type-name{color:var(--t1)}
+.map-loc-type-count{font-size:10px;color:var(--tm);background:var(--bgi);padding:0px 5px;border-radius:8px;min-width:16px;text-align:center}
+.map-loc-type-hide-btn{font-size:9px;color:var(--tm);background:none;border:none;cursor:pointer;padding:0 2px;font-family:inherit;transition:color .1s}
+.map-loc-type-hide-btn:hover{color:var(--t1)}
+.map-loc-type-arrow{font-size:8px;color:var(--tf);transition:transform .15s;width:10px;text-align:center}
+.map-loc-type-group.collapsed .map-loc-type-arrow{transform:rotate(-90deg)}
+.map-loc-type-group.off .map-loc-type-name{opacity:.5}
+
+/* Selected location footer */
+.map-sb-footer{flex-shrink:0;border-top:1px solid var(--bd);padding:8px 10px;background:var(--bgi)}
+.map-sb-footer-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);font-weight:600;margin-bottom:5px}
+.map-sel-empty{font-size:11px;color:var(--tm);font-style:italic}
+.map-sel-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px;line-height:1.3}
+.map-sel-type{font-size:10px;color:var(--ac);font-weight:500;margin-bottom:4px}
+.map-sel-notes{font-size:11px;color:var(--t2);line-height:1.4;max-height:48px;overflow-y:auto}
+.map-sel-coords{font-size:10px;color:var(--tm);margin-top:4px;font-family:monospace}
+
+/* Legacy compat */
 .map-leg-toggle{background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;opacity:.6;transition:opacity .15s}
 .map-leg-toggle:hover{opacity:1}
 .map-leg-row{display:flex;align-items:center;gap:8px;padding:5px 8px;cursor:pointer;border-radius:4px;margin:1px 0;transition:all .15s}
-.map-leg-row:hover{background:var(--bgh)}
-.map-leg-row.off{opacity:.35}
-.map-leg-row.off .map-leg-icon{filter:grayscale(1)}
+.map-leg-row:hover{background:var(--bgh)}.map-leg-row.off{opacity:.35}
 .map-leg-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
-.map-leg-name{flex:1;font-size:11px;color:var(--t2)}
-.map-leg-row:hover .map-leg-name{color:var(--t1)}
-.map-leg-count{font-size:10px;color:var(--tm);background:var(--bgi);padding:1px 5px;border-radius:8px}
+.map-leg-name{flex:1;font-size:11px;color:var(--t2)}.map-leg-count{font-size:10px;color:var(--tm);background:var(--bgi);padding:1px 5px;border-radius:8px}
 
 /* Cards */
 .card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:14px}
@@ -158,15 +228,19 @@ tbody td{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:middl
 .cb-skill-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
 .cb-skill-btn{width:40px;height:40px;background-color:transparent;background-size:100% 100%;background-position:center;background-repeat:no-repeat;border:1px solid var(--bd);border-radius:4px;cursor:pointer;transition:all .12s}
 .cb-skill-btn:hover:not(.cb-locked){border-color:var(--ac);box-shadow:0 0 8px rgba(127,109,242,.3);transform:scale(1.05)}
-.cb-skill-btn.cb-locked{opacity:.3;cursor:not-allowed;pointer-events:none;filter:grayscale(40%)}
+.cb-skill-btn.cb-locked{opacity:.3;cursor:not-allowed;filter:grayscale(40%)}
 .cb-skill-btn.cb-active{border-color:var(--org);box-shadow:0 0 6px rgba(210,153,34,.4)}
 .cb-skill-btn.cb-maxed{border-color:var(--grn);box-shadow:0 0 6px rgba(86,211,100,.4)}
 .cb-skill-cnt{font-size:10px;font-weight:500;margin-top:2px;color:var(--tm)}
 .cb-skill-cnt.cb-active{color:var(--org)}
 .cb-skill-cnt.cb-maxed{color:var(--grn)}
-.cb-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);width:200px;padding:10px;background:var(--bg1);border:1px solid var(--ac);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.5);z-index:100;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s;font-size:12px}
-.cb-skill-wrap:hover .cb-tooltip{opacity:1;visibility:visible}
-.cb-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--ac)}
+.cb-tooltip{display:none}
+/* JS floating tooltip */
+#cb-floating-tip{position:fixed;z-index:9999;width:224px;padding:11px 13px;background:var(--bg1);border:1px solid var(--ac);border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.7);font-size:12px;pointer-events:none;opacity:0;transition:opacity .1s}
+#cb-floating-tip.visible{opacity:1}
+#cb-floating-tip::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:6px solid transparent}
+#cb-floating-tip.tip-below::after{top:-12px;border-bottom-color:var(--ac)}
+#cb-floating-tip.tip-above::after{bottom:-12px;border-top-color:var(--ac)}
 .cb-reset-row{display:flex;justify-content:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)}
 @media(max-width:900px){.cb-container{flex-direction:column}.cb-left{width:100%}}
 
@@ -183,7 +257,18 @@ tbody td{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:middl
 // STORAGE & UTILS
 // ═══════════════════════════════════════════════════════════
 const SK="gv_platform_v1";
-const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds"];
+const SK_SESSION="gv_session_v1";
+const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds","wikiPages","wikiDrafts"];
+
+function saveSession(user, guildId){
+  try{localStorage.setItem(SK_SESSION,JSON.stringify({userId:user?.id||null,guildId:guildId||null}));}catch(e){}
+}
+function clearSession(){
+  try{localStorage.removeItem(SK_SESSION);}catch(e){}
+}
+function loadSession(){
+  try{return JSON.parse(localStorage.getItem(SK_SESSION))||null;}catch(e){return null;}
+}
 
 // ── Cloudflare KV backend ──────────────────────────────────
 // Set this to the URL of your deployed Cloudflare Worker.
@@ -257,6 +342,12 @@ async function initKvSync(){
     if(ptRaw){playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){}}
     const peRaw=await _pullFromKV("gv_potion_effects");
     if(peRaw){try{localStorage.setItem("gv_potion_effects",JSON.stringify(Array.isArray(peRaw)?peRaw:JSON.parse(peRaw)))}catch(e){}}
+    // Re-resolve currentUser from fresh data (IDs are stable, data may have changed)
+    if(currentUser){
+      const freshUser=D.users.find(u=>u.id===currentUser.id);
+      if(freshUser) currentUser=freshUser;
+      else { currentUser=null; currentGuildId=null; clearSession(); }
+    }
     rebuildG();
     render();
   }catch(e){console.warn("KV sync failed, running from local cache:",e);}
@@ -299,6 +390,8 @@ const D={
   vendorItems:saved?.vendorItems||[],
   toolStatus:saved?.toolStatus||{crafting:true,charbuilder:true,announcements:true,map:true,itemsearch:true,wiki:true},
   savedBuilds:saved?.savedBuilds||[],
+  wikiPages:saved?.wikiPages||[],    // published articles [{id,title,category,tags,sections,author,date,updatedDate,views}]
+  wikiDrafts:saved?.wikiDrafts||[],  // submissions pending review [{id,title,category,tags,sections,authorId,authorName,submittedDate,status:"pending"|"rejected",rejectReason}]
 };
 // ── Seed map markers from buddy's data if mapData is empty ──
 const GV_SEED_MARKERS=[
@@ -355,7 +448,7 @@ if(!saved)persist(); // save defaults on first run
 let currentUser=null; // set after login
 let activeTool="crafting"; // start on a public tool so no login required on open
 let pg="dashboard",selP=null,sOpen=true;
-let F={s:"",rank:"All",status:"All",gtType:"All",itType:"All",invCat:"All",lbTab:"gold-donors",actF:"All",dTab:"gold",evF:"All",ordF:"All",reqF:"All",annF:"All",goldReqF:"All"};
+let F={s:"",rank:"All",status:"All",gtType:"All",itType:"All",invCat:"All",lbTab:"gold-donors",actF:"All",dTab:"gold",evF:"All",ordF:"All",reqF:"All",annF:"All",goldReqF:"All",wikiCat:"",wikiSearch:"",wikiPage:null,wikiEditDraft:null};
 
 // currentGuildId: the guild the current user belongs to / is managing
 let currentGuildId=null;
@@ -530,7 +623,12 @@ function renderGuest(){
   h+=`</div>`;
 
   // Tool-specific nav (guest versions — no guild data)
-  h+=`<div style="flex:1;overflow-y:auto">`;
+  if(activeTool==="map"){
+    // Map sidebar gets its own full-height panel — don't wrap in the scroll div
+    h+=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">`;
+  } else {
+    h+=`<div style="flex:1;overflow-y:auto">`;
+  }
   if(activeTool==="crafting"){
     h+=`<div class="ns"><div class="nst">Calculators</div>
       <div class="ni${["craft-calc","dashboard"].includes(pg)?" a":""}" data-page="craft-calc"><span style="font-size:13px;width:16px;text-align:center">📊</span>Level Calculator</div>
@@ -543,12 +641,7 @@ function renderGuest(){
       <div class="ni${pg==="cb-armor"?" a":""}" data-page="cb-armor"><span style="font-size:13px;width:16px;text-align:center">🛡️</span>Armor Info</div>
     </div>`;
   } else if(activeTool==="map"){
-    const markers=D.mapData||[];
-    const catCounts={};MAP_CATEGORIES.forEach(c=>catCounts[c.id]=markers.filter(m=>m.category===c.id).length);
-    h+=`<div class="ns"><div class="nst">Map</div><div class="ni a" data-page="map-home"><span style="font-size:13px;width:16px;text-align:center">🗺️</span>View Map</div></div>`;
-    h+=`<div class="ns"><div class="nst" style="display:flex;justify-content:space-between;align-items:center">Legend<button class="map-leg-toggle" id="map-toggle-all" title="Toggle All">👁️</button></div>`;
-    MAP_CATEGORIES.forEach(c=>{const hidden=mapState.hiddenCats[c.id];h+=`<div class="map-leg-row${hidden?" off":""}" data-cat="${c.id}"><span class="map-leg-icon" style="background:${c.color}">${c.icon}</span><span class="map-leg-name">${c.name}</span><span class="map-leg-count">${catCounts[c.id]||0}</span></div>`;});
-    h+=`</div>`;
+    h += `<div class="map-sb" id="map-sidebar-panel">${buildMapSidebarHTML()}</div>`;
   } else if(activeTool==="itemsearch"){
     const itemCount=D.vendorItems.length;
     h+=`<div class="ns"><div class="nst">Item Search</div>
@@ -567,10 +660,11 @@ function renderGuest(){
     h+=`<div class="ni${pg==="database-duplicates"?" a":""}" data-page="database-duplicates"><span style="font-size:13px;width:16px;text-align:center">âš </span>Duplicates${dupeCount?`<span class="cnt">${dupeCount}</span>`:""}</div>`;
     h+=`</div>`;
   } else if(activeTool==="wiki"){
-    h+=`<div class="ns"><div class="nst">Wiki</div><div class="ni a" data-page="wiki-home"><span style="font-size:13px;width:16px;text-align:center">📖</span>Articles</div></div>`;
+    h=buildWikiSidebarNav(h);
   }
   h+=`</div>`;
   sb.innerHTML=h;
+  sb.classList.toggle("map-wide", activeTool==="map");
 
   // Render main content
   const m=document.getElementById("main");
@@ -595,25 +689,33 @@ function renderGuest(){
     m.innerHTML=pgAnnouncements();
   } else if(activeTool==="wiki"){
     m.innerHTML=pgWiki();
+    initWikiBindings(()=>renderGuest());
   }
-
-    // Bind guest sidebar
   bindOnce(document.getElementById("guest-login-btn"),"click","guest-login",()=>{activeTool="treasury";renderLogin();});
   bindOnce(document.getElementById("guest-profile-btn"),"click","guest-profile",()=>{activeTool="treasury";renderLogin();});
   document.querySelectorAll("[data-tool-guest]").forEach(el=>{
     el.addEventListener("click",()=>{
       const tk=el.dataset.toolGuest;
-      if(tk==="treasury"){activeTool="treasury";renderLogin();return;}
+      if(tk==="treasury"){
+        // Not logged in → login screen; logged in but no guild → show guild picker inline
+        if(!currentUser){activeTool="treasury";renderLogin();return;}
+        if(!currentUser.guildId||currentUser.status==="pending"){activeTool="treasury";pg="wiki-join-guild";renderGuest();return;}
+        activeTool="treasury";pg="dashboard";render();return;
+      }
       activeTool=tk;pg="dashboard";renderGuest();
     });
   });
   document.querySelectorAll("[data-page]").forEach(el=>{
-    el.addEventListener("click",()=>{pg=el.dataset.page;renderGuest();});
+    el.addEventListener("click",()=>{
+      if(el.dataset.wikiCat!==undefined) F.wikiCat=el.dataset.wikiCat;
+      pg=el.dataset.page;renderGuest();
+    });
   });
-  // Map legend
-  document.querySelectorAll(".map-leg-row").forEach(el=>{el.addEventListener("click",()=>{const c=el.dataset.cat;mapState.hiddenCats[c]=!mapState.hiddenCats[c];renderGuest();});});
-  bindOnce(document.getElementById("map-toggle-all"),"click","map-toggle-all",()=>{const allHidden=MAP_CATEGORIES.every(c=>mapState.hiddenCats[c.id]);MAP_CATEGORIES.forEach(c=>{mapState.hiddenCats[c.id]=!allHidden;});renderGuest();});
+  // Map sidebar bindings
+  bindMapSidebarEvents(()=>refreshMapSidebar());
   bindOnce(document.getElementById("mob-toggle"),"click","mobile-toggle",()=>{sOpen=!sOpen;document.getElementById("sidebar")?.classList.toggle("hide",!sOpen);});
+  // Wiki bindings (guest)
+  if(activeTool==="wiki") initWikiBindings(()=>renderGuest());
 }
 
 
@@ -634,22 +736,23 @@ function renderLogin(){
       ${err}
       <div style="margin-top:16px;text-align:center;font-size:12px;color:var(--t2)">No account? <span id="goto-register" style="color:var(--ac);cursor:pointer;font-weight:500">Create one</span></div>`);
   } else if(mode==="register"){
-    html=wrap(`${logo}<div class="login-title">Create Account</div><div class="login-sub" style="margin-bottom:16px">Step 1 of 2 — Your details</div>
+    html=wrap(`${logo}<div class="login-title">Create Account</div><div class="login-sub" style="margin-bottom:16px">Fill in your details to get started</div>
       <div class="fg"><label class="fl">In-Game Name *</label><input class="inp" id="login-user" placeholder="Your character name" autofocus></div>
       <div class="fg"><label class="fl">Discord *</label><input class="inp" id="login-discord" placeholder="username or user#0000"></div>
       <div class="fg"><label class="fl">Password *</label><input class="inp" type="password" id="login-pass" placeholder="Choose a password"></div>
       <div class="fg"><label class="fl">Confirm Password *</label><input class="inp" type="password" id="login-pass2" placeholder="Confirm password"></div>
-      <button class="btn bp" id="login-btn" style="width:100%;justify-content:center;padding:8px;margin-top:4px">Continue →</button>
+      <button class="btn bp" id="login-btn" style="width:100%;justify-content:center;padding:8px;margin-top:4px">Create Account</button>
       ${err}
-      <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--t2)"><span id="goto-login" style="color:var(--ac);cursor:pointer;font-weight:500">← Back to sign in</span></div>`);
+      <div style="margin-top:14px;padding:10px 12px;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;font-size:11px;color:var(--tm)">You can join or create a guild after signing in from the Guild Manager tab.</div>
+      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--t2)"><span id="goto-login" style="color:var(--ac);cursor:pointer;font-weight:500">← Back to sign in</span></div>`);
   } else if(mode==="create-guild"){
-    html=wrap(`${logo}<div class="login-title">Create Your Guild</div><div class="login-sub" style="margin-bottom:16px">Step 2 of 2 — Set up your guild</div>
+    html=wrap(`${logo}<div class="login-title">Create a Guild</div><div class="login-sub" style="margin-bottom:16px">You'll be set as Guild Leader</div>
       <div class="fg"><label class="fl">Guild Name *</label><input class="inp" id="reg-guild-name" placeholder="e.g., Iron Brotherhood"></div>
-      <div style="font-size:11px;color:var(--tm);margin-bottom:14px">You will be the Guild Leader. You can invite members after setup.</div>
-      <button class="btn bp" id="create-guild-btn" style="width:100%;justify-content:center;padding:8px">Create Guild & Sign In</button>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:14px">You can invite members after your guild is created.</div>
+      <button class="btn bp" id="create-guild-btn" style="width:100%;justify-content:center;padding:8px">Create Guild</button>
       <div style="margin-top:10px;text-align:center"><button class="btn bg" id="goto-join-guild" style="width:100%;justify-content:center">Join an existing guild instead</button></div>
       ${err}
-      <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--t2)"><span id="goto-register" style="color:var(--ac);cursor:pointer;font-weight:500">← Back</span></div>`);
+      <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--t2)"><span id="goto-login" style="color:var(--ac);cursor:pointer;font-weight:500">← Cancel</span></div>`);
   } else if(mode==="join-guild"){
     const guildList=guilds.length
       ?guilds.map(g=>`<div class="shop-city-row" data-gid="${g.id}" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;margin-bottom:6px;cursor:pointer;transition:all .12s"><div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--tm)">${D.users.filter(u=>u.guildId===g.id&&u.role==="guild_leader").map(u=>u.displayName).join(", ")||"Guild"}</div></div><span style="font-size:11px;color:var(--tm)">${D.p.filter(p=>p.guildId===g.id).length} members</span></div>`).join("")
@@ -703,12 +806,13 @@ function renderLogin(){
         // Show pending screen directly
         currentUser=user;currentGuildId=user.guildId||null;
         document.getElementById("root").innerHTML=`<div class="login-wrap"><div class="login-box" style="max-width:420px"><div style="text-align:center;padding:20px 0"><div style="font-size:40px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Application Pending</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Your application to join <strong>${D.guilds.find(g=>g.id===user.guildId)?.name||"the guild"}</strong> is waiting for approval from the Guild Leader.</div><div style="margin-top:20px"><button class="btn bg" id="pending-logout-login">Sign Out</button></div></div></div></div>`;
-        document.getElementById("pending-logout-login").addEventListener("click",()=>{currentUser=null;currentGuildId=null;loginMode="login";render();});
+        document.getElementById("pending-logout-login").addEventListener("click",()=>{currentUser=null;currentGuildId=null;clearSession();loginMode="login";render();});
         return;
       }
       currentUser=user;
       currentGuildId=user.guildId||null;
       if(isSiteAdmin())currentGuildId=currentGuildId||D.guilds[0]?.id||null;
+      saveSession(currentUser, currentGuildId);
       // Admin/guild_leader can access without a guild
       activeTool="treasury";pg="dashboard";
       window._regData={};
@@ -727,29 +831,51 @@ function renderLogin(){
       if(!discord){showErr("Discord is required");return}
       if(!pass||pass.length<3){showErr("Password must be at least 3 characters");return}
       if(pass!==pass2){showErr("Passwords don't match");return}
-      if(D.users.find(x=>x.username.toLowerCase()===name.toLowerCase())){showErr("Username already exists");return}
-      window._regData={name,discord,pass};
-      loginMode="create-guild";renderLogin();
+      if(D.users.find(x=>x.username.toLowerCase()===name.toLowerCase())){showErr("Username already taken");return}
+      // Create account with no guild — they can join/create one from the Guild Manager tab
+      const newUser={id:uid(),username:name,discord,password:pass,displayName:name,role:"member",guildId:null,status:"active"};
+      D.users.push(newUser);
+      currentUser=newUser;
+      currentGuildId=null;
+      saveSession(currentUser, null);
+      persist();
+      window._regData={};
+      activeTool="crafting";pg="dashboard";
+      render();
+      toast("Welcome, "+name+"! You can join or create a guild from the Guild Manager tab.");
     });
     document.getElementById("goto-login").addEventListener("click",()=>{loginMode="login";renderLogin()});
   } else if(mode==="create-guild"){
     document.getElementById("create-guild-btn").addEventListener("click",()=>{
       const guildName=document.getElementById("reg-guild-name").value.trim();
       if(!guildName){showErr("Guild name is required");return}
-      const {name,discord,pass}=window._regData;
-      if(!name){loginMode="register";renderLogin();return}
+      // Works for both logged-in users and new registrations via _regData
+      let user=currentUser;
+      if(!user){
+        const {name,discord,pass}=window._regData||{};
+        if(!name){loginMode="register";renderLogin();return}
+        user={id:uid(),username:name,discord,password:pass,displayName:name,role:"guild_leader",guildId:null,status:"active"};
+        D.users.push(user);
+      }
       const guildId=uid();
-      const newGuild={id:guildId,name:guildName,createdBy:name,cfg:{...DEFAULT_CFG,guildName},createdDate:new Date().toISOString().slice(0,10)};
+      const newGuild={id:guildId,name:guildName,createdBy:user.displayName,cfg:{...DEFAULT_CFG,guildName},createdDate:new Date().toISOString().slice(0,10)};
       D.guilds.push(newGuild);
-      const newUser={id:uid(),username:name,discord,password:pass,displayName:name,role:"guild_leader",guildId};
-      D.users.push(newUser);
-      currentUser=newUser;currentGuildId=guildId;
+      // Upgrade user to guild_leader and assign guild
+      const storedUser=D.users.find(x=>x.id===user.id);
+      if(storedUser){storedUser.guildId=guildId;storedUser.role="guild_leader";storedUser.status="active";}
+      currentUser={...user,guildId,role:"guild_leader",status:"active"};
+      currentGuildId=guildId;
+      saveSession(currentUser,currentGuildId);
       rebuildG();
       addLog("Guild Created",guildName);
-      persist();window._regData={};activeTool="treasury";pg="dashboard";render();toast("Welcome, "+name+"! Your guild has been created.");
+      persist();window._regData={};activeTool="treasury";pg="dashboard";render();toast("Welcome! Your guild \""+guildName+"\" has been created.");
     });
     document.getElementById("goto-join-guild").addEventListener("click",()=>{loginMode="join-guild";renderLogin()});
-    document.getElementById("goto-register").addEventListener("click",()=>{loginMode="register";renderLogin()});
+    document.getElementById("goto-login").addEventListener("click",()=>{
+      // If already logged in, just close; otherwise go to login
+      if(currentUser){activeTool="crafting";pg="dashboard";render();}
+      else{loginMode="login";renderLogin();}
+    });
   } else if(mode==="join-guild"){
     let selectedGuildId=null;
     document.querySelectorAll("[data-gid]").forEach(row=>{
@@ -797,7 +923,7 @@ function renderNoPendingGuild(){
       </div>
     </div>
   </div></div>`;
-  document.getElementById("pending-logout").addEventListener("click",()=>{currentUser=null;currentGuildId=null;loginMode="login";render();});
+  document.getElementById("pending-logout").addEventListener("click",()=>{currentUser=null;currentGuildId=null;clearSession();loginMode="login";render();});
 }
 
 
@@ -840,6 +966,296 @@ function modalAnnouncement(e){
 // TOOL: MAP — Gloria Victis
 // ═══════════════════════════════════════════════════════════
 // Categories derived from gloriavict_leafletmap.sql + mapmain.sql marker-types
+// ═══════════════════════════════════════════════════════════
+// MAP SIDEBAR HTML BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildMapSidebarHTML(){
+  const markers = D.mapData || [];
+  const searchTerm = (mapState.searchTerm || "").toLowerCase();
+
+  function tagStyle(tag){
+    const t = tag.toLowerCase();
+    if(t.includes("loot zone")) return "background:var(--redd);color:var(--red)";
+    if(t.includes("non-loot")) return "background:var(--grnd);color:var(--grn)";
+    if(t.includes("market"))   return "background:var(--orgd);color:var(--org)";
+    if(t.includes("farm"))     return "background:var(--grnd);color:var(--grn)";
+    if(t.includes("dungeon"))  return "background:var(--pkd);color:var(--pk)";
+    if(t.includes("chest"))    return "background:var(--pkd);color:var(--pk)";
+    if(t.includes("horse"))    return "background:var(--yld);color:var(--yl)";
+    if(t.includes("depot")||t.includes("logistician")) return "background:var(--blud);color:var(--blu)";
+    return "background:var(--acg);color:var(--ac)";
+  }
+
+  let h = "";
+  h += `<div class="map-sb-header">`;
+  h += `<div class="map-sb-title">Locations</div>`;
+  h += `<div class="map-sb-search"><span class="map-sb-search-icon">🔍</span><input type="text" id="map-sb-search" placeholder="Search locations..." autocomplete="off" value="${(mapState.searchTerm||"").replace(/"/g,'&quot;')}"><button class="map-sb-search-clear" id="map-sb-search-clear" style="display:${mapState.searchTerm?"inline":"none"}">✕</button></div>`;
+  h += `<div class="map-sb-btns"><button class="map-sb-btn" id="map-sb-show-all">Show All</button><button class="map-sb-btn" id="map-sb-hide-all">Hide All</button><button class="map-sb-btn" id="map-sb-reset">Reset</button></div>`;
+  h += `</div>`;
+
+  h += `<div class="map-sb-body">`;
+
+  let anyResults = false;
+
+  MAP_CATEGORIES.forEach(cat => {
+    const hidden = mapState.hiddenCats[cat.id];
+    const collapsed = mapState.collapsedCats && mapState.collapsedCats[cat.id];
+
+    // All markers in this category, filtered by search
+    let catMarkers = markers.filter(m => m.category === cat.id);
+    if(searchTerm){
+      catMarkers = catMarkers.filter(m => {
+        const hay = [m.name, m.markerType, m.region, m.notes].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(searchTerm);
+      });
+    }
+
+    // When searching, skip categories with no matches
+    if(searchTerm && catMarkers.length === 0) return;
+    anyResults = true;
+
+    // Group markers by markerType
+    const byType = {};
+    catMarkers.forEach(m => {
+      const t = m.markerType || "Other";
+      if(!byType[t]) byType[t] = [];
+      byType[t].push(m);
+    });
+
+    // All known types for this category (even if no markers yet)
+    const allTypes = GV_MARKER_TYPES[cat.id] || [];
+    // Build ordered list: types that have markers first (in GV order), then rest
+    const typesWithMarkers = allTypes.filter(t => byType[t] && byType[t].length > 0);
+    const typesEmpty = allTypes.filter(t => !byType[t] || byType[t].length === 0);
+    // Also catch any marker types not in the predefined list
+    const extraTypes = Object.keys(byType).filter(t => !allTypes.includes(t));
+    const orderedTypes = [...typesWithMarkers, ...extraTypes, ...typesEmpty];
+
+    h += `<div class="map-loc-group${hidden?" off":""}${collapsed?" collapsed":""}" data-cat="${cat.id}">`;
+
+    // Group header
+    h += `<div class="map-loc-group-header" data-cat-toggle="${cat.id}">`;
+    h += `<span class="map-loc-group-dot" style="background:${cat.color}"></span>`;
+    h += `<span class="map-loc-group-name">${cat.name}</span>`;
+    h += `<span class="map-loc-group-meta">`;
+    h += `<button class="map-loc-hide-btn" data-cat-vis="${cat.id}">${hidden?"Show":"Hide"}</button>`;
+    h += `<span class="map-loc-count">${catMarkers.length} shown</span>`;
+    h += `</span>`;
+    h += `<span class="map-loc-arrow">▾</span>`;
+    h += `</div>`;
+
+    if(!collapsed){
+      h += `<div class="map-loc-type-sections">`;
+
+      orderedTypes.forEach(typeName => {
+        const typeMarkers = byType[typeName] || [];
+        const typeHidden = mapState.hiddenTypes?.[cat.id]?.[typeName];
+        const typeCollapsed = mapState.collapsedTypes?.[cat.id]?.[typeName];
+
+        h += `<div class="map-loc-type-group${typeHidden?" off":""}${typeCollapsed?" collapsed":""}" data-type="${cat.id}|${typeName}">`;
+
+        // Type sub-header
+        h += `<div class="map-loc-type-header" data-type-toggle="${cat.id}|${typeName}">`;
+        h += `<span class="map-loc-type-dot" style="background:${cat.color}88"></span>`;
+        h += `<span class="map-loc-type-name">${typeName}</span>`;
+        h += `<span class="map-loc-type-count">${typeMarkers.length}</span>`;
+        if(typeMarkers.length > 0){
+          h += `<button class="map-loc-type-hide-btn" data-type-vis="${cat.id}|${typeName}">${typeHidden?"Show":"Hide"}</button>`;
+        }
+        h += `<span class="map-loc-type-arrow">${typeMarkers.length > 0 ? "▾" : ""}</span>`;
+        h += `</div>`;
+
+        // Marker cards (single column, full width)
+        if(typeMarkers.length > 0 && !typeCollapsed){
+          h += `<div class="map-loc-cards">`;
+          typeMarkers.forEach(m => {
+            const isSelected = mapState.selectedMarker === m.id;
+            const tags = [];
+            if(m.region) tags.push(m.region);
+            if(m.has_market) tags.push("Market");
+            if(m.has_depot) tags.push("Depot");
+            if(m.has_logistician) tags.push("Logistician");
+            if(m.has_crafting_district) tags.push("Crafting District");
+
+            h += `<div class="map-loc-card${isSelected?" selected":""}" data-marker-id="${m.id}">`;
+            h += `<button class="map-loc-fly" data-fly-id="${m.id}" title="Fly to">◎</button>`;
+            h += `<div class="map-loc-card-name">${m.name || typeName}</div>`;
+            if(m.region || m.notes){
+              h += `<div class="map-loc-card-sub">${[m.region, m.notes ? m.notes.slice(0,40)+(m.notes.length>40?"…":"") : ""].filter(Boolean).join(" · ")}</div>`;
+            }
+            if(tags.length){
+              h += `<div class="map-loc-card-tags">`;
+              tags.slice(0,4).forEach(tag => {
+                h += `<span class="map-loc-tag" style="${tagStyle(tag)}">${tag}</span>`;
+              });
+              h += `</div>`;
+            }
+            h += `</div>`;
+          });
+          h += `</div>`;
+        }
+
+        h += `</div>`; // map-loc-type-group
+      });
+
+      h += `</div>`; // map-loc-type-sections
+    }
+
+    h += `</div>`; // map-loc-group
+  });
+
+  if(searchTerm && !anyResults){
+    h += `<div style="text-align:center;padding:24px 12px;color:var(--tm);font-size:12px">No locations match "${mapState.searchTerm}"</div>`;
+  }
+
+  h += `</div>`; // map-sb-body
+
+  // Footer
+  const sel = mapState.selectedMarker ? D.mapData.find(m => m.id === mapState.selectedMarker) : null;
+  h += `<div class="map-sb-footer">`;
+  h += `<div class="map-sb-footer-label">Selected Location</div>`;
+  if(sel){
+    h += `<div class="map-sel-name">${sel.name||sel.markerType}</div>`;
+    h += `<div class="map-sel-type">${sel.markerType||""}${sel.region?` · ${sel.region}`:""}</div>`;
+    if(sel.notes) h += `<div class="map-sel-notes">${sel.notes}</div>`;
+    h += `<div class="map-sel-coords">x:${sel.x?.toFixed(4)} y:${sel.y?.toFixed(4)}</div>`;
+  } else {
+    h += `<div class="map-sel-empty">No location selected</div>`;
+    h += `<div style="font-size:10px;color:var(--tm);margin-top:2px">Click a marker to see details</div>`;
+  }
+  h += `</div>`;
+
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAP SIDEBAR EVENT BINDER (shared between guest + logged-in)
+// ═══════════════════════════════════════════════════════════
+function bindMapSidebarEvents(onVisChange){
+  const rerender = typeof onVisChange === "function" ? onVisChange : () => {};
+
+  // Widen sidebar when on map tool
+  const sb = document.getElementById("sidebar");
+  if(sb) sb.classList.add("map-wide");
+
+  // Show All / Hide All / Reset
+  document.getElementById("map-sb-show-all")?.addEventListener("click", () => {
+    MAP_CATEGORIES.forEach(c => { mapState.hiddenCats[c.id] = false; mapState.hiddenTypes[c.id] = {}; });
+    rerender();
+  });
+  document.getElementById("map-sb-hide-all")?.addEventListener("click", () => {
+    MAP_CATEGORIES.forEach(c => { mapState.hiddenCats[c.id] = true; });
+    rerender();
+  });
+  document.getElementById("map-sb-reset")?.addEventListener("click", () => {
+    mapState.hiddenCats = {}; mapState.hiddenTypes = {}; mapState.collapsedCats = {}; mapState.collapsedTypes = {}; mapState.searchTerm = "";
+    rerender();
+  });
+
+  // Category collapse toggle
+  document.querySelectorAll("[data-cat-toggle]").forEach(el => {
+    el.addEventListener("click", e => {
+      if(e.target.closest("[data-cat-vis]")) return;
+      const c = el.dataset.catToggle;
+      mapState.collapsedCats = mapState.collapsedCats || {};
+      mapState.collapsedCats[c] = !mapState.collapsedCats[c];
+      rerender();
+    });
+  });
+
+  // Per-category hide/show
+  document.querySelectorAll("[data-cat-vis]").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      const c = el.dataset.catVis;
+      mapState.hiddenCats[c] = !mapState.hiddenCats[c];
+      rerender();
+    });
+  });
+
+  // Type sub-header collapse
+  document.querySelectorAll("[data-type-toggle]").forEach(el => {
+    el.addEventListener("click", e => {
+      if(e.target.closest("[data-type-vis]")) return;
+      const [cat, type] = el.dataset.typeToggle.split("|");
+      mapState.collapsedTypes = mapState.collapsedTypes || {};
+      mapState.collapsedTypes[cat] = mapState.collapsedTypes[cat] || {};
+      mapState.collapsedTypes[cat][type] = !mapState.collapsedTypes[cat][type];
+      rerender();
+    });
+  });
+
+  // Per-type hide/show
+  document.querySelectorAll("[data-type-vis]").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      const [cat, type] = el.dataset.typeVis.split("|");
+      mapState.hiddenTypes = mapState.hiddenTypes || {};
+      mapState.hiddenTypes[cat] = mapState.hiddenTypes[cat] || {};
+      mapState.hiddenTypes[cat][type] = !mapState.hiddenTypes[cat][type];
+      rerender();
+    });
+  });
+
+  // Search
+  const sbSearch = document.getElementById("map-sb-search");
+  const sbClear = document.getElementById("map-sb-search-clear");
+  if(sbSearch){
+    sbSearch.addEventListener("input", () => {
+      mapState.searchTerm = sbSearch.value.trim();
+      if(sbClear) sbClear.style.display = mapState.searchTerm ? "inline" : "none";
+      rerender();
+    });
+  }
+  if(sbClear){
+    sbClear.addEventListener("click", () => {
+      if(sbSearch) sbSearch.value = "";
+      sbClear.style.display = "none";
+      mapState.searchTerm = "";
+      rerender();
+    });
+  }
+
+  // Location card click — select + pan
+  document.querySelectorAll(".map-loc-card").forEach(el => {
+    el.addEventListener("click", e => {
+      if(e.target.closest(".map-loc-fly")) return;
+      const mid = el.dataset.markerId;
+      const m = D.mapData.find(x => String(x.id) === String(mid));
+      if(!m) return;
+      mapState.selectedMarker = m.id;
+      document.querySelectorAll(".map-loc-card").forEach(c => c.classList.toggle("selected", c.dataset.markerId === String(mid)));
+      const footerEl = document.querySelector(".map-sb-footer");
+      if(footerEl){
+        footerEl.innerHTML = `<div class="map-sb-footer-label">Selected Location</div>
+          <div class="map-sel-name">${m.name||m.markerType}</div>
+          <div class="map-sel-type">${m.markerType||""}${m.region?` · ${m.region}`:""}</div>
+          ${m.notes?`<div class="map-sel-notes">${m.notes}</div>`:""}
+          <div class="map-sel-coords">x:${m.x?.toFixed(4)} y:${m.y?.toFixed(4)}</div>`;
+      }
+      if(typeof leafletMap !== "undefined" && leafletMap && typeof percentToLeaflet === "function"){
+        const latLng = percentToLeaflet(m.x, m.y);
+        leafletMap.setView(latLng, Math.max(4, leafletMap.getZoom()), {animate: true});
+      }
+    });
+  });
+
+  // Fly-to button
+  document.querySelectorAll(".map-loc-fly").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      const mid = el.dataset.flyId;
+      const m = D.mapData.find(x => String(x.id) === String(mid));
+      if(!m) return;
+      mapState.selectedMarker = m.id;
+      if(typeof leafletMap !== "undefined" && leafletMap && typeof percentToLeaflet === "function"){
+        const latLng = percentToLeaflet(m.x, m.y);
+        leafletMap.setView(latLng, MAP_MAX_ZOOM - 1, {animate: true});
+      }
+    });
+  });
+}
+
 const MAP_CATEGORIES=[
   {id:"chests",    name:"Chests",           icon:"📦", color:"#f691b2"},
   {id:"resources", name:"Resources",        icon:"⛏️", color:"#56d364"},
@@ -867,7 +1283,7 @@ const GV_MARKER_TYPES={
 // GV Region names from mapmain.sql sm_regions table — useful for marker notes/search
 const GV_REGIONS=["Mereley","Dunfen","Baalhammon","Audenstede","Skergard","Volkvar","Abbey","Blackrock","Waterford","Lordly","Skogar","Hordun","Haddah","Dimar"];
 
-let mapState={zoom:0.5,panX:0,panY:0,dragging:false,dragStart:{x:0,y:0},selectedMarker:null,addingMarker:false,searchTerm:"",hiddenCats:{}};
+let mapState={zoom:0.5,panX:0,panY:0,dragging:false,dragStart:{x:0,y:0},selectedMarker:null,addingMarker:false,searchTerm:"",hiddenCats:{},collapsedCats:{},hiddenTypes:{},collapsedTypes:{}};
 let leafletMap=null;
 let leafletMarkers=[];
 let tempLeafletMarker=null;
@@ -1358,7 +1774,7 @@ function initMapBindings(){
   
   // Filter markers visibility
   const updateMarkerVisibility = () => {
-    const searchTerm = mapState.searchTerm.toLowerCase();
+    const searchTerm = (mapState.searchTerm||"").toLowerCase();
     
     leafletMarkers.forEach((marker, i) => {
       const m = D.mapData[i];
@@ -1366,16 +1782,36 @@ function initMapBindings(){
       
       const cat = m.category;
       const haystack = [m.name, m.markerType, m.region, m.notes].filter(Boolean).join(" ").toLowerCase();
-      const hiddenByCat = mapState.hiddenCats[cat];
-      const hiddenBySearch = searchTerm && !haystack.includes(searchTerm);
+      const hiddenByCat = !!mapState.hiddenCats[cat];
+      const hiddenByType = !hiddenByCat && !!(mapState.hiddenTypes?.[cat]?.[m.markerType]);
+      const hiddenBySearch = !!(searchTerm && !haystack.includes(searchTerm));
       
       const iconEl = marker.getElement()?.querySelector('.custom-marker-inner');
       if(iconEl) {
-        iconEl.classList.toggle('hidden', hiddenByCat);
-        iconEl.classList.toggle('dimmed', !hiddenByCat && hiddenBySearch);
+        iconEl.classList.toggle('hidden', hiddenByCat || hiddenByType);
+        iconEl.classList.toggle('dimmed', !hiddenByCat && !hiddenByType && hiddenBySearch);
       }
     });
+
+    // Update the selected location footer in sidebar
+    const footerEl = document.querySelector(".map-sb-footer");
+    if(footerEl){
+      const sel = mapState.selectedMarker ? D.mapData.find(m=>m.id===mapState.selectedMarker) : null;
+      if(sel){
+        footerEl.innerHTML = `<div class="map-sb-footer-label">Selected Location</div>
+          <div class="map-sel-name">${sel.name||sel.markerType}</div>
+          <div class="map-sel-type">${sel.markerType||""}${sel.region?` · ${sel.region}`:""}</div>
+          ${sel.notes?`<div class="map-sel-notes">${sel.notes}</div>`:""}
+          <div class="map-sel-coords">x:${sel.x?.toFixed(4)} y:${sel.y?.toFixed(4)}</div>`;
+      } else {
+        footerEl.innerHTML = `<div class="map-sb-footer-label">Selected Location</div>
+          <div class="map-sel-empty">No location selected</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:2px">Click a marker to see details</div>`;
+      }
+    }
   };
+  // Expose to module level so sidebar buttons can call it without re-rendering Leaflet
+  _updateMarkerVisibility = updateMarkerVisibility;
   
   // Show marker info panel
   function showMarkerInfo(idx, marker) {
@@ -1388,6 +1824,17 @@ function initMapBindings(){
     });
     const el = marker.getElement()?.querySelector('.custom-marker-inner');
     if(el) el.classList.add('selected');
+
+    // Update sidebar footer with selected marker
+    mapState.selectedMarker = m.id;
+    const footerEl = document.querySelector(".map-sb-footer");
+    if(footerEl){
+      footerEl.innerHTML = `<div class="map-sb-footer-label">Selected Location</div>
+        <div class="map-sel-name">${m.name||m.markerType}</div>
+        <div class="map-sel-type">${m.markerType||""}${m.region?` · ${m.region}`:""}</div>
+        ${m.notes?`<div class="map-sel-notes">${m.notes}</div>`:""}
+        <div class="map-sel-coords">x:${m.x?.toFixed(4)} y:${m.y?.toFixed(4)}</div>`;
+    }
     
     const cat = MAP_CATEGORIES.find(c => c.id === m.category) || MAP_CATEGORIES[MAP_CATEGORIES.length-1];
     const panel = document.getElementById("map-info");
@@ -1561,27 +2008,8 @@ function initMapBindings(){
     updateSearchResults();
   });
   
-  // Legend row toggles (in left sidebar)
-  document.querySelectorAll(".map-leg-row").forEach(row => {
-    row.addEventListener("click", function() {
-      const cat = this.dataset.cat;
-      mapState.hiddenCats[cat] = !mapState.hiddenCats[cat];
-      this.classList.toggle("off", mapState.hiddenCats[cat]);
-      updateMarkerVisibility();
-    });
-  });
-  
-  // Toggle all button
-  document.getElementById("map-toggle-all")?.addEventListener("click", function() {
-    const anyVisible = MAP_CATEGORIES.some(c => !mapState.hiddenCats[c.id]);
-    MAP_CATEGORIES.forEach(c => {
-      mapState.hiddenCats[c.id] = anyVisible;
-    });
-    document.querySelectorAll(".map-leg-row").forEach(row => {
-      row.classList.toggle("off", anyVisible);
-    });
-    updateMarkerVisibility();
-  });
+  // New map sidebar bindings
+  bindMapSidebarEvents(()=>refreshMapSidebar());
   
   // Add marker mode
   document.getElementById("map-add-marker")?.addEventListener("click", function() {
@@ -1742,114 +2170,284 @@ function initMapBindings(){
   updateMarkerVisibility();
 }
 
-function modalNationLocation(m, idx){
-  var feats=[
-    {key:"has_market",icon:"🛒",label:"Market"},
-    {key:"has_logistician",icon:"📦",label:"Logistician"},
-    {key:"has_depot",icon:"🏬",label:"Depot"},
-    {key:"has_crafting_district",icon:"⚒",label:"Crafting District"}
-  ];
-  var activeFeats=feats.filter(function(f){return m[f.key];});
+// Module-level marker visibility updater — called by sidebar buttons without re-rendering Leaflet
+let _updateMarkerVisibility = null;
 
-  function buildVendorSection(){
-    if(!m.cityLink){
-      return '<div style="padding:20px;text-align:center;color:var(--tm);font-size:12px">No city linked. Edit marker to link a city from Item Search.</div>';
-    }
-    var city=D.cities.find(function(c){return c.id===m.cityLink;});
-    if(!city){
-      return '<div style="padding:20px;text-align:center;color:var(--tm);font-size:12px">Linked city not found.</div>';
-    }
-    var cityVendors=D.vendors.filter(function(v){return v.cityId===m.cityLink;}).sort(function(a,b){return a.name.localeCompare(b.name);});
-    if(!cityVendors.length){
-      return '<div style="padding:20px;text-align:center;color:var(--tm);font-size:12px">No vendors in '+city.name+' yet.</div>';
-    }
-    var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">';
-    cityVendors.forEach(function(v){
-      var vItems=D.vendorItems.filter(function(vi){return vi.vendorId===v.id;}).sort(function(a,b){return a.itemName.localeCompare(b.itemName);});
-      h+='<div style="background:var(--bgi);border:1px solid var(--bd);border-radius:6px;overflow:hidden">';
-      h+='<div style="padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">';
-      h+='<span style="font-size:15px">🧑‍💼</span>';
-      h+='<div style="flex:1"><div style="font-weight:600;font-size:13px">'+v.name+'</div>'+(v.type?'<div style="font-size:10px;color:var(--tm)">'+v.type+'</div>':'')+'</div>';
-      h+='<span style="font-size:10px;color:var(--tm)">'+vItems.length+' item'+(vItems.length!==1?'s':'')+'</span></div>';
-      if(!vItems.length){
-        h+='<div style="padding:10px 12px;font-size:11px;color:var(--tm)">No items listed</div>';
-      } else {
-        h+='<div style="max-height:200px;overflow-y:auto">';
-        vItems.forEach(function(vi){
-          var tc=SHOP_TYPE_COLORS[vi.itemType]||'var(--tm)';
-          var tbg=SHOP_TYPE_BG[vi.itemType]||'transparent';
-          h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--bd)">';
-          if(vi.itemType) h+='<span style="font-size:9px;font-weight:600;color:'+tc+';background:'+tbg+';padding:1px 5px;border-radius:2px;white-space:nowrap">'+vi.itemType+'</span>';
-          h+='<span style="flex:1;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:0;min-width:0">'+shopDisplayItemLabel(vi)+'</span>';
-          h+='<span style="font-size:11px;color:var(--org);white-space:nowrap;font-weight:600">'+shopFormatPrice(vi)+'</span>';
-          if(vi.notes) h+='<span style="font-size:10px;color:var(--tm)">'+vi.notes+'</span>';
-          h+='</div>';
-        });
-        h+='</div>';
-      }
-      h+='</div>';
-    });
-    h+='</div>';
-    return h;
-  }
-
-  var regionTag=m.region?'<span style="font-size:11px;color:var(--ac);background:var(--acg);padding:2px 8px;border-radius:10px">'+m.region+'</span>':"";
-  var typeTag='<span style="font-size:11px;font-weight:600;background:var(--orgd);color:var(--org);padding:2px 8px;border-radius:10px">'+(m.markerType||'Location')+'</span>';
-  var featTags=activeFeats.map(function(f){return '<span style="font-size:11px;padding:2px 8px;background:var(--grnd);color:var(--grn);border-radius:10px">'+f.icon+' '+f.label+'</span>';}).join('');
-  var workshopTags=(m.workshops&&m.workshops.length)?m.workshops.map(function(w){return '<span style="font-size:11px;padding:3px 10px;background:var(--blud);color:var(--blu);border-radius:10px">⚒ '+w+'</span>';}).join(''):'';
-  var linkedCityName=m.cityLink?(D.cities.find(function(c){return c.id===m.cityLink;})||{}).name||'':'';
-
-  openModal(m.locationName||m.name||m.markerType||'Location', function(body){
-    var html='';
-    html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">'+typeTag+regionTag+featTags+'</div>';
-    if(workshopTags){
-      html+='<div style="margin-bottom:14px">';
-      html+='<div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Workshops</div>';
-      html+='<div style="display:flex;flex-wrap:wrap;gap:4px">'+workshopTags+'</div>';
-      html+='</div>';
-    }
-    var locRes=m.locResources||m.mineResources||[];
-    var locResCfg={"Mine":{title:"⛏ Mine Resources",col1:"Veins",col2:"Deposits"},"Farm":{title:"🌾 Farm Produce",col1:"Qty",col2:"Notes"},"Lumbermill":{title:"🪵 Lumbermill Resources",col1:"Qty",col2:"Notes"}}[m.markerType||m.locResType||""]||null;
-    if(locRes.length&&locResCfg){
-      html+='<div style="margin-bottom:14px">';
-      html+='<div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">'+locResCfg.title+'</div>';
-      html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px">';
-      locRes.forEach(function(r){
-        html+='<div style="background:var(--bgi);border:1px solid var(--bd);border-radius:4px;padding:7px 10px">';
-        html+='<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px">'+r.resource+'</div>';
-        html+='<div style="display:flex;gap:5px;flex-wrap:wrap">';
-        if(r.col1) html+='<span style="font-size:11px;color:var(--grn);background:var(--grnd);padding:1px 7px;border-radius:3px">'+locResCfg.col1+': '+r.col1+'</span>';
-        if(r.col2) html+='<span style="font-size:11px;color:var(--org);background:var(--orgd);padding:1px 7px;border-radius:3px">'+locResCfg.col2+': '+r.col2+'</span>';
-        html+='</div></div>';
-      });
-      html+='</div></div>';
-    }
-    if(m.notes){
-      html+='<div style="margin-bottom:14px;padding:10px 12px;background:var(--bgi);border-radius:4px;border-left:3px solid var(--ac)">';
-      html+='<div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Notes</div>';
-      html+='<div style="font-size:13px;color:var(--t2);line-height:1.5">'+m.notes+'</div>';
-      html+='</div>';
-    }
-    html+='<div style="border-top:1px solid var(--bd);padding-top:14px">';
-    html+='<div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Vendors &amp; Items'+(linkedCityName?' — '+linkedCityName:'')+'</div>';
-    html+=buildVendorSection();
-    html+='</div>';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--bd)">';
-    html+='<div style="font-size:10px;color:var(--tm)">Added by '+(m.addedBy||'Unknown')+' &bull; '+(m.addedDate?new Date(m.addedDate).toLocaleDateString():'')+'</div>';
-    if(canManageDatabase()){
-      html+='<div style="display:flex;gap:6px"><button class="btn bg bs" id="nation-edit-btn">✎ Edit</button><button class="btn bd bs" id="nation-delete-btn">✕ Delete</button></div>';
-    }
-    html+='</div>';
-    body.innerHTML=html;
-    document.getElementById('nation-edit-btn')&&document.getElementById('nation-edit-btn').addEventListener('click',function(){closeModal();modalEditMarker(idx);});
-    document.getElementById('nation-delete-btn')&&document.getElementById('nation-delete-btn').addEventListener('click',function(){
-      confirmAction('Delete "'+m.name+'"?',function(){
-        D.mapData.splice(idx,1);persist();addLog('Map Marker Deleted',m.name);render();toast('Deleted!');
-      });
-    });
-  }, true);
+function refreshMapSidebar(){
+  // Rebuild just the sidebar HTML without touching the Leaflet map
+  const sbPanel = document.getElementById("map-sidebar-panel");
+  if(!sbPanel) return;
+  sbPanel.innerHTML = buildMapSidebarHTML();
+  // Re-bind sidebar events, passing a lightweight updater instead of full rerender
+  bindMapSidebarEvents(()=>{
+    refreshMapSidebar();
+    if(_updateMarkerVisibility) _updateMarkerVisibility();
+  });
+  // Update marker visibility on map
+  if(_updateMarkerVisibility) _updateMarkerVisibility();
 }
 
+function modalNationLocation(m, idx){
+  const feats=[
+    {key:"has_market",      icon:"🛒", label:"Market",            color:"#f59e0b", bg:"rgba(245,158,11,.13)"},
+    {key:"has_logistician", icon:"📦", label:"Logistician",       color:"#60a5fa", bg:"rgba(96,165,250,.13)"},
+    {key:"has_depot",       icon:"🏬", label:"Depot",             color:"#34d399", bg:"rgba(52,211,153,.13)"},
+    {key:"has_crafting_district",icon:"⚒",label:"Crafting District",color:"#c084fc",bg:"rgba(192,132,252,.13)"}
+  ];
+  const activeFeats=feats.filter(f=>m[f.key]);
+  const linkedCity=m.cityLink?D.cities.find(c=>c.id===m.cityLink):null;
+  const cityVendors=linkedCity
+    ?D.vendors.filter(v=>v.cityId===linkedCity.id).sort((a,b)=>a.name.localeCompare(b.name))
+    :[];
+
+  // Close any existing overlay
+  document.getElementById("nlm-overlay")?.remove();
+
+  // Inject CSS once
+  if(!document.getElementById("nlm-css")){
+    const s=document.createElement("style");s.id="nlm-css";s.textContent=`
+#nlm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);animation:fadeIn .15s}
+#nlm-panel{background:#1a1a1a;border:1px solid #2e2e2e;border-radius:16px;width:100%;max-width:1340px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 28px 80px rgba(0,0,0,.7)}
+#nlm-hero{background:linear-gradient(135deg,#1e2535 0%,#1a1a2e 50%,#16213e 100%);padding:32px 36px 26px;border-bottom:1px solid #2e2e2e;flex-shrink:0;position:relative}
+#nlm-hero-close{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:7px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#888;font-size:15px;transition:all .15s}
+#nlm-hero-close:hover{background:rgba(229,83,75,.2);border-color:rgba(229,83,75,.4);color:#e5534b}
+#nlm-hero-title{font-size:30px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:7px;line-height:1.2}
+#nlm-hero-sub{font-size:14px;color:#666;margin-bottom:18px}
+#nlm-feat-row{display:flex;flex-wrap:wrap;gap:7px}
+.nlm-feat-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.02em;border:1px solid rgba(255,255,255,.08)}
+#nlm-body{display:flex;flex:1;min-height:0;overflow:hidden}
+#nlm-left{width:300px;flex-shrink:0;border-right:1px solid #2e2e2e;overflow-y:auto;padding:24px}
+#nlm-right{flex:1;overflow-y:auto;padding:24px;min-width:0}
+.nlm-info-section{margin-bottom:22px}
+.nlm-info-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#555;margin-bottom:10px}
+.nlm-note-box{background:rgba(127,109,242,.08);border:1px solid rgba(127,109,242,.2);border-radius:8px;padding:12px 14px;font-size:13px;color:#aaa;line-height:1.65}
+.nlm-res-item{background:#222;border:1px solid #2e2e2e;border-radius:7px;padding:10px 12px;margin-bottom:7px}
+.nlm-res-name{font-size:13px;font-weight:600;color:#ccc;margin-bottom:5px}
+.nlm-res-badges{display:flex;gap:5px;flex-wrap:wrap}
+.nlm-ws-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);border-radius:12px;font-size:12px;color:#60a5fa;margin:2px}
+.nlm-meta-row{display:flex;align-items:center;gap:6px;font-size:12px;color:#555;margin-top:5px}
+.nlm-action-btn{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #333;background:#222;color:#aaa;transition:all .15s;font-family:inherit}
+.nlm-action-btn:hover{border-color:#555;color:#e5e5e5;background:#2a2a2a}
+.nlm-action-btn.danger:hover{border-color:rgba(229,83,75,.5);color:#e5534b;background:rgba(229,83,75,.08)}
+.nlm-vendors-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#555;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.nlm-vendor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+.nlm-vendor-card{background:#222;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s}
+.nlm-vendor-card:hover{border-color:#3a3a3a}
+.nlm-vendor-head{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#1e1e1e;border-bottom:1px solid #2e2e2e}
+.nlm-vendor-avatar{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,rgba(127,109,242,.3),rgba(127,109,242,.1));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.nlm-vendor-name{font-weight:700;font-size:14px;color:#e5e5e5}
+.nlm-vendor-type{font-size:11px;color:#555;margin-top:2px}
+.nlm-vendor-count{margin-left:auto;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:3px 10px;font-size:11px;color:#666;white-space:nowrap;flex-shrink:0}
+.nlm-item-list{overflow-y:auto;max-height:300px;flex:1}
+.nlm-item-row{display:grid;grid-template-columns:76px 1fr 32px;gap:10px;align-items:center;padding:8px 16px;border-bottom:1px solid rgba(46,46,46,.7);min-width:0}
+.nlm-item-row:last-child{border-bottom:none}
+.nlm-item-row:hover{background:rgba(255,255,255,.025)}
+.nlm-badge{font-size:10px;font-weight:800;padding:3px 7px;border-radius:4px;text-align:center;white-space:nowrap;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis}
+.nlm-iname{font-size:13px;color:#bbb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.nlm-price{font-size:12px;font-weight:700;color:#f59e0b;white-space:nowrap;text-align:right;padding-left:8px}
+.nlm-empty-vendor{padding:22px;text-align:center;color:#444;font-size:13px;flex:1;display:flex;align-items:center;justify-content:center}
+.nlm-no-city{text-align:center;padding:56px 24px;color:#444}
+.nlm-no-city-ico{font-size:44px;margin-bottom:14px;opacity:.4}
+.nlm-bag-btn{background:none;border:1px solid rgba(245,158,11,.25);cursor:pointer;padding:3px 5px;border-radius:6px;transition:all .12s;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:26px;height:26px}
+.nlm-bag-btn:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.6);box-shadow:0 0 8px rgba(245,158,11,.2)}
+.nlm-price-popup{position:fixed;z-index:400;background:#1e1e1e;border:1px solid #3a3a3a;border-radius:10px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:180px;max-width:300px;animation:fadeIn .12s}
+.nlm-price-popup-name{font-size:12px;color:#666;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nlm-price-popup-short{font-size:22px;font-weight:800;color:#f59e0b;margin-bottom:4px}
+.nlm-price-popup-long{font-size:12px;color:#888;line-height:1.5}
+.nlm-legend-box{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;padding:12px 14px}
+.nlm-legend-row{display:flex;align-items:center;gap:10px;padding:3px 0;font-size:12px;color:#666}
+.nlm-legend-key{font-size:11px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:1px 7px;border-radius:4px;min-width:36px;text-align:center;flex-shrink:0}
+    `;
+    document.head.appendChild(s);
+  }
+
+  const overlay=document.createElement("div");
+  overlay.id="nlm-overlay";
+  overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove();});
+
+  // ── Build panel HTML ────────────────────────────────────────
+  const locRes=m.locResources||m.mineResources||[];
+  const locResCfg={Mine:{title:"⛏ Mine Resources",col1:"Veins",col2:"Deposits"},Farm:{title:"🌾 Farm Produce",col1:"Qty",col2:"Notes"},Lumbermill:{title:"🪵 Lumbermill",col1:"Qty",col2:"Notes"}}[m.markerType||m.locResType||""];
+
+  // Hero
+  let heroSub=(m.region?`📍 ${m.region}`:"")+((m.region&&linkedCity)?" · ":"")+(linkedCity?`🏙 ${linkedCity.name}`:"");
+
+  // Left panel
+  let leftH="";
+
+  if(m.notes){
+    leftH+=`<div class="nlm-info-section">
+      <div class="nlm-info-label">Notes</div>
+      <div class="nlm-note-box">${m.notes}</div>
+    </div>`;
+  }
+
+  if(m.workshops&&m.workshops.length){
+    leftH+=`<div class="nlm-info-section">
+      <div class="nlm-info-label">Workshops</div>
+      <div>${m.workshops.map(w=>`<span class="nlm-ws-tag">⚒ ${w}</span>`).join("")}</div>
+    </div>`;
+  }
+
+  if(locRes.length&&locResCfg){
+    leftH+=`<div class="nlm-info-section">
+      <div class="nlm-info-label">${locResCfg.title}</div>`;
+    locRes.forEach(r=>{
+      leftH+=`<div class="nlm-res-item"><div class="nlm-res-name">${r.resource}</div><div class="nlm-res-badges">`;
+      if(r.col1)leftH+=`<span style="font-size:10px;color:#34d399;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);padding:1px 7px;border-radius:3px">${locResCfg.col1}: ${r.col1}</span>`;
+      if(r.col2)leftH+=`<span style="font-size:10px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:1px 7px;border-radius:3px">${locResCfg.col2}: ${r.col2}</span>`;
+      leftH+=`</div></div>`;
+    });
+    leftH+=`</div>`;
+  }
+
+  // Legend / help section — always shown at bottom of left panel
+  leftH+=`<div class="nlm-info-section" style="margin-top:auto;padding-top:16px;border-top:1px solid #2e2e2e">
+    <div class="nlm-info-label">Quick Guide</div>
+    <div class="nlm-legend-box">
+      <div class="nlm-legend-row"><span class="nlm-legend-key" style="display:inline-flex;align-items:center;justify-content:center;padding:3px 7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M9 2h6l2 3H7L9 2z" fill="#f59e0b"/><path d="M12 7c-4.418 0-8 2.91-8 6.5S7.582 20 12 20s8-2.91 8-6.5S16.418 7 12 7z" fill="#f59e0b"/><path d="M12 9c-3.314 0-6 2.015-6 4.5S8.686 18 12 18s6-2.015 6-4.5S15.314 9 12 9z" fill="#fbbf24"/><text x="12" y="15" text-anchor="middle" font-size="7" font-weight="900" fill="#92400e" font-family="Arial,sans-serif">G</text></svg></span><span>Click bag to see full price</span></div>
+      <div class="nlm-legend-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #2e2e2e">
+        <span style="font-size:10px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Abbreviations</span>
+      </div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">G</span><span>Gold</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">S</span><span>Silver</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">IC</span><span>Iron Crowns</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">CC</span><span>Copper Crowns</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">CP</span><span>Contribution Points</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">VT</span><span>Valley Tokens</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">CGT</span><span>Champions Guild Tokens</span></div>
+      <div class="nlm-legend-row"><span class="nlm-legend-key">FPT</span><span>Frontier Pass Tokens</span></div>
+    </div>
+  </div>`;
+
+  // Marker meta + actions
+  leftH+=`<div class="nlm-info-section">
+    <div class="nlm-info-label">Marker Info</div>
+    <div class="nlm-meta-row">Added by ${m.addedBy||"Unknown"}</div>
+    <div class="nlm-meta-row">📅 ${m.addedDate?new Date(m.addedDate).toLocaleDateString():""}</div>
+    ${isContributor()?`<div style="display:flex;gap:6px;margin-top:10px">
+      <button class="nlm-action-btn" id="nation-edit-btn">✎ Edit</button>
+      <button class="nlm-action-btn danger" id="nation-delete-btn">Delete</button>
+    </div>`:""}
+  </div>`;
+
+  // Right panel — vendors
+  let rightH=`<div class="nlm-vendors-label">
+    <span>Vendors &amp; Items${linkedCity?" — "+linkedCity.name:""}</span>
+    ${cityVendors.length?`<span style="font-size:10px;color:#555">${cityVendors.length} vendor${cityVendors.length!==1?"s":""} · ${D.vendorItems.filter(vi=>cityVendors.some(v=>v.id===vi.vendorId)).length} items</span>`:""}
+  </div>`;
+
+  if(!linkedCity){
+    rightH+=`<div class="nlm-no-city"><div class="nlm-no-city-ico">🏙</div><div style="font-size:14px;font-weight:600;color:#555;margin-bottom:6px">No City Linked</div><div style="font-size:12px">Edit this marker to connect it to a city from Item Search</div></div>`;
+  } else if(!cityVendors.length){
+    rightH+=`<div class="nlm-no-city"><div class="nlm-no-city-ico">🧑‍💼</div><div style="font-size:14px;font-weight:600;color:#555;margin-bottom:6px">No Vendors Yet</div><div style="font-size:12px">No vendors have been added for ${linkedCity.name}</div></div>`;
+  } else {
+    rightH+=`<div class="nlm-vendor-grid">`;
+    cityVendors.forEach(v=>{
+      const vItems=D.vendorItems.filter(vi=>vi.vendorId===v.id).sort((a,b)=>(a.itemName||"").localeCompare(b.itemName||""));
+      rightH+=`<div class="nlm-vendor-card">
+        <div class="nlm-vendor-head">
+          <div class="nlm-vendor-avatar">🧑‍💼</div>
+          <div style="flex:1;min-width:0">
+            <div class="nlm-vendor-name">${v.name}</div>
+            ${v.type?`<div class="nlm-vendor-type">${v.type}</div>`:""}
+          </div>
+          <div class="nlm-vendor-count">${vItems.length} item${vItems.length!==1?"s":""}</div>
+        </div>`;
+      if(!vItems.length){
+        rightH+=`<div class="nlm-empty-vendor">No items listed</div>`;
+      } else {
+        rightH+=`<div class="nlm-item-list">`;
+        vItems.forEach(vi=>{
+          const tc=SHOP_TYPE_COLORS[vi.itemType]||"#555";
+          const tbg=SHOP_TYPE_BG[vi.itemType]||"rgba(255,255,255,.04)";
+          const name=vi.itemName||"Unknown";
+          const priceShort=shopFormatPrice(vi);
+          const priceLong=shopFormatPriceLong(vi);
+          const safeShort=priceShort.replace(/'/g,"&#39;");
+          const safeLong=priceLong.replace(/'/g,"&#39;");
+          rightH+=`<div class="nlm-item-row">`;
+          rightH+=vi.itemType
+            ?`<span class="nlm-badge" style="color:${tc};background:${tbg}">${vi.itemType}</span>`
+            :`<span></span>`;
+          rightH+=`<span class="nlm-iname" title="${name.replace(/"/g,"&quot;")}">${name}</span>`;
+          // Bag icon — click to reveal price popup
+          rightH+=`<button class="nlm-bag-btn" data-price-short="${safeShort}" data-price-long="${safeLong}" title="View price"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M9 2h6l2 3H7L9 2z" fill="#f59e0b"/><path d="M12 7c-4.418 0-8 2.91-8 6.5S7.582 20 12 20s8-2.91 8-6.5S16.418 7 12 7z" fill="#f59e0b"/><path d="M12 9c-3.314 0-6 2.015-6 4.5S8.686 18 12 18s6-2.015 6-4.5S15.314 9 12 9z" fill="#fbbf24"/><text x="12" y="15" text-anchor="middle" font-size="7" font-weight="900" fill="#92400e" font-family="Arial,sans-serif">G</text></svg></button>`;
+          rightH+=`</div>`;
+          if(vi.notes) rightH+=`<div style="padding:0 14px 5px 92px;font-size:10px;color:#555;font-style:italic">${vi.notes}</div>`;
+        });
+        rightH+=`</div>`;
+      }
+      rightH+=`</div>`;
+    });
+    rightH+=`</div>`;
+  }
+
+  overlay.innerHTML=`
+    <div id="nlm-panel">
+      <div id="nlm-hero">
+        <button id="nlm-hero-close">✕</button>
+        <div id="nlm-hero-title">${m.locationName||m.name||m.markerType||"Location"}</div>
+        ${heroSub?`<div id="nlm-hero-sub">${heroSub}</div>`:""}
+        <div id="nlm-feat-row">
+          <span class="nlm-feat-chip" style="color:#f59e0b;background:rgba(245,158,11,.13)">${m.markerType||"Location"}</span>
+          ${activeFeats.map(f=>`<span class="nlm-feat-chip" style="color:${f.color};background:${f.bg}">${f.icon} ${f.label}</span>`).join("")}
+        </div>
+      </div>
+      <div id="nlm-body">
+        <div id="nlm-left" style="display:flex;flex-direction:column">${leftH}</div>
+        <div id="nlm-right">${rightH}</div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById("nlm-hero-close").addEventListener("click",()=>overlay.remove());
+  document.getElementById("nation-edit-btn")?.addEventListener("click",()=>{overlay.remove();modalEditMarker(idx);});
+  document.getElementById("nation-delete-btn")?.addEventListener("click",()=>{
+    confirmAction(`Delete marker "${m.name}"?`,()=>{
+      D.mapData.splice(idx,1);persist();addLog("Map Marker Deleted",m.name);overlay.remove();render();toast("Marker deleted!");
+    });
+  });
+
+  // Bag icon — click to show price popup, click anywhere else to close
+  let pricePopup=null;
+  function closePricePopup(){if(pricePopup){pricePopup.remove();pricePopup=null;}}
+  overlay.querySelectorAll(".nlm-bag-btn").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      e.stopPropagation();
+      closePricePopup();
+      const short=btn.dataset.priceShort;
+      const long=btn.dataset.priceLong;
+      const row=btn.closest(".nlm-item-row");
+      const name=row?.querySelector(".nlm-iname")?.textContent||"";
+      pricePopup=document.createElement("div");
+      pricePopup.className="nlm-price-popup";
+      pricePopup.innerHTML=`
+        <div class="nlm-price-popup-name">${name}</div>
+        <div class="nlm-price-popup-short">${short}</div>
+        <div class="nlm-price-popup-long">${long}</div>
+      `;
+      document.body.appendChild(pricePopup);
+      // Position near the button
+      const rect=btn.getBoundingClientRect();
+      const pw=pricePopup.offsetWidth||200;
+      const ph=pricePopup.offsetHeight||80;
+      let left=rect.left - pw - 10;
+      let top=rect.top - ph/2 + rect.height/2;
+      if(left < 10) left=rect.right + 10;
+      if(top < 10) top=10;
+      if(top + ph > window.innerHeight - 10) top=window.innerHeight - ph - 10;
+      pricePopup.style.left=left+"px";
+      pricePopup.style.top=top+"px";
+    });
+  });
+  // Close popup when clicking anywhere in overlay
+  overlay.addEventListener("click",()=>closePricePopup());
+  document.addEventListener("keydown",function escHandler(e){
+    if(e.key==="Escape"){overlay.remove();closePricePopup();document.removeEventListener("keydown",escHandler);}
+  });
+}
 
 function modalEditMarker(idx){
   const marker=D.mapData[idx];
@@ -1941,8 +2539,525 @@ function modalEditMarker(idx){
 // ═══════════════════════════════════════════════════════════
 // TOOL: WIKI (Placeholder)
 // ═══════════════════════════════════════════════════════════
+function buildWikiSidebarNav(h){
+  const wikiCats=[...new Set((D.wikiPages||[]).map(p=>p.category).filter(Boolean))].sort();
+  const pendingDrafts=isSiteAdmin()?(D.wikiDrafts||[]).filter(d=>d.status==="pending").length:0;
+  const myDrafts=currentUser?(D.wikiDrafts||[]).filter(d=>d.authorId===currentUser.id):[];
+  h+=`<div class="ns"><div class="nst">Wiki</div>
+    <div class="ni${pg==="wiki-home"||pg==="dashboard"?" a":""}" data-page="wiki-home"><span style="font-size:13px;width:16px;text-align:center">📖</span>All Articles</div>
+    <div class="ni${pg==="wiki-new"?" a":""}" data-page="wiki-new"><span style="font-size:13px;width:16px;text-align:center">✏️</span>Write Article</div>
+    ${myDrafts.length?`<div class="ni${pg==="wiki-drafts"?" a":""}" data-page="wiki-drafts"><span style="font-size:13px;width:16px;text-align:center">📝</span>My Drafts<span class="cnt">${myDrafts.length}</span></div>`:""}
+    ${pendingDrafts?`<div class="ni${pg==="wiki-review"?" a":""}" data-page="wiki-review"><span style="font-size:13px;width:16px;text-align:center">⏳</span>Review Queue<span class="cnt">${pendingDrafts}</span></div>`:""}
+  </div>`;
+  if(wikiCats.length){h+=`<div class="ns"><div class="nst">Categories</div>${wikiCats.map(cat=>`<div class="ni${F.wikiCat===cat?" a":""}" data-page="wiki-home" data-wiki-cat="${cat}"><span style="font-size:11px;width:16px;text-align:center">›</span>${cat}</div>`).join("")}</div>`;}
+  return h;
+}
+// ═══════════════════════════════════════════════════════════
+// WIKI CSS
+// ═══════════════════════════════════════════════════════════
+(function injectWikiCSS(){
+  if(document.getElementById("wiki-css"))return;
+  const s=document.createElement("style");s.id="wiki-css";
+  s.textContent=`
+.wiki-layout{display:flex;gap:0;min-height:0}
+.wiki-toc{width:210px;flex-shrink:0;padding:0 14px 0 0;border-right:1px solid var(--bd)}
+.wiki-toc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:8px}
+.wiki-toc-item{display:block;font-size:12px;color:var(--t2);padding:3px 0 3px 8px;border-left:2px solid transparent;cursor:pointer;transition:all .1s;text-decoration:none;border-radius:0 3px 3px 0}
+.wiki-toc-item:hover{color:var(--ac);border-left-color:var(--ac)}
+.wiki-toc-item.h2{padding-left:16px;font-size:11px;color:var(--tm)}
+.wiki-content{flex:1;min-width:0;padding:0 0 0 20px}
+.wiki-article-title{font-size:24px;font-weight:700;color:var(--t1);margin-bottom:6px;line-height:1.3}
+.wiki-article-meta{font-size:11px;color:var(--tm);margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.wiki-article-meta .tag{cursor:pointer}
+.wiki-section{margin-bottom:28px}
+.wiki-h1{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+.wiki-h2{font-size:14px;font-weight:600;color:var(--ac);margin-bottom:8px;margin-top:16px}
+.wiki-body{font-size:13px;color:var(--t2);line-height:1.75;white-space:pre-wrap}
+.wiki-body strong{color:var(--t1);font-weight:600}
+.wiki-body em{color:var(--t2);font-style:italic}
+.wiki-body code{background:var(--bgi);border:1px solid var(--bd);border-radius:3px;padding:1px 5px;font-family:monospace;font-size:12px;color:var(--ac)}
+.wiki-tip{background:var(--blud);border:1px solid var(--blu);border-radius:5px;padding:10px 14px;margin:10px 0;font-size:12px;color:var(--blu)}
+.wiki-warn{background:var(--orgd);border:1px solid var(--org);border-radius:5px;padding:10px 14px;margin:10px 0;font-size:12px;color:var(--org)}
+.wiki-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+.wiki-card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:14px;cursor:pointer;transition:all .13s}
+.wiki-card:hover{border-color:var(--ac);background:var(--bgh)}
+.wiki-card-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.wiki-card-cat{font-size:10px;color:var(--ac);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.wiki-card-desc{font-size:11px;color:var(--tm);line-height:1.5}
+.wiki-card-meta{font-size:10px;color:var(--tf);margin-top:8px;display:flex;gap:8px}
+.wiki-editor-section{background:var(--bgi);border:1px solid var(--bd);border-radius:6px;padding:14px;margin-bottom:10px;position:relative}
+.wiki-editor-section-handle{font-size:11px;color:var(--tm);margin-bottom:8px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.wiki-draft-card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:14px;margin-bottom:10px}
+.wiki-draft-card.pending{border-color:var(--org)}
+.wiki-draft-card.rejected{border-color:var(--red)}
+  `;
+  document.head.appendChild(s);
+})();
+
+// ═══════════════════════════════════════════════════════════
+// WIKI — RENDER HELPERS
+// ═══════════════════════════════════════════════════════════
+const WIKI_CATEGORIES=["Getting Started","Combat","Crafting","Economy","Guilds","Map & Exploration","Classes & Builds","Events","Guides","Other"];
+
+function wikiRenderBody(text){
+  if(!text)return"";
+  return text
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,"<em>$1</em>")
+    .replace(/`(.+?)`/g,"<code>$1</code>")
+    .replace(/^TIP: (.+)$/gm,'<div class="wiki-tip">💡 $1</div>')
+    .replace(/^WARN: (.+)$/gm,'<div class="wiki-warn">⚠ $1</div>');
+}
+
 function pgWiki(){
-  return`<div class="placeholder-page"><div class="placeholder-ico">📖</div><div class="placeholder-title">Guild Wiki</div><div class="placeholder-sub">A knowledge base for guides, strategies, crafting recipes, and guild rules. Coming in a future update.</div></div>`;
+  // Not logged in — show read-only list, prompt to log in to write
+  // No guild needed to READ or WRITE wiki
+
+  // Guild join page (shown when treasury tab clicked with no guild)
+  if(pg==="wiki-join-guild"){
+    const guilds=D.guilds.filter(g=>g.id!=="__legacy__");
+    let h=`<div class="ph"><div class="pt">Join a Guild</div></div>`;
+    if(!currentUser){
+      h+=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:40px;margin-bottom:12px">🔐</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Sign in Required</div><div style="font-size:13px;color:var(--tm);margin-bottom:16px">You need an account to access the Guild Manager.</div><button class="btn bp" id="wiki-goto-login">Sign In</button></div>`;
+      return h;
+    }
+    if(currentUser.status==="pending"){
+      const pendingGuild=D.guilds.find(g=>g.id===currentUser.guildId);
+      h+=`<div class="card" style="border-color:var(--org);text-align:center;padding:32px"><div style="font-size:40px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Application Pending</div><div style="font-size:13px;color:var(--t2)">Your application to join <strong>${pendingGuild?.name||"a guild"}</strong> is waiting for approval from the Guild Leader.</div></div>`;
+      return h;
+    }
+    h+=`<div style="font-size:13px;color:var(--tm);margin-bottom:18px">You're not in a guild yet. Apply to join one below — the Guild Leader will approve your request.</div>`;
+    if(!guilds.length){
+      h+=`<div class="card">${empty("🏰","No guilds yet","No guilds have been created yet. You can create the first one!")}</div>`;
+    } else {
+      guilds.forEach(g=>{
+        const leader=D.users.find(u=>u.guildId===g.id&&u.role==="guild_leader");
+        const members=D.p.filter(p=>p.guildId===g.id).length;
+        const alreadyApplied=currentUser.guildId===g.id;
+        h+=`<div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:8px;background:var(--acg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏰</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px">${g.name}</div>
+            <div style="font-size:11px;color:var(--tm);margin-top:2px">Led by ${leader?.displayName||"Unknown"} · ${members} members</div>
+          </div>
+          ${alreadyApplied?`<span class="badge byl">Applied</span>`:`<button class="btn bp bs guild-apply-btn" data-guild-id="${g.id}" data-guild-name="${g.name.replace(/"/g,'&quot;')}">Apply</button>`}
+        </div>`;
+      });
+    }
+    h+=`<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd);text-align:center">
+      <div style="font-size:12px;color:var(--tm);margin-bottom:10px">Want to start your own guild instead?</div>
+      <button class="btn bg bs" id="wiki-create-guild-btn">🏰 Create a Guild</button>
+    </div>`;
+    return h;
+  }
+
+  // Wiki article viewer
+  if(pg==="wiki-article"&&F.wikiPage){
+    const art=D.wikiPages.find(p=>p.id===F.wikiPage);
+    if(!art){pg="wiki-home";F.wikiPage=null;return pgWiki();}
+    // Increment views
+    art.views=(art.views||0)+1;
+    const sections=art.sections||[];
+    let toc="";
+    sections.forEach((s,i)=>{
+      if(s.heading) toc+=`<a class="wiki-toc-item${s.level===2?" h2":""}" data-section-id="ws-${i}">${s.heading}</a>`;
+    });
+    let content=`<div class="wiki-article-title">${art.title}</div>`;
+    content+=`<div class="wiki-article-meta">
+      <span>📁 ${art.category||"Uncategorized"}</span>
+      <span>✍ ${art.author}</span>
+      <span>📅 ${fmtD(art.updatedDate||art.date)}</span>
+      <span>👁 ${art.views} views</span>
+      ${(art.tags||[]).map(t=>`<span class="tag" data-wiki-tag="${t}">${t}</span>`).join("")}
+    </div>`;
+    if(art.summary) content+=`<div style="font-size:13px;color:var(--t2);background:var(--bgi);border-left:3px solid var(--ac);padding:10px 14px;border-radius:0 5px 5px 0;margin-bottom:18px;line-height:1.6">${art.summary}</div>`;
+    sections.forEach((s,i)=>{
+      content+=`<div class="wiki-section" id="ws-${i}">`;
+      if(s.heading) content+=`<div class="wiki-h${s.level||1}">${s.heading}</div>`;
+      if(s.body) content+=`<div class="wiki-body">${wikiRenderBody(s.body)}</div>`;
+      content+=`</div>`;
+    });
+    // Edit/delete for admins or author
+    const canEdit=isSiteAdmin()||(currentUser&&currentUser.displayName===art.author);
+    if(canEdit) content+=`<div style="display:flex;gap:8px;margin-top:24px;padding-top:14px;border-top:1px solid var(--bd)"><button class="btn bg bs" id="wiki-edit-published" data-id="${art.id}">✎ Edit</button>${isSiteAdmin()?`<button class="btn bd bs" id="wiki-delete-published" data-id="${art.id}">Delete</button>`:""}</div>`;
+    let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><button class="btn bg bs" id="wiki-back-btn">← Back</button></div>`;
+    h+=`<div class="wiki-layout"><div class="wiki-toc"><div class="wiki-toc-title">Contents</div>${toc}</div><div class="wiki-content">${content}</div></div>`;
+    return h;
+  }
+
+  // Wiki editor (new or edit draft)
+  if(pg==="wiki-new"||pg==="wiki-edit"){
+    if(!currentUser){
+      return`<div class="card" style="text-align:center;padding:32px"><div style="font-size:40px;margin-bottom:12px">🔐</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Sign in to Write</div><div style="font-size:13px;color:var(--tm);margin-bottom:16px">You need an account to write wiki articles.</div><button class="btn bp" id="wiki-goto-login">Sign In</button></div>`;
+    }
+    const draft=F.wikiEditDraft||(pg==="wiki-edit"&&F.wikiPage?(D.wikiPages.find(p=>p.id===F.wikiPage)||null):null);
+    const sections=draft?.sections||[{heading:"",level:1,body:""}];
+    let h=`<div class="ph"><div class="pt">${draft?"Edit Article":"Write Article"}</div><div style="display:flex;gap:6px"><button class="btn bg bs" id="wiki-save-draft-btn">💾 Save Draft</button><button class="btn bp bs" id="wiki-submit-btn">📤 Submit for Review</button></div></div>`;
+    h+=`<div class="card" style="margin-bottom:12px">
+      <div class="fg"><label class="fl">Title *</label><input class="inp" id="wiki-title" placeholder="Article title..." value="${draft?.title?.replace(/"/g,'&quot;')||""}"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><label class="fl">Category</label><select class="inp" id="wiki-category">${WIKI_CATEGORIES.map(c=>`<option${draft?.category===c?" selected":""}>${c}</option>`).join("")}</select></div>
+        <div class="fg"><label class="fl">Tags (comma-separated)</label><input class="inp" id="wiki-tags" placeholder="e.g. combat, beginner" value="${(draft?.tags||[]).join(", ")}"></div>
+      </div>
+      <div class="fg"><label class="fl">Summary / Introduction</label><textarea class="inp" id="wiki-summary" rows="3" placeholder="A brief overview shown at the top of the article...">${draft?.summary||""}</textarea></div>
+    </div>`;
+    h+=`<div id="wiki-sections-list">`;
+    sections.forEach((s,i)=>{
+      h+=`<div class="wiki-editor-section" data-sec-idx="${i}">
+        <div class="wiki-editor-section-handle">
+          <span>Section ${i+1}</span>
+          <div style="display:flex;gap:4px">
+            <select class="inp" id="wiki-sec-level-${i}" style="width:100px;padding:2px 6px;font-size:11px">
+              <option value="1"${s.level===1?" selected":""}>H1 — Heading</option>
+              <option value="2"${s.level===2?" selected":""}>H2 — Subheading</option>
+              <option value="0"${s.level===0?" selected":""}>Body only</option>
+            </select>
+            <button class="btn bd bs wiki-remove-section" data-idx="${i}" style="font-size:10px">✕</button>
+          </div>
+        </div>
+        <input class="inp" id="wiki-sec-heading-${i}" placeholder="Section heading (optional)" value="${(s.heading||"").replace(/"/g,'&quot;')}" style="margin-bottom:6px">
+        <textarea class="inp" id="wiki-sec-body-${i}" rows="5" placeholder="Content... Use **bold**, *italic*, \`code\`, TIP: text, WARN: text">${s.body||""}</textarea>
+      </div>`;
+    });
+    h+=`</div>`;
+    h+=`<button class="btn bg bs" id="wiki-add-section-btn" style="margin-top:4px">+ Add Section</button>`;
+    h+=`<div style="font-size:11px;color:var(--tm);margin-top:10px">💡 Formatting: **bold** · *italic* · \`code\` · TIP: text (tip box) · WARN: text (warning box)</div>`;
+    return h;
+  }
+
+  // My drafts page
+  if(pg==="wiki-drafts"){
+    if(!currentUser) return`<div class="card">${empty("🔐","Sign in required","")}</div>`;
+    const myDrafts=(D.wikiDrafts||[]).filter(d=>d.authorId===currentUser.id);
+    let h=`<div class="ph"><div class="pt">My Drafts</div><button class="btn bp bs" id="wiki-new-btn2">+ New Article</button></div>`;
+    if(!myDrafts.length) return h+`<div class="card">${empty("📝","No drafts yet","Write an article and submit it for review.")}</div>`;
+    myDrafts.slice().reverse().forEach(d=>{
+      const statusColor=d.status==="rejected"?"var(--red)":d.status==="pending"?"var(--org)":"var(--grn)";
+      const statusLabel=d.status==="rejected"?"Rejected":d.status==="pending"?"Pending Review":"Published";
+      h+=`<div class="wiki-draft-card ${d.status||"pending"}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div><div style="font-weight:600;font-size:14px">${d.title}</div><div style="font-size:11px;color:var(--tm);margin-top:2px">Submitted ${fmtD(d.submittedDate)} · ${d.category||"Uncategorized"}</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;font-weight:600;color:${statusColor}">${statusLabel}</span>
+            ${d.status==="rejected"||d.status==="pending"?`<button class="btn bg bs wiki-edit-draft-btn" data-id="${d.id}">✎ Edit</button>`:""}
+            <button class="btn bd bs wiki-delete-draft-btn" data-id="${d.id}">✕</button>
+          </div>
+        </div>
+        ${d.status==="rejected"&&d.rejectReason?`<div style="margin-top:8px;padding:8px 10px;background:var(--redd);border:1px solid rgba(229,83,75,.25);border-radius:4px;font-size:11px;color:var(--red)">❌ Rejection reason: ${d.rejectReason}</div>`:""}
+      </div>`;
+    });
+    return h;
+  }
+
+  // Admin review queue
+  if(pg==="wiki-review"){
+    if(!isSiteAdmin()) return`<div class="card">${empty("🔒","Admins Only","")}</div>`;
+    const pending=(D.wikiDrafts||[]).filter(d=>d.status==="pending");
+    let h=`<div class="ph"><div class="pt">Review Queue</div><span style="font-size:13px;color:var(--tm)">${pending.length} pending</span></div>`;
+    if(!pending.length) return h+`<div class="card">${empty("✅","All caught up","No articles waiting for review.")}</div>`;
+    pending.forEach(d=>{
+      h+=`<div class="wiki-draft-card pending">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+          <div>
+            <div style="font-weight:600;font-size:14px">${d.title}</div>
+            <div style="font-size:11px;color:var(--tm);margin-top:2px">by ${d.authorName} · ${d.category||"Uncategorized"} · submitted ${fmtD(d.submittedDate)}</div>
+            ${(d.tags||[]).length?`<div style="margin-top:4px">${d.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
+          </div>
+        </div>
+        ${d.summary?`<div style="font-size:12px;color:var(--t2);background:var(--bgi);padding:8px 10px;border-radius:4px;margin-bottom:10px;line-height:1.5">${d.summary}</div>`:""}
+        ${(d.sections||[]).map(s=>`<div style="margin-bottom:8px">${s.heading?`<div style="font-size:12px;font-weight:600;color:var(--ac);margin-bottom:4px">${s.heading}</div>`:""}<div style="font-size:12px;color:var(--t2);white-space:pre-wrap;max-height:80px;overflow:hidden">${s.body||""}</div></div>`).join("")}
+        <div style="display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)">
+          <button class="btn bgrn bs wiki-publish-btn" data-id="${d.id}">✓ Publish</button>
+          <button class="btn bg bs wiki-review-edit-btn" data-id="${d.id}">✎ Edit & Publish</button>
+          <button class="btn bd bs wiki-reject-btn" data-id="${d.id}">✕ Reject</button>
+        </div>
+      </div>`;
+    });
+    return h;
+  }
+
+  // ── Default: article list ───────────────────────────────
+  const pages=D.wikiPages||[];
+  const search=(F.wikiSearch||"").toLowerCase();
+  const catFilter=F.wikiCat||"";
+  let filtered=pages.filter(p=>{
+    if(catFilter&&p.category!==catFilter)return false;
+    if(search){
+      const hay=[p.title,p.category,...(p.tags||[]),p.summary||""].join(" ").toLowerCase();
+      return hay.includes(search);
+    }
+    return true;
+  });
+
+  let h=`<div class="ph">
+    <div class="pt">Wiki${catFilter?` — ${catFilter}`:""}</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      ${catFilter?`<button class="btn bg bs" id="wiki-clear-cat">✕ ${catFilter}</button>`:""}
+      <button class="btn bp bs" id="wiki-new-btn">✏ Write Article</button>
+    </div>
+  </div>`;
+
+  // Search bar
+  h+=`<div class="sb" style="margin-bottom:14px"><span style="color:var(--tm);padding:0 4px">🔍</span><input id="wiki-search-inp" placeholder="Search articles..." value="${F.wikiSearch||""}"></div>`;
+
+  if(!filtered.length){
+    h+=pages.length
+      ? `<div class="card">${empty("🔍","No articles found","Try a different search or category.")}</div>`
+      : `<div class="card">${empty("📖","Wiki is empty","Be the first to write an article! Click 'Write Article' to get started.")}</div>`;
+    return h;
+  }
+
+  // Group by category if no filter
+  if(!catFilter){
+    const byCat={};
+    filtered.forEach(p=>{const c=p.category||"Other";if(!byCat[c])byCat[c]=[];byCat[c].push(p);});
+    Object.keys(byCat).sort().forEach(cat=>{
+      h+=`<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ac);margin:16px 0 8px">${cat}</div>`;
+      h+=`<div class="wiki-card-grid">`;
+      byCat[cat].forEach(p=>{
+        h+=`<div class="wiki-card wiki-open-article" data-id="${p.id}">
+          <div class="wiki-card-title">${p.title}</div>
+          <div style="font-size:11px;color:var(--tm);margin-bottom:6px">${p.summary?p.summary.slice(0,80)+(p.summary.length>80?"…":""):""}</div>
+          ${(p.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}
+          <div class="wiki-card-meta"><span>✍ ${p.author}</span><span>👁 ${p.views||0}</span><span>📅 ${fmtD(p.updatedDate||p.date)}</span></div>
+        </div>`;
+      });
+      h+=`</div>`;
+    });
+  } else {
+    h+=`<div class="wiki-card-grid">`;
+    filtered.forEach(p=>{
+      h+=`<div class="wiki-card wiki-open-article" data-id="${p.id}">
+        <div class="wiki-card-title">${p.title}</div>
+        <div style="font-size:11px;color:var(--tm);margin-bottom:6px">${p.summary?p.summary.slice(0,80)+(p.summary.length>80?"…":""):""}</div>
+        ${(p.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}
+        <div class="wiki-card-meta"><span>✍ ${p.author}</span><span>👁 ${p.views||0}</span></div>
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// WIKI — EVENT BINDINGS
+// ═══════════════════════════════════════════════════════════
+function initWikiBindings(rerender){
+  const re=typeof rerender==="function"?rerender:()=>render();
+
+  // Helper: collect editor state into a draft object
+  function collectDraft(){
+    const title=document.getElementById("wiki-title")?.value.trim()||"";
+    const category=document.getElementById("wiki-category")?.value||WIKI_CATEGORIES[0];
+    const tagsRaw=document.getElementById("wiki-tags")?.value||"";
+    const tags=tagsRaw.split(",").map(t=>t.trim()).filter(Boolean);
+    const summary=document.getElementById("wiki-summary")?.value.trim()||"";
+    const sectionEls=document.querySelectorAll(".wiki-editor-section");
+    const sections=[];
+    sectionEls.forEach(el=>{
+      const i=el.dataset.secIdx;
+      sections.push({
+        heading:document.getElementById(`wiki-sec-heading-${i}`)?.value.trim()||"",
+        level:parseInt(document.getElementById(`wiki-sec-level-${i}`)?.value||"1"),
+        body:document.getElementById(`wiki-sec-body-${i}`)?.value||""
+      });
+    });
+    return{title,category,tags,summary,sections};
+  }
+
+  // Open article
+  document.querySelectorAll(".wiki-open-article").forEach(el=>{
+    el.addEventListener("click",()=>{F.wikiPage=el.dataset.id;pg="wiki-article";re();});
+  });
+
+  // Back button
+  document.getElementById("wiki-back-btn")?.addEventListener("click",()=>{F.wikiPage=null;pg="wiki-home";re();});
+
+  // New article buttons
+  document.getElementById("wiki-new-btn")?.addEventListener("click",()=>{F.wikiEditDraft=null;F.wikiPage=null;pg="wiki-new";re();});
+  document.getElementById("wiki-new-btn2")?.addEventListener("click",()=>{F.wikiEditDraft=null;F.wikiPage=null;pg="wiki-new";re();});
+
+  // Clear category filter
+  document.getElementById("wiki-clear-cat")?.addEventListener("click",()=>{F.wikiCat="";re();});
+
+  // Search
+  document.getElementById("wiki-search-inp")?.addEventListener("input",e=>{F.wikiSearch=e.target.value;re();});
+
+  // TOC smooth scroll
+  document.querySelectorAll(".wiki-toc-item[data-section-id]").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const target=document.getElementById(el.dataset.sectionId);
+      if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+
+  // Tag filter from article view
+  document.querySelectorAll("[data-wiki-tag]").forEach(el=>{
+    el.addEventListener("click",()=>{F.wikiSearch=el.dataset.wikiTag;F.wikiPage=null;pg="wiki-home";re();});
+  });
+
+  // Edit published article
+  document.getElementById("wiki-edit-published")?.addEventListener("click",e=>{
+    const art=D.wikiPages.find(p=>p.id===e.target.dataset.id);
+    if(!art)return;
+    F.wikiEditDraft={...art,_publishedId:art.id};
+    pg="wiki-edit";re();
+  });
+
+  // Delete published article (admin only)
+  document.getElementById("wiki-delete-published")?.addEventListener("click",e=>{
+    confirmAction("Delete this article?",()=>{
+      D.wikiPages=D.wikiPages.filter(p=>p.id!==e.target.dataset.id);
+      F.wikiPage=null;pg="wiki-home";persist();re();toast("Article deleted!");
+    });
+  });
+
+  // Add section
+  document.getElementById("wiki-add-section-btn")?.addEventListener("click",()=>{
+    const d=collectDraft();
+    d.sections.push({heading:"",level:1,body:""});
+    F.wikiEditDraft={...(F.wikiEditDraft||{}), ...d};
+    re();
+  });
+
+  // Remove section
+  document.querySelectorAll(".wiki-remove-section").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=collectDraft();
+      const idx=parseInt(btn.dataset.idx);
+      d.sections.splice(idx,1);
+      if(!d.sections.length)d.sections.push({heading:"",level:1,body:""});
+      F.wikiEditDraft={...(F.wikiEditDraft||{}), ...d};
+      re();
+    });
+  });
+
+  // Save draft locally
+  document.getElementById("wiki-save-draft-btn")?.addEventListener("click",()=>{
+    if(!currentUser){toast("Sign in to save","error");return;}
+    const d=collectDraft();
+    if(!d.title){toast("Title is required","error");return;}
+    if(!F.wikiEditDraft)F.wikiEditDraft={};
+    F.wikiEditDraft={...F.wikiEditDraft,...d};
+    toast("Draft saved locally — use 'Submit for Review' to send it.");
+  });
+
+  // Submit for review
+  document.getElementById("wiki-submit-btn")?.addEventListener("click",()=>{
+    if(!currentUser){toast("Sign in required","error");return;}
+    const d=collectDraft();
+    if(!d.title){toast("Title is required","error");return;}
+    if(!d.sections.some(s=>s.body?.trim())){toast("Add some content to at least one section","error");return;}
+    D.wikiDrafts=D.wikiDrafts||[];
+    // If editing an existing draft, replace it
+    const existingIdx=F.wikiEditDraft?.id?D.wikiDrafts.findIndex(x=>x.id===F.wikiEditDraft.id):-1;
+    const draft={
+      id:F.wikiEditDraft?.id||uid(),
+      ...d,
+      authorId:currentUser.id,
+      authorName:currentUser.displayName||currentUser.username,
+      submittedDate:new Date().toISOString().slice(0,10),
+      status:"pending",
+      rejectReason:""
+    };
+    if(existingIdx>=0) D.wikiDrafts[existingIdx]=draft;
+    else D.wikiDrafts.push(draft);
+    F.wikiEditDraft=null;
+    persist();pg="wiki-drafts";re();
+    toast("Article submitted for review!");
+  });
+
+  // Edit draft from drafts page
+  document.querySelectorAll(".wiki-edit-draft-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=D.wikiDrafts.find(x=>x.id===btn.dataset.id);
+      if(!d)return;
+      F.wikiEditDraft={...d};
+      pg="wiki-new";re();
+    });
+  });
+
+  // Delete draft
+  document.querySelectorAll(".wiki-delete-draft-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      confirmAction("Delete this draft?",()=>{
+        D.wikiDrafts=D.wikiDrafts.filter(x=>x.id!==btn.dataset.id);
+        persist();re();toast("Draft deleted!");
+      });
+    });
+  });
+
+  // Admin: publish draft
+  document.querySelectorAll(".wiki-publish-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=D.wikiDrafts.find(x=>x.id===btn.dataset.id);
+      if(!d)return;
+      D.wikiPages=D.wikiPages||[];
+      // Check if editing published article
+      if(d._publishedId){
+        const idx=D.wikiPages.findIndex(p=>p.id===d._publishedId);
+        if(idx>=0){D.wikiPages[idx]={...D.wikiPages[idx],...d,id:d._publishedId,updatedDate:new Date().toISOString().slice(0,10)};D.wikiDrafts=D.wikiDrafts.filter(x=>x.id!==d.id);persist();re();toast("Article updated!");return;}
+      }
+      D.wikiPages.push({id:uid(),title:d.title,category:d.category,tags:d.tags,summary:d.summary,sections:d.sections,author:d.authorName,date:new Date().toISOString().slice(0,10),updatedDate:new Date().toISOString().slice(0,10),views:0});
+      D.wikiDrafts=D.wikiDrafts.filter(x=>x.id!==d.id);
+      addLog("Wiki Published",d.title);
+      persist();re();toast(`"${d.title}" published!`);
+    });
+  });
+
+  // Admin: edit & publish (load into editor)
+  document.querySelectorAll(".wiki-review-edit-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=D.wikiDrafts.find(x=>x.id===btn.dataset.id);
+      if(!d)return;
+      F.wikiEditDraft={...d};
+      pg="wiki-new";re();
+    });
+  });
+
+  // Admin: reject draft
+  document.querySelectorAll(".wiki-reject-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=D.wikiDrafts.find(x=>x.id===btn.dataset.id);
+      if(!d)return;
+      openModal("Reject Article",body=>{
+        body.innerHTML=`<div class="fg"><label class="fl">Reason for rejection (shown to author)</label><textarea class="inp" id="reject-reason" rows="3" placeholder="What needs to be changed?"></textarea></div><div class="actions"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bd" id="confirm-reject">Reject</button></div>`;
+        setTimeout(()=>{
+          document.getElementById("confirm-reject")?.addEventListener("click",()=>{
+            const reason=document.getElementById("reject-reason")?.value.trim()||"Please review and resubmit.";
+            d.status="rejected";
+            d.rejectReason=reason;
+            addLog("Wiki Rejected",d.title);
+            persist();closeModal();re();toast("Draft rejected.");
+          });
+        },0);
+      });
+    });
+  });
+
+  // Guild apply buttons (shown in wiki-join-guild page)
+  document.querySelectorAll(".guild-apply-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const guildId=btn.dataset.guildId;
+      const guildName=btn.dataset.guildName;
+      confirmAction(`Apply to join "${guildName}"? The Guild Leader must approve your request.`,()=>{
+        const u=D.users.find(x=>x.id===currentUser.id);
+        if(u){
+          u.guildId=guildId;u.status="pending";
+          currentUser=u;
+          saveSession(currentUser,guildId);
+          addLog("Guild Application",`${currentUser.displayName} applied to join ${guildName}`);
+          persist();re();toast(`Application sent to ${guildName}!`);
+        }
+      });
+    });
+  });
+
+  // Sign in redirects from wiki pages
+  document.getElementById("wiki-goto-login")?.addEventListener("click",()=>{activeTool="treasury";renderLogin();});
+
+  // Create guild from join page
+  document.getElementById("wiki-create-guild-btn")?.addEventListener("click",()=>{loginMode="create-guild";renderLogin();});
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2037,40 +3152,206 @@ if(F.dTab==="recipes"){
 }
 return h}
 function tSiteProfile(){
-  if(!currentUser)return`<div class="card">${empty("🔐","Sign in required","Please sign in to view your profile.")}</div>`;
-  const linkedPlayers=getLinkedPlayersForUser(currentUser);
-  const linkedIds=new Set(linkedPlayers.map(p=>p.id));
-  const linkedGuilds=[...new Set(linkedPlayers.map(p=>p.guildId).filter(Boolean))].map(gid=>D.guilds.find(g=>g.id===gid)?.name).filter(Boolean);
-  const profile=getUserProfile(currentUser.id);
-  const allRecipes=craftItems.filter(i=>i.isRecipe);
-  const knownIds=new Set(getUserRecipeIds(currentUser));
-  const knownCount=allRecipes.filter(r=>knownIds.has(String(r.id))).length;
-  let h=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="av">${(currentUser.displayName||currentUser.username||"U").charAt(0)}</div><div style="flex:1"><div class="pt">${currentUser.displayName||currentUser.username}</div><div style="display:flex;gap:5px;align-items:center;margin-top:2px;flex-wrap:wrap">${B(currentUser.role||"member",currentUser.role==="site_admin"?"ac":currentUser.role==="guild_leader"?"b":"g")}<span style="font-size:11px;color:var(--tm)">${currentUser.discord||""}</span>${linkedGuilds.map(g=>`<span class="tag">${g}</span>`).join("")}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn bg bs" id="change-pw-btn">Change Password</button></div></div>`;
-  h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:16px">${stat("Linked Characters",linkedPlayers.length,"var(--ac)")}${stat("Guilds",linkedGuilds.length,"var(--blu)")}${stat("Recipes Known",knownCount+"/"+allRecipes.length,"var(--grn)")}${stat("Role",(currentUser.role||"member").replace(/_/g," "),"var(--org)")}</div>`;
-  h+=`<div class="tb"><div class="ti${F.dTab==="recipes"?" a":""}" data-tab="recipes">Recipes (${knownCount}/${allRecipes.length})</div><div class="ti${F.dTab==="characters"?" a":""}" data-tab="characters">Linked Characters (${linkedPlayers.length})</div></div>`;
-  if(F.dTab==="characters"){
-    if(!linkedPlayers.length)h+=`<div class="card">${empty("👤","No linked characters","This account is not linked to a guild character yet.")}</div>`;
-    else{
-      h+=`<div class="card tw"><table><thead><tr><th>Name</th><th>Guild</th><th>Rank</th><th>Status</th><th>Discord</th></tr></thead><tbody>`;
-      linkedPlayers.forEach(p=>{h+=`<tr><td style="font-weight:500">${p.name}</td><td>${D.guilds.find(g=>g.id===p.guildId)?.name||"—"}</td><td>${rankB(p.rank||"Member")}</td><td>${statusB(p.status||"Active")}</td><td style="font-size:11px;color:var(--tm)">${p.discord||""}</td></tr>`;});
-      h+=`</tbody></table></div>`;
-    }
-  } else {
+  if(!currentUser) return `<div class="card">${empty("🔐","Sign in required","Please sign in to view your profile.")}</div>`;
+
+  const linkedPlayers = getLinkedPlayersForUser(currentUser);
+  const linkedGuilds = [...new Set(linkedPlayers.map(p=>p.guildId).filter(Boolean))].map(gid=>D.guilds.find(g=>g.id===gid)).filter(Boolean);
+  const profile = getUserProfile(currentUser.id);
+  const allRecipes = craftItems.filter(i=>i.isRecipe);
+  const knownIds = new Set(getUserRecipeIds(currentUser));
+  const knownCount = allRecipes.filter(r=>knownIds.has(String(r.id))).length;
+  const myBuilds = (D.savedBuilds||[]).filter(b=>b.author===currentUser.displayName||b.author===currentUser.username||b.ownerId===currentUser.id).reverse();
+
+  // Check if user has a pending application
+  const pendingApp = currentUser.guildId && currentUser.status==="pending"
+    ? D.guilds.find(g=>g.id===currentUser.guildId) : null;
+
+  // Guilds the user is NOT already in and has NOT pending application for
+  const availableGuilds = currentUser.guildId
+    ? []
+    : D.guilds.filter(g=>g.id!=="__legacy__");
+
+  const tabs = ["recipes","builds","guild"];
+  const tabLabels = {
+    recipes:`Recipes (${knownCount}/${allRecipes.length})`,
+    builds:`Saved Builds (${myBuilds.length})`,
+    guild: currentUser.guildId ? `Guild` : `Join Guild`
+  };
+  if(!tabs.includes(F.dTab)) F.dTab="recipes";
+
+  // ── Header ──────────────────────────────────────────────
+  let h = `<div class="ph" style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:14px;flex:1">
+      <div style="width:48px;height:48px;border-radius:10px;background:var(--acs);display:flex;align-items:center;justify-content:center;color:var(--ac);font-weight:700;font-size:20px;flex-shrink:0">${(currentUser.displayName||currentUser.username||"U").charAt(0).toUpperCase()}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--t1)">${currentUser.displayName||currentUser.username}</div>
+        <div style="display:flex;gap:5px;align-items:center;margin-top:3px;flex-wrap:wrap">
+          ${B(currentUser.role==="site_admin"?"Site Admin":currentUser.role==="guild_leader"?"Guild Leader":currentUser.role==="contributor"?"Contributor":"Member", currentUser.role==="site_admin"?"r":currentUser.role==="guild_leader"?"ac":currentUser.role==="contributor"?"b":"g")}
+          ${currentUser.discord?`<span style="font-size:11px;color:var(--tm)">💬 ${currentUser.discord}</span>`:""}
+          ${linkedGuilds.map(g=>`<span class="tag">🏰 ${g.name}</span>`).join("")}
+          ${pendingApp?`<span class="badge byl">⏳ Pending: ${pendingApp.name}</span>`:""}
+        </div>
+      </div>
+    </div>
+    <button class="btn bg bs" id="change-pw-btn">🔑 Change Password</button>
+  </div>`;
+
+  // ── Stats row ───────────────────────────────────────────
+  h += `<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-bottom:18px">
+    ${stat("Recipes Known",`${knownCount}/${allRecipes.length}`,"var(--grn)")}
+    ${stat("Saved Builds",myBuilds.length,"var(--ac)")}
+    ${stat("Characters",linkedPlayers.length,"var(--blu)")}
+    ${stat("Guild",linkedGuilds.length?"In Guild":"None",linkedGuilds.length?"var(--org)":"var(--tm)")}
+  </div>`;
+
+  // ── Tabs ────────────────────────────────────────────────
+  h += `<div class="tb">`;
+  tabs.forEach(t=>{h+=`<div class="ti${F.dTab===t?" a":""}" data-tab="${t}">${tabLabels[t]}</div>`;});
+  h += `</div>`;
+
+  // ── RECIPES tab ─────────────────────────────────────────
+  if(F.dTab==="recipes"){
     const bySkill={};
     allRecipes.forEach(r=>{const sk=r.skill||"other";if(!bySkill[sk])bySkill[sk]=[];bySkill[sk].push(r);});
     const pct=allRecipes.length?Math.round(knownCount/allRecipes.length*100):0;
-    h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:600">${knownCount} / ${allRecipes.length} recipes known</span><span style="font-size:12px;color:var(--ac);font-weight:600">${pct}%</span></div><div class="pb"><div class="pf" style="width:${pct}%;background:${pct===100?"var(--grn)":"var(--ac)"}"></div></div><div style="font-size:11px;color:var(--tm);margin-top:8px">This recipe list is account-wide and follows you across tools.</div></div>`;
-    h+=`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap"><div style="display:flex;gap:2px;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px"><button class="btn recipe-filter-btn" data-filter="all" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:var(--ac);color:#fff;font-family:inherit">All</button><button class="btn recipe-filter-btn" data-filter="known" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--tm);font-family:inherit">✓ Known</button><button class="btn recipe-filter-btn" data-filter="unknown" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--tm);font-family:inherit">✕ Unknown</button></div></div>`;
+    h+=`<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:600">${knownCount} / ${allRecipes.length} recipes known</span>
+        <span style="font-size:12px;color:var(--ac);font-weight:600">${pct}%</span>
+      </div>
+      <div class="pb"><div class="pf" style="width:${pct}%;background:${pct===100?"var(--grn)":"var(--ac)"}"></div></div>
+      <div style="font-size:11px;color:var(--tm);margin-top:8px">This recipe list is account-wide and follows you across tools.</div>
+    </div>`;
+    h+=`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:2px;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px">
+        <button class="btn recipe-filter-btn" data-filter="all" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:var(--ac);color:#fff;font-family:inherit">All</button>
+        <button class="btn recipe-filter-btn" data-filter="known" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--tm);font-family:inherit">✓ Known</button>
+        <button class="btn recipe-filter-btn" data-filter="unknown" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--tm);font-family:inherit">✕ Unknown</button>
+      </div>
+    </div>`;
     Object.entries(bySkill).sort(([a],[b])=>a.localeCompare(b)).forEach(([sk,recipes])=>{
       const skKnown=recipes.filter(r=>knownIds.has(String(r.id))).length;
-      h+=`<div class="card" style="margin-bottom:10px" data-skill-group="${sk}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em">${SKILL_NAMES[sk]||sk}</span><span style="font-size:11px;color:var(--tm)">${skKnown}/${recipes.length}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">`;
+      h+=`<div class="card" style="margin-bottom:10px" data-skill-group="${sk}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em">${SKILL_NAMES[sk]||sk}</span>
+          <span style="font-size:11px;color:var(--tm)">${skKnown}/${recipes.length}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px">`;
       recipes.sort((a,b)=>a.name.localeCompare(b.name)).forEach(r=>{
         const known=knownIds.has(String(r.id));
-        h+=`<label class="recipe-item site-recipe-editable" data-recipe-id="${r.id}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${known?"var(--grnd)":"var(--bgi)"};border:1px solid ${known?"var(--grn)":"var(--bd)"};border-radius:4px;cursor:pointer;transition:all .15s;user-select:none"><input type="checkbox" ${known?"checked":""} style="width:14px;height:14px;accent-color:var(--grn);flex-shrink:0;pointer-events:none"><span style="font-size:12px;font-weight:${known?"600":"400"};color:${known?"var(--grn)":"var(--t2)"};flex:1">${r.name}</span>${r.requiredLevel>1?`<span style="font-size:10px;color:var(--tm);white-space:nowrap">Lv ${r.requiredLevel}</span>`:""}<button class="btn bg bs recipe-search-btn" data-name="${r.name.replace(/"/g,"&quot;")}" title="Find where to buy this recipe" onclick="event.stopPropagation()" style="padding:2px 6px;font-size:10px;flex-shrink:0">🔍</button></label>`;
+        h+=`<label class="recipe-item site-recipe-editable" data-recipe-id="${r.id}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${known?"var(--grnd)":"var(--bgi)"};border:1px solid ${known?"var(--grn)":"var(--bd)"};border-radius:4px;cursor:pointer;transition:all .15s;user-select:none">
+          <input type="checkbox" ${known?"checked":""} style="width:14px;height:14px;accent-color:var(--grn);flex-shrink:0;pointer-events:none">
+          <span style="font-size:12px;font-weight:${known?"600":"400"};color:${known?"var(--grn)":"var(--t2)"};flex:1">${r.name}</span>
+          ${r.requiredLevel>1?`<span style="font-size:10px;color:var(--tm);white-space:nowrap">Lv ${r.requiredLevel}</span>`:""}
+          <button class="btn bg bs recipe-search-btn" data-name="${r.name.replace(/"/g,"&quot;")}" title="Find where to buy this recipe" onclick="event.stopPropagation()" style="padding:2px 6px;font-size:10px;flex-shrink:0">🔍</button>
+        </label>`;
       });
       h+=`</div></div>`;
     });
   }
+
+  // ── BUILDS tab ──────────────────────────────────────────
+  else if(F.dTab==="builds"){
+    if(!myBuilds.length){
+      h+=`<div class="card">${empty("⚔️","No builds saved yet","Head to the Character Builder tool, set up your attributes and passives, then save your build.")}</div>`;
+    } else {
+      h+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">`;
+      myBuilds.forEach(b=>{
+        const str=b.attrs?.strength||80, con=b.attrs?.constitution||80, dex=b.attrs?.dexterity||80;
+        const ptsUsed=b.ptsUsed||0, ppUsed=b.ppUsed||0;
+        const date=b.date?new Date(b.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+        h+=`<div class="card" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font-weight:600;font-size:14px;color:var(--t1)">${b.name}</div>
+              <div style="font-size:11px;color:var(--tm);margin-top:2px">Saved ${date}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <button class="btn bp bs cb-load-build-profile" data-id="${b.id}" style="font-size:11px">Load</button>
+              <button class="btn bd bs cb-del-build-profile" data-id="${b.id}" style="font-size:11px">✕</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11px;background:var(--redd);color:var(--red);padding:2px 8px;border-radius:3px">STR ${str}</span>
+            <span style="font-size:11px;background:var(--grnd);color:var(--grn);padding:2px 8px;border-radius:3px">CON ${con}</span>
+            <span style="font-size:11px;background:var(--blud);color:var(--blu);padding:2px 8px;border-radius:3px">DEX ${dex}</span>
+            <span style="font-size:11px;background:var(--acg);color:var(--ac);padding:2px 8px;border-radius:3px">${ptsUsed}/535 pts</span>
+            <span style="font-size:11px;background:var(--orgd);color:var(--org);padding:2px 8px;border-radius:3px">${ppUsed}/100 PP</span>
+          </div>
+          ${b.description?`<div style="font-size:12px;color:var(--t2);line-height:1.5;padding:8px 10px;background:var(--bgi);border-radius:4px;border-left:3px solid var(--ac)">${b.description}</div>`:""}
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+  }
+
+  // ── GUILD tab ───────────────────────────────────────────
+  else if(F.dTab==="guild"){
+    // Already in a guild
+    if(linkedGuilds.length){
+      h+=`<div class="card" style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Your Guild</div>`;
+      linkedGuilds.forEach(g=>{
+        const leader=D.users.find(u=>u.guildId===g.id&&u.role==="guild_leader");
+        const memberCount=D.p.filter(p=>p.guildId===g.id).length;
+        h+=`<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bgi);border:1px solid var(--bd);border-radius:6px">
+          <div style="width:36px;height:36px;border-radius:6px;background:var(--acg);display:flex;align-items:center;justify-content:center;color:var(--ac);font-size:16px">🏰</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${g.name}</div>
+            <div style="font-size:11px;color:var(--tm);margin-top:2px">Led by ${leader?.displayName||"Unknown"} · ${memberCount} members</div>
+          </div>
+          ${B("Active","g")}
+        </div>`;
+      });
+      h+=`</div>`;
+      // Also show linked characters in this guild
+      if(linkedPlayers.length){
+        h+=`<div class="card">
+          <div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Linked Characters</div>
+          <div class="tw"><table><thead><tr><th>Name</th><th>Guild</th><th>Rank</th><th>Status</th></tr></thead><tbody>`;
+        linkedPlayers.forEach(p=>{
+          h+=`<tr><td style="font-weight:500">${p.name}</td><td>${D.guilds.find(g=>g.id===p.guildId)?.name||"—"}</td><td>${rankB(p.rank||"Member")}</td><td>${statusB(p.status||"Active")}</td></tr>`;
+        });
+        h+=`</tbody></table></div></div>`;
+      }
+    }
+    // Pending application
+    else if(pendingApp){
+      h+=`<div class="card" style="border-color:var(--org);margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:32px">⏳</div>
+          <div>
+            <div style="font-weight:600;font-size:14px">Application Pending</div>
+            <div style="font-size:12px;color:var(--t2);margin-top:4px">Your application to join <strong>${pendingApp.name}</strong> is waiting for approval from the Guild Leader.</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    // No guild — show available guilds to join
+    else{
+      if(!availableGuilds.length){
+        h+=`<div class="card">${empty("🏰","No guilds available","No guilds have been created yet. Ask your Guild Leader to set one up.")}</div>`;
+      } else {
+        h+=`<div class="card" style="margin-bottom:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Join a Guild</div>
+          <div style="font-size:12px;color:var(--tm);margin-bottom:14px">Select a guild to apply to. Your request must be approved by the Guild Leader.</div>`;
+        availableGuilds.forEach(g=>{
+          const leader=D.users.find(u=>u.guildId===g.id&&u.role==="guild_leader");
+          const memberCount=D.p.filter(p=>p.guildId===g.id).length;
+          h+=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bgi);border:1px solid var(--bd);border-radius:6px;margin-bottom:8px">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--acg);display:flex;align-items:center;justify-content:center;color:var(--ac);font-size:16px;flex-shrink:0">🏰</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">${g.name}</div>
+              <div style="font-size:11px;color:var(--tm);margin-top:2px">Led by ${leader?.displayName||"Unknown"} · ${memberCount} members</div>
+            </div>
+            <button class="btn bp bs profile-apply-guild" data-guild-id="${g.id}" data-guild-name="${g.name.replace(/"/g,"&quot;")}">Apply</button>
+          </div>`;
+        });
+        h+=`</div>`;
+      }
+    }
+  }
+
   return h;
 }
 
@@ -3305,22 +4586,38 @@ function shopUpdateResults(){
 }
 
 // Format vendor item price from structured currency data
-function shopFormatPrice(vi){
+function shopFormatPriceLong(vi){
   if(vi.priceType==="free")return"Free";
   if(vi.priceType==="tokens")return`${(vi.price||0).toLocaleString()} Valley Tokens`;
   if(vi.priceType==="champions")return`${(vi.price||0).toLocaleString()} Champions Guild Token${(vi.price||0)!==1?"s":""}`;
   if(vi.priceType==="frontier")return`${(vi.price||0).toLocaleString()} Frontier Pass Token${(vi.price||0)!==1?"s":""}`;
-  if(vi.priceType==="contribution")return`${(vi.price||0).toLocaleString()} CP`;
+  if(vi.priceType==="contribution")return`${(vi.price||0).toLocaleString()} Contribution Points`;
   if(vi.priceType==="currency"){
     const parts=[];
-    if(vi.pGold>0)parts.push(`${vi.pGold.toLocaleString()}g`);
-    if(vi.pSilver>0)parts.push(`${vi.pSilver}s`);
+    if(vi.pGold>0)parts.push(`${vi.pGold.toLocaleString()} Gold`);
+    if(vi.pSilver>0)parts.push(`${vi.pSilver} Silver`);
     if(vi.pIronCrown>0)parts.push(`${vi.pIronCrown} Iron Crown${vi.pIronCrown!==1?"s":""}`);
     if(vi.pCopperCrown>0)parts.push(`${vi.pCopperCrown} Copper Crown${vi.pCopperCrown!==1?"s":""}`);
     return parts.length?parts.join(" + "):"Free";
   }
+  return vi.price>0?`${vi.price.toLocaleString()} ${vi.currency||"Gold"}`:"Free";
+}
+function shopFormatPrice(vi){
+  if(vi.priceType==="free")return"Free";
+  if(vi.priceType==="tokens")return`${(vi.price||0).toLocaleString()} VT`;
+  if(vi.priceType==="champions")return`${(vi.price||0).toLocaleString()} CGT`;
+  if(vi.priceType==="frontier")return`${(vi.price||0).toLocaleString()} FPT`;
+  if(vi.priceType==="contribution")return`${(vi.price||0).toLocaleString()} CP`;
+  if(vi.priceType==="currency"){
+    const parts=[];
+    if(vi.pGold>0)parts.push(`${vi.pGold.toLocaleString()}G`);
+    if(vi.pSilver>0)parts.push(`${vi.pSilver}S`);
+    if(vi.pIronCrown>0)parts.push(`${vi.pIronCrown}IC`);
+    if(vi.pCopperCrown>0)parts.push(`${vi.pCopperCrown}CC`);
+    return parts.length?parts.join(" + "):"Free";
+  }
   // Legacy: plain price field
-  return vi.price>0?`${vi.price.toLocaleString()} ${vi.currency||"g"}`:"Free";
+  return vi.price>0?`${vi.price.toLocaleString()}${vi.currency||"G"}`:"Free";
 }
 function shopDisplayItemName(vi){
   return vi?.itemName||"";
@@ -4484,50 +5781,50 @@ function initCraftBindings(){
 // ═══════════════════════════════════════════════════════════
 const CB_IMG='https://gloriavictischaracterbuilder.netlify.app/images/';
 const cbSkillData={
-  unstoppable:{name:"Unstoppable",max:5,parents:"",icon:"icon_skill_passiveStagger_d.png",desc:"Stun effects changed to stagger.",extra:"Only one top-tier allowed."},
-  survival_instinct:{name:"Survival Instinct",max:5,parents:"",icon:"icon_skill_passiveRHealthDelay_d.png",desc:"Under 40% HP: combat mode shortened.",extra:"Only one top-tier allowed."},
-  not_on_my_watch:{name:"Not On My Watch",max:5,parents:"",icon:"icon_skill_passiveNotOnMyWatch_d.png",desc:"Full arrow interrupts. +200% capacity.",extra:""},
-  battle_rage:{name:"Battle Rage",max:5,parents:"",icon:"icon_skill_passiveBattleRage_d.png",desc:"Uninterruptible for 15s at low HP.",extra:"Cooldown: 2 min."},
-  last_stand:{name:"Last Stand",max:10,parents:"unstoppable",icon:"icon_skill_passiveRMPowerBar_d.png",desc:"Regen 2% shield/level after blocks.",extra:"+20% at 10."},
-  what_doesnt_kill_me:{name:"What Doesn't Kill Me",max:10,parents:"survival_instinct,unstoppable",icon:"icon_skill_passiveIHealthRegen_d.png",desc:"HP regen +2%/level.",extra:""},
-  sting:{name:"Sting",max:10,parents:"battle_rage,survival_instinct,not_on_my_watch",icon:"icon_skill_passiveITargeting_d.png",desc:"Pierce dmg +0.2%/level.",extra:"+3% at 10."},
-  precision:{name:"Precision",max:10,parents:"battle_rage",icon:"icon_skill_passiveIMeleCrit_d.png",desc:"0 stamina for 3s/level after hits.",extra:"+15s at 10."},
-  man_of_steel:{name:"Man of Steel",max:10,parents:"last_stand",icon:"icon_skill_passiveHeavyBonus_d.png",desc:"Heavy armor +1%/level.",extra:"+5% at 10."},
-  you_shall_not_pass:{name:"You Shall Not Pass",max:10,parents:"what_doesnt_kill_me,last_stand",icon:"icon_skill_passiveShieldBlock_d.png",desc:"Shield cost -3%/level.",extra:"+30% at 10."},
-  veteran:{name:"Veteran",max:10,parents:"sting,what_doesnt_kill_me",icon:"icon_skill_passiveIStamina_d.png",desc:"Max Stamina +2%/level.",extra:""},
-  bullseye:{name:"Bullseye",max:10,parents:"precision,sting",icon:"icon_skill_passiveRRPowerBar_d.png",desc:"Recover 2% stam/level on headshots.",extra:"+10% at 10."},
-  breaker:{name:"Breaker",max:10,parents:"precision",icon:"icon_skill_passiveBreaker_d.png",desc:"Shield/mount dmg +1-2%/level.",extra:""},
-  evade:{name:"Evade",max:10,parents:"you_shall_not_pass,man_of_steel",icon:"icon_skill_passiveRArmorPenetration_d.png",desc:"Enemy armor pen -0.5%/level.",extra:""},
-  awareness:{name:"Awareness",max:10,parents:"veteran,you_shall_not_pass",icon:"icon_skill_passiveRBackstab_d.png",desc:"Backstab taken -0.5%/level.",extra:"+5% at 10."},
-  finesse:{name:"Finesse",max:10,parents:"bullseye,veteran",icon:"icon_skill_passiveRAttackCost_d.png",desc:"Attack stamina -1.5%/level.",extra:""},
-  butcher:{name:"Huntsman",max:10,parents:"breaker,bullseye",icon:"icon_skill_passiveIPenetration_d.png",desc:"Armor pen +0.5%/level.",extra:""},
-  tough_one:{name:"Tough One",max:10,parents:"evade",icon:"icon_skill_passiveIHealth_d.png",desc:"Max Health +1%/level.",extra:""},
-  protector:{name:"Protector",max:10,parents:"awareness,evade",icon:"icon_skill_passiveRBlockCost_d.png",desc:"Arrow block -5%/level.",extra:"+25% at 10."},
-  breath_control:{name:"Breath Control",max:10,parents:"finesse,awareness",icon:"icon_skill_passiveIStaminaRegen_d.png",desc:"Stamina regen +3%/level.",extra:""},
-  dirty_fighting:{name:"Dirty Fighting",max:10,parents:"butcher,finesse",icon:"icon_skill_passiveIBackstab_d.png",desc:"Backstab/headshot +0.5-1%/level.",extra:""},
-  brute:{name:"Brute",max:10,parents:"butcher",icon:"icon_skill_passiveIDamage_d.png",desc:"Damage +0.2%/level.",extra:""},
-  vanguard:{name:"Vanguard",max:10,parents:"protector,tough_one",icon:"icon_skill_passiveShieldBonus_d.png",desc:"Shield resist +2%/level.",extra:"+25% at 10."},
-  shieldman:{name:"Shieldman",max:10,parents:"breath_control,protector",icon:"icon_skill_passiveStaBlock_d.png",desc:"Block drain -2%/level.",extra:""},
-  athlete:{name:"Athlete",max:10,parents:"dirty_fighting,breath_control",icon:"icon_skill_passiveREffortCost_d.png",desc:"Sprint/swim drain -2%/level.",extra:""},
-  strongman:{name:"Strongman",max:10,parents:"brute,dirty_fighting",icon:"icon_skill_passiveI2hBarDmg_d.png",desc:"Full power +0.5%/level.",extra:""},
-  shield_bash:{name:"Shield Bash",max:5,parents:"shieldman,vanguard",icon:"icon_skill_passiveShieldbash_d.png",desc:"Stun attack +5%/level.",extra:"+10% at 5."},
-  bleeding:{name:"Marksman",max:5,parents:"athlete,shieldman",icon:"icon_skill_passiveAssassin_d.png",desc:"Bleed + faster bow draw.",extra:""},
-  reaper:{name:"Reaper",max:5,parents:"strongman,athlete",icon:"icon_skill_passiveI1hBarDmg_d.png",desc:"2H hits 2 targets.",extra:"3 at level 5."},
-  focus:{name:"Focus",max:5,parents:"",icon:"icon_skill_passiveReviveFocus_d.png",desc:"Damage won't interrupt revive.",extra:"Only one top-tier allowed."},
-  great_comeback:{name:"Great Comeback",max:10,parents:"focus",icon:"icon_skill_passiveReviveSphere_d.png",desc:"Allies get HP regen on revive.",extra:"+15s at 10."},
-  battle_medic:{name:"Battle Medic",max:10,parents:"great_comeback",icon:"icon_skill_passiveReviveHpBonus_d.png",desc:"Revived HP +2%/level.",extra:"+5% at 10."},
-  first_aid:{name:"First Aid",max:5,parents:"battle_medic",icon:"icon_skill_passiveRevive_d.png",desc:"Revive time -10%/level.",extra:""},
-  steady_hand:{name:"Steady Hand",max:5,parents:"",icon:"icon_horse_bow_red_d.png",desc:"Max powerbar bow on mount.",extra:""},
-  momentum:{name:"Momentum",max:5,parents:"",icon:"icon_horse_melee_d.png",desc:"Max powerbar melee on mount.",extra:""},
-  rapid_fire:{name:"Rapid Fire",max:10,parents:"steady_hand",icon:"icon_horse_arrow_d.png",desc:"Faster bow, +1% dmg/level.",extra:""},
-  sweet_spot:{name:"Sweet Spot",max:10,parents:"momentum,steady_hand",icon:"icon_horse_point_d.png",desc:"Mount dmg +2%/level.",extra:"+10% at 10."},
-  battle_horse:{name:"Battle Horse",max:10,parents:"momentum",icon:"icon_horse_shield_d.png",desc:"Mounted melee +1%/level.",extra:""},
-  vigour:{name:"Vigour",max:10,parents:"rapid_fire,sweet_spot",icon:"icon_horse_t_d.png",desc:"Mount stam regen +0.3%/level.",extra:""},
-  will_to_survive:{name:"Will to Survive",max:10,parents:"sweet_spot,battle_horse",icon:"icon_horse_red_d.png",desc:"Mount HP regen +0.1%/level.",extra:""},
-  calm:{name:"Calm",max:10,parents:"vigour",icon:"icon_horse_bow_d.png",desc:"Better mounted arrow accuracy.",extra:""},
-  hardened:{name:"Hardened",max:10,parents:"vigour,will_to_survive",icon:"icon_horse_scout_d.png",desc:"Mount stam/HP per stat.",extra:""},
-  cavalryman:{name:"Cavalryman",max:10,parents:"will_to_survive",icon:"icon_horse_cavalry_d.png",desc:"Mounted attack stam -2%/level.",extra:""},
-  bound:{name:"Bound",max:5,parents:"hardened,cavalryman,calm",icon:"icon_horse_gold_d.png",desc:"Horse call -20s/level.",extra:"-20s more at 5."}
+  unstoppable:{name:"Unstoppable",max:5,parents:"",icon:"icon_skill_passiveStagger_d.png",desc:"Stun effects on your character are changed to stagger effects. Unstoppable costs 5 points and can't be leveled.",extra:"You can only have one top-tier ability."},
+  survival_instinct:{name:"Survival Instinct",max:5,parents:"",icon:"icon_skill_passiveRHealthDelay_d.png",desc:"When under 40% health, combat mode is shortened from 3 to 2 seconds, letting you sprint or regenerate HP sooner. Costs 5 points and can't be leveled.",extra:"You can only have one top-tier ability."},
+  not_on_my_watch:{name:"Not On My Watch",max:5,parents:"",icon:"icon_skill_passiveNotOnMyWatch_d.png",desc:"A fully-drawn arrow interrupts the target's damage. Base foot archer arrow capacity increased by 200%.",extra:""},
+  battle_rage:{name:"Battle Rage",max:5,parents:"",icon:"icon_skill_passiveBattleRage_d.png",desc:"Your attacks cannot be interrupted for the first 15 seconds that your health is below 60%. Costs 5 points and can't be leveled.",extra:"You can only have one top-tier ability. Cooldown: 2 minutes."},
+  last_stand:{name:"Last Stand",max:10,parents:"unstoppable",icon:"icon_skill_passiveRMPowerBar_d.png",desc:"When your shield's resistance is fully depleted, instantly regenerate 2% shield resistance per level after effectively blocking 3 attacks in a row within 30 seconds.",extra:"Instantly regenerate an additional 20% shield resistance at level 10."},
+  what_doesnt_kill_me:{name:"What Doesn't Kill Me",max:10,parents:"survival_instinct,unstoppable",icon:"icon_skill_passiveIHealthRegen_d.png",desc:"Health regeneration is increased by 2% per level of this passive ability.",extra:""},
+  sting:{name:"Sting",max:10,parents:"battle_rage,survival_instinct,not_on_my_watch",icon:"icon_skill_passiveITargeting_d.png",desc:"Increases damage dealt by piercing attacks by 0.2% per level in Sting.",extra:"Additional 3% at level 10."},
+  precision:{name:"Precision",max:10,parents:"battle_rage",icon:"icon_skill_passiveIMeleCrit_d.png",desc:"After 3 unblocked attacks in a row within 30 seconds, your attacks cost 0 stamina for 3 seconds per level in Precision. Applies only to melee combat.",extra:"Additional 15 seconds at level 10. Cooldown: 3 minutes."},
+  man_of_steel:{name:"Man of Steel",max:10,parents:"last_stand",icon:"icon_skill_passiveHeavyBonus_d.png",desc:"Increases heavy armour's piercing, slashing and bludgeoning damage reductions by 1% per level of Man of Steel.",extra:"Gain an additional 5% to heavy armor damage reduction at level 10."},
+  you_shall_not_pass:{name:"You Shall Not Pass",max:10,parents:"what_doesnt_kill_me,last_stand",icon:"icon_skill_passiveShieldBlock_d.png",desc:"Decreases shield resistance cost by 3% per level after effectively blocking 3 blows with a shield within 3 seconds.",extra:"Additional 30% decrease at level 10. Cooldown: 2 minutes."},
+  veteran:{name:"Veteran",max:10,parents:"sting,what_doesnt_kill_me",icon:"icon_skill_passiveIStamina_d.png",desc:"Maximum Stamina is increased by 2% per level of Veteran.",extra:""},
+  bullseye:{name:"Bullseye",max:10,parents:"precision,sting",icon:"icon_skill_passiveRRPowerBar_d.png",desc:"After performing 3 headshots within 30 seconds, instantly recover 2% of your total stamina per level of Bullseye.",extra:"Instantly recover an additional 10% of your total stamina at level 10."},
+  breaker:{name:"Breaker",max:10,parents:"precision",icon:"icon_skill_passiveBreaker_d.png",desc:"Increases damage dealt to enemy shields by 1% per level and an additional 5% at level 10. Increases damage dealt to mounts by 2% per level and an additional 10% at level 10. Not applied on mounted players.",extra:""},
+  evade:{name:"Evade",max:10,parents:"you_shall_not_pass,man_of_steel",icon:"icon_skill_passiveRArmorPenetration_d.png",desc:"Armour penetration of an attacker is reduced by 0.5% per level of this passive.",extra:""},
+  awareness:{name:"Awareness",max:10,parents:"veteran,you_shall_not_pass",icon:"icon_skill_passiveRBackstab_d.png",desc:"Melee damage received from being backstabbed is reduced by 0.5% per level of Awareness.",extra:"Additional 5% at level 10."},
+  finesse:{name:"Finesse",max:10,parents:"bullseye,veteran",icon:"icon_skill_passiveRAttackCost_d.png",desc:"Stamina drain while attacking and holding a weapon is reduced by 1.5% per level of Finesse.",extra:""},
+  butcher:{name:"Huntsman",max:10,parents:"breaker,bullseye",icon:"icon_skill_passiveIPenetration_d.png",desc:"Armour penetration increased by 0.5% per level to weapons with armour penetration. Hold a fully drawn bow for 0.01 seconds longer per level.",extra:"Additional 0.1 second bow hold at level 10."},
+  tough_one:{name:"Tough One",max:10,parents:"evade",icon:"icon_skill_passiveIHealth_d.png",desc:"Maximum Health is increased by 1% per level of Tough One.",extra:""},
+  protector:{name:"Protector",max:10,parents:"awareness,evade",icon:"icon_skill_passiveRBlockCost_d.png",desc:"Decreases loss of shield resistance while blocking arrows by 5% per level of Protector.",extra:"Additional 25% at level 10."},
+  breath_control:{name:"Breath Control",max:10,parents:"finesse,awareness",icon:"icon_skill_passiveIStaminaRegen_d.png",desc:"Stamina regeneration is increased by 3% per level of Breath Control.",extra:""},
+  dirty_fighting:{name:"Dirty Fighting",max:10,parents:"butcher,finesse",icon:"icon_skill_passiveIBackstab_d.png",desc:"Melee backstab damage increased by 0.5% per level. Headshot damage increased by 1% per level.",extra:"Additional 10% headshot damage bonus at level 10."},
+  brute:{name:"Brute",max:10,parents:"butcher",icon:"icon_skill_passiveIDamage_d.png",desc:"Damage is increased by 0.2% per level of Brute.",extra:""},
+  vanguard:{name:"Vanguard",max:10,parents:"protector,tough_one",icon:"icon_skill_passiveShieldBonus_d.png",desc:"Increases shield resistance by 2% per level while blocking with a shield.",extra:"Gain an additional 25% shield resistance at level 10."},
+  shieldman:{name:"Shieldman",max:10,parents:"breath_control,protector",icon:"icon_skill_passiveStaBlock_d.png",desc:"Decreases stamina drain while blocking by 2% per level of Shieldman.",extra:""},
+  athlete:{name:"Athlete",max:10,parents:"dirty_fighting,breath_control",icon:"icon_skill_passiveREffortCost_d.png",desc:"Stamina drain when kicking, sprinting and swimming is reduced by 2% per level of Athlete.",extra:""},
+  strongman:{name:"Strongman",max:10,parents:"brute,dirty_fighting",icon:"icon_skill_passiveI2hBarDmg_d.png",desc:"Damage dealt at full power increased by 0.5% per level of Strongman.",extra:""},
+  shield_bash:{name:"Shield Bash",max:5,parents:"shieldman,vanguard",icon:"icon_skill_passiveShieldbash_d.png",desc:"Attack using a shield to stun and damage an enemy. Damage from Shield Bash increases by 5% per level.",extra:"Deals an additional 10% damage at level 5."},
+  bleeding:{name:"Marksman",max:5,parents:"athlete,shieldman",icon:"icon_skill_passiveAssassin_d.png",desc:"Strong knife attack causes a 10-second bleed (1 damage/second per 2 levels). Fully draw the bow 0.05 seconds faster per level, with an additional 0.05 second bonus at level 5.",extra:"Effect not applied on mounted players."},
+  reaper:{name:"Reaper",max:5,parents:"strongman,athlete",icon:"icon_skill_passiveI1hBarDmg_d.png",desc:"Use any two-handed weapon, except a polearm, to damage 2 targets at the same time with full-power attacks. At level 5, deal an additional 7% damage and gain the possibility to damage 3 targets. 2% damage increase per level to second and third target.",extra:"Each ally on the attack's way is counted as another attacked target."},
+  focus:{name:"Focus",max:5,parents:"",icon:"icon_skill_passiveReviveFocus_d.png",desc:"Taking damage does not interrupt reviving other players. Being stunned or staggered still interrupts the revive. Costs 5 points and can't be leveled.",extra:"You can only have one top-tier ability."},
+  great_comeback:{name:"Great Comeback",max:10,parents:"focus",icon:"icon_skill_passiveReviveSphere_d.png",desc:"After you revive an ally, all nearby allies gain 10% health regeneration for 3 seconds per level of Great Comeback.",extra:"At level 10, gain an additional 15 seconds of increased health regeneration."},
+  battle_medic:{name:"Battle Medic",max:10,parents:"great_comeback",icon:"icon_skill_passiveReviveHpBonus_d.png",desc:"Increases the health points of a revived player by 2% per level of Battle Medic.",extra:"Additional 5% at level 10."},
+  first_aid:{name:"First Aid",max:5,parents:"battle_medic",icon:"icon_skill_passiveRevive_d.png",desc:"Decreases the time required to revive fallen allies by 10% per level in First Aid.",extra:""},
+  steady_hand:{name:"Steady Hand",max:5,parents:"",icon:"icon_horse_bow_red_d.png",desc:"Unlocks loading the powerbar to max when shooting a bow while riding a mount.",extra:"The effect works only when shooting a bow."},
+  momentum:{name:"Momentum",max:5,parents:"",icon:"icon_horse_melee_d.png",desc:"Unlocks loading the powerbar to max when fighting melee while riding a mount.",extra:"The effect works only when fighting melee."},
+  rapid_fire:{name:"Rapid Fire",max:10,parents:"steady_hand",icon:"icon_horse_arrow_d.png",desc:"Fully draw the bow 0.02 seconds faster per level in Rapid Fire. Increases damage dealt with bow while riding a mount by 1% per level.",extra:"Additional 0.1 second draw speed bonus at level 10."},
+  sweet_spot:{name:"Sweet Spot",max:10,parents:"momentum,steady_hand",icon:"icon_horse_point_d.png",desc:"Increases damage dealt to other mounts while riding a mount by 2% per level in Sweet Spot.",extra:"Additional 10% at level 10."},
+  battle_horse:{name:"Battle Horse",max:10,parents:"momentum",icon:"icon_horse_shield_d.png",desc:"Increases melee damage dealt while riding a mount by 1% per level. Reduces damage received by a mount by 1% per level in Battle Horse.",extra:""},
+  vigour:{name:"Vigour",max:10,parents:"rapid_fire,sweet_spot",icon:"icon_horse_t_d.png",desc:"Mount stamina regeneration increased by 0.3% per level. Mount stamina drain when jumping, sprinting and swimming reduced by 1% per level.",extra:"Additional 5% stamina drain reduction at level 10."},
+  will_to_survive:{name:"Will to Survive",max:10,parents:"sweet_spot,battle_horse",icon:"icon_horse_red_d.png",desc:"Mount health regeneration increased by 0.1% per level. Reduces mount-kill stun duration by 0.1 second per level.",extra:"Completely negates the stun at level 10."},
+  calm:{name:"Calm",max:10,parents:"vigour",icon:"icon_horse_bow_d.png",desc:"Increase the accuracy of arrows in mounted archery.",extra:""},
+  hardened:{name:"Hardened",max:10,parents:"vigour,will_to_survive",icon:"icon_horse_scout_d.png",desc:"Increases mount Stamina points added per Condition attribute point (0.2 extra per level). Increases mount Health points added per Vitality attribute point (0.5 extra HP per level).",extra:""},
+  cavalryman:{name:"Cavalryman",max:10,parents:"will_to_survive",icon:"icon_horse_cavalry_d.png",desc:"Stamina drain while attacking and holding a weapon while riding a mount is reduced by 2% per level. At level 10, hitting an enemy with a mounted melee attack won't slow your mount or block your regeneration.",extra:""},
+  bound:{name:"Bound",max:5,parents:"hardened,cavalryman,calm",icon:"icon_horse_gold_d.png",desc:"Reduces the time needed to call a horse by 20 seconds per level in Bound.",extra:"Additional 20 seconds reduction at level 5."}
 };
 const cbCombatRows=[["unstoppable","survival_instinct","not_on_my_watch","battle_rage"],["last_stand","what_doesnt_kill_me","sting","precision"],["man_of_steel","you_shall_not_pass","veteran","bullseye","breaker"],["evade","awareness","finesse","butcher"],["tough_one","protector","breath_control","dirty_fighting","brute"],["vanguard","shieldman","athlete","strongman"],["shield_bash","bleeding","reaper"]];
 const cbSupportRows=[["focus"],[null],["great_comeback"],[null],["battle_medic"],[null],["first_aid"]];
@@ -4674,18 +5971,67 @@ function cbGenerateSkillGrid(){
       row.forEach(key=>{const cell=document.createElement('div');cell.className='cb-skill-cell';
         if(key){const s=cbSkillData[key],w=document.createElement('div');w.className='cb-skill-wrap';
           const b=document.createElement('div');b.className='cb-skill-btn cb-locked';b.id='cb_skill__'+key;b.dataset.parents=s.parents;b.dataset.max=s.max;b.style.backgroundImage=`url(${CB_IMG}${s.icon})`;
+          b.dataset.tipName=s.name;b.dataset.tipDesc=s.desc||'';b.dataset.tipExtra=s.extra||'';
           const c=document.createElement('span');c.className='cb-skill-cnt';c.id='cb_cnt__'+key;c.textContent='0/'+s.max;
-          const t=document.createElement('div');t.className='cb-tooltip';t.innerHTML=`<div style="font-weight:600;color:var(--ac);margin-bottom:4px">${s.name}</div><div style="font-size:11px">${s.desc}</div>${s.extra?'<div style="font-size:10px;color:var(--tm);margin-top:4px">'+s.extra+'</div>':''}`;
-          w.appendChild(b);w.appendChild(c);w.appendChild(t);cell.appendChild(w);cbSkillValues['cb_skill__'+key]=0;}
+          w.appendChild(b);w.appendChild(c);cell.appendChild(w);cbSkillValues['cb_skill__'+key]=0;}
         rd.appendChild(cell);});col.appendChild(rd);});return col;};
   grid.appendChild(makeCol(cbCombatRows,'combat'));grid.appendChild(makeCol(cbSupportRows,'support'));grid.appendChild(makeCol(cbHorseRows,'horse'));
 }
 
 function cbInitSkills(){
+  // Create floating tooltip element if not present
+  let tip=document.getElementById('cb-floating-tip');
+  if(!tip){
+    tip=document.createElement('div');tip.id='cb-floating-tip';
+    document.body.appendChild(tip);
+  }
+  let _tipTimeout=null;
+
   document.querySelectorAll('.cb-skill-btn').forEach(s=>{
     s.addEventListener('click',e=>{e.preventDefault();cbHandleSkillClick(s,'inc')});
     s.addEventListener('contextmenu',e=>{e.preventDefault();cbHandleSkillClick(s,'dec')});
+
+    s.addEventListener('mouseenter',()=>{
+      const name=s.dataset.tipName||'';
+      const desc=s.dataset.tipDesc||'';
+      const extra=s.dataset.tipExtra||'';
+      const val=cbSkillValues[s.id]||0;
+      const max=parseInt(s.dataset.max)||0;
+      tip.innerHTML=`<div style="font-weight:700;color:var(--ac);margin-bottom:6px;font-size:13px">${name}</div>`+
+        `<div style="color:var(--t2);line-height:1.5">${desc}</div>`+
+        (extra?`<div style="font-size:11px;color:var(--org);margin-top:5px;padding-top:5px;border-top:1px solid var(--bd)">${extra}</div>`:'')+
+        `<div style="font-size:10px;color:var(--tm);margin-top:6px">Level: ${val} / ${max} &nbsp;•&nbsp; ${s.classList.contains('cb-locked')?'🔒 Locked':'Left-click +1 · Right-click −1'}</div>`;
+
+      // Position: prefer below the button, flip above if near bottom
+      const rect=s.getBoundingClientRect();
+      const tw=280, margin=10;
+      let left=rect.left+rect.width/2-tw/2;
+      if(left<margin) left=margin;
+      if(left+tw>window.innerWidth-margin) left=window.innerWidth-tw-margin;
+
+      // Flip above or below
+      const spaceBelow=window.innerHeight-rect.bottom;
+      tip.style.width=tw+'px';tip.style.maxWidth='320px';
+      tip.classList.remove('tip-above','tip-below');
+      if(spaceBelow>160){
+        tip.style.top=(rect.bottom+10)+'px';
+        tip.classList.add('tip-below');
+      } else {
+        tip.style.top='';
+        tip.style.bottom=(window.innerHeight-rect.top+10)+'px';
+        tip.classList.add('tip-above');
+      }
+      tip.style.left=left+'px';
+      clearTimeout(_tipTimeout);
+      tip.classList.add('visible');
+    });
+
+    s.addEventListener('mouseleave',()=>{
+      clearTimeout(_tipTimeout);
+      _tipTimeout=setTimeout(()=>tip.classList.remove('visible'),80);
+    });
   });
+
   ['cb_skill__first_aid','cb_skill__reaper','cb_skill__bleeding','cb_skill__shield_bash','cb_skill__bound'].forEach(cbUnlockSkill);
 }
 
@@ -4903,6 +6249,8 @@ function cbResetAttr(){['cb-strength','cb-constitution','cb-dexterity'].forEach(
 function cbResetSkills(){Object.keys(cbSkillValues).forEach(cbLockSkill);['cb_skill__first_aid','cb_skill__reaper','cb_skill__bleeding','cb_skill__shield_bash','cb_skill__bound'].forEach(cbUnlockSkill);cbCountPoints();cbSetColors()}
 
 function initCharBuilderBindings(){
+  // Remove any stale floating tooltip from a previous visit
+  document.getElementById('cb-floating-tip')?.remove();
   cbGenerateSkillGrid();cbCheckTopSkills();cbInitSkills();cbCountPoints();cbSetColors();cbUpdateStats();
   document.querySelectorAll('.cb-attr-btn').forEach(b=>{b.addEventListener('click',function(){const attr=this.dataset.attr,action=this.dataset.action;const input=document.getElementById('cb-'+attr);if(input)cbHandleAttr(input,action)})});
   document.getElementById('cb-apply-food')?.addEventListener('click',cbUpdateStats);
@@ -5000,22 +6348,48 @@ function renderSidebar(){
   const pendingGoldReq=G.goldRequests.filter(r=>r.status==="Pending").length;
   const pendingAppsCount=isAdmin()?D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending").length:0;
   // Header
-  let h=`<div style="padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px"><button id="my-profile-btn" style="display:flex;align-items:center;gap:9px;flex:1;background:none;border:none;padding:0;cursor:pointer;text-align:left"><div style="width:24px;height:24px;border-radius:4px;background:var(--acs);display:inline-flex;align-items:center;justify-content:center;color:var(--ac);font-weight:700;font-size:10px">GV</div><div style="flex:1"><div style="font-weight:600;color:var(--t1);font-size:12px">${currentGuildCfg().guildName}</div><div style="font-size:9px;color:var(--tm)">Logged in as ${currentUser?.displayName} (${currentUser?.role==="guild_leader"?"Guild Leader":currentUser?.role==="site_admin"?"Site Admin":currentUser?.role})</div></div></button><button class="btn bg bs" id="logout-btn" style="font-size:10px">⏻</button></div>`;
+  const roleLabel=currentUser?.role==="guild_leader"?"Guild Leader":currentUser?.role==="site_admin"?"Site Admin":currentUser?.role==="contributor"?"Contributor":"Member";
+  const userInitial=(currentUser?.displayName||currentUser?.username||"?").charAt(0).toUpperCase();
+  let h=`<div style="padding:8px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">
+    <button id="my-profile-btn" style="display:flex;align-items:center;gap:8px;flex:1;background:none;border:none;padding:0;cursor:pointer;text-align:left;min-width:0">
+      <div style="width:28px;height:28px;border-radius:6px;background:var(--acs);display:inline-flex;align-items:center;justify-content:center;color:var(--ac);font-weight:700;font-size:13px;flex-shrink:0">${userInitial}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:var(--t1);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${currentUser?.displayName||currentUser?.username}</div>
+        <div style="font-size:9px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${roleLabel}${currentGuildCfg().guildName&&currentGuildId?" · "+currentGuildCfg().guildName:""}</div>
+      </div>
+    </button>
+    <button id="logout-btn" title="Sign out" style="background:none;border:1px solid var(--bd);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);font-size:13px;flex-shrink:0;transition:all .12s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--tm)'">⏻</button>
+  </div>`;
   // Tool switcher
   h+=`<div class="tool-sw">${TOOLS.map(t=>{const locked=t.k!=="treasury"&&!toolEnabled(t.k);return`<div class="tool-btn${activeTool===t.k?" a":""}${locked?" tool-btn-locked":""}" data-tool="${t.k}" title="${locked?"Coming Soon":""}"><span class="tool-icon">${t.i}</span><span class="tool-label">${t.l}</span>${locked?`<span class="tool-badge">🔒</span>`:""}</div>`;}).join("")}</div>`;
   if(canManageDatabase()){
     h+=`<div class="tool-sw" style="padding-top:0"><div class="tool-btn${activeTool==="database"?" a":""}" data-tool="database"><span class="tool-icon">${DATABASE_TOOL.i}</span><span class="tool-label">${DATABASE_TOOL.l}</span></div></div>`;
   }
   // Tool-specific nav
-  h+=`<div style="flex:1;overflow-y:auto">`;
+  if(activeTool==="map"){
+    h+=`<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">`;
+  } else {
+    h+=`<div style="flex:1;overflow-y:auto">`;
+  }
   if(activeTool==="treasury"){
-    let sec;
-    if(isAdmin()){
-      sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
+    // User has no guild yet — show join prompt in sidebar
+    if(!isSiteAdmin()&&(!currentUser.guildId||currentUser.status==="pending")){
+      const pendingGuild=currentUser.status==="pending"?D.guilds.find(g=>g.id===currentUser.guildId):null;
+      h+=`<div class="ns"><div class="nst">Guild Manager</div>
+        <div style="padding:10px 8px">
+          <div style="font-size:12px;color:var(--t2);margin-bottom:10px">${pendingGuild?`⏳ Application pending for <strong>${pendingGuild.name}</strong>`:"You are not in a guild yet."}</div>
+          ${!pendingGuild?`<button class="btn bp bs" style="width:100%" data-page="wiki-join-guild">Browse Guilds</button>`:""}
+        </div>
+      </div>`;
     } else {
-      sec=[{t:"Gold",items:[{k:"gold-request",l:"Request Gold",i:"💰"}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
+      let sec;
+      if(isAdmin()){
+        sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
+      } else {
+        sec=[{t:"Gold",items:[{k:"gold-request",l:"Request Gold",i:"💰"}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
+      }
+      sec.forEach(s=>{h+=`<div class="ns"><div class="nst">${s.t}</div>`;s.items.forEach(i=>{h+=`<div class="ni${pg===i.k?" a":""}" data-page="${i.k}"><span style="font-size:13px;width:16px;text-align:center">${i.i}</span>${i.l}${i.c?`<span class="cnt">${i.c}</span>`:""}</div>`});h+=`</div>`});
     }
-    sec.forEach(s=>{h+=`<div class="ns"><div class="nst">${s.t}</div>`;s.items.forEach(i=>{h+=`<div class="ni${pg===i.k?" a":""}" data-page="${i.k}"><span style="font-size:13px;width:16px;text-align:center">${i.i}</span>${i.l}${i.c?`<span class="cnt">${i.c}</span>`:""}</div>`});h+=`</div>`});
   } else if(activeTool==="crafting"){
     const craftedCount=craftItems.filter(i=>!i.isResource&&!i.isRecipe).length;
     const recipeCount=craftItems.filter(i=>i.isRecipe).length;
@@ -5036,20 +6410,7 @@ function renderSidebar(){
   } else if(activeTool==="announcements"){
     h+=`<div class="ns"><div class="nst">Announcements</div><div class="ni a" data-page="ann-home"><span style="font-size:13px;width:16px;text-align:center">📢</span>All Posts${annC?`<span class="cnt">${annC}</span>`:""}</div></div>`;
   } else if(activeTool==="map"){
-    const markers=D.mapData||[];
-    const catCounts={};MAP_CATEGORIES.forEach(c=>catCounts[c.id]=markers.filter(m=>m.category===c.id).length);
-    h+=`<div class="ns"><div class="nst">Map</div><div class="ni a" data-page="map-home"><span style="font-size:13px;width:16px;text-align:center">🗺️</span>View Map</div></div>`;
-    h+=`<div class="ns"><div class="nst" style="display:flex;justify-content:space-between;align-items:center">Legend<button class="map-leg-toggle" id="map-toggle-all" title="Toggle All">👁️</button></div>`;
-    MAP_CATEGORIES.forEach(c=>{
-      const count=catCounts[c.id]||0;
-      const hidden=mapState.hiddenCats[c.id];
-      h+=`<div class="map-leg-row${hidden?" off":""}" data-cat="${c.id}">`;
-      h+=`<span class="map-leg-icon" style="background:${c.color}">${c.icon}</span>`;
-      h+=`<span class="map-leg-name">${c.name}</span>`;
-      h+=`<span class="map-leg-count">${count}</span>`;
-      h+=`</div>`;
-    });
-    h+=`</div>`;
+    h+=`<div class="map-sb" id="map-sidebar-panel">${buildMapSidebarHTML()}</div>`;
   } else if(activeTool==="itemsearch"){
     const cityCount=D.cities.length,vendorCount=D.vendors.length,itemCount=D.vendorItems.length;
     h+=`<div class="ns"><div class="nst">Item Search</div>`;
@@ -5069,7 +6430,7 @@ function renderSidebar(){
     h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">🧍</span>Character XP Table</div>`;
     h+=`</div>`;
   } else if(activeTool==="wiki"){
-    h+=`<div class="ns"><div class="nst">Wiki</div><div class="ni a" data-page="wiki-home"><span style="font-size:13px;width:16px;text-align:center">📖</span>Articles</div></div>`;
+    h=buildWikiSidebarNav(h);
   }
   h+=`</div>`;
   // Settings footer - visible on all tools for admins
@@ -5077,9 +6438,19 @@ function renderSidebar(){
     h+=`<div style="padding:6px 10px;border-top:1px solid var(--bd)"><div class="ni${pg==="settings"&&activeTool==="treasury"?" a":""}" id="global-settings-btn" style="font-size:11px"><span style="font-size:13px;width:16px;text-align:center">⚙</span>Settings</div></div>`;
   }
   sb.innerHTML=h;
+  sb.classList.toggle("map-wide", activeTool==="map");
 }
 
-function modalMyProfile(){if(!currentUser){activeTool="treasury";renderLogin();return;}activeTool="treasury";pg="site-profile";F.dTab=F.dTab==="characters"?"characters":"recipes";render();}
+function modalMyProfile(){
+  if(!currentUser){activeTool="treasury";renderLogin();return;}
+  // Store current tool so we can show profile overlay without changing tool
+  const prevTool=activeTool;
+  const prevPg=pg;
+  activeTool="treasury";
+  pg="site-profile";
+  if(!["recipes","builds","guild"].includes(F.dTab)) F.dTab="recipes";
+  render();
+}
 function render(){
   // Guest mode: allow browsing public tools without login
   // Guild Manager always requires login
@@ -5106,11 +6477,12 @@ function render(){
   }
   // Redirect non-admins away from admin-only pages
   const memberPages=["gold-request","events","orders","requests","leaderboards","settings","site-profile"];
-  if(!currentGuildId&&!isSiteAdmin()&&currentUser?.role!=="guild_leader"&&pg!=="site-profile"){
-    // Regular member with no guild - show pending/join screen
-    renderNoPendingGuild();return;
+  const hasNoGuild=!currentGuildId&&!isSiteAdmin()&&currentUser?.role!=="guild_leader";
+  // Only block treasury access when user has no guild — all other tools are freely accessible
+  if(hasNoGuild&&activeTool==="treasury"&&pg!=="site-profile"&&pg!=="wiki-join-guild"){
+    pg="wiki-join-guild";
   }
-  if(!isAdmin()&&activeTool==="treasury"&&!memberPages.includes(pg)){
+  if(!isAdmin()&&activeTool==="treasury"&&!memberPages.includes(pg)&&pg!=="wiki-join-guild"){
     pg="gold-request";
   }
   document.getElementById("root").innerHTML=`<div id="app"><div id="sidebar"></div><div id="main"></div></div>`;
@@ -5118,12 +6490,19 @@ function render(){
   renderSidebar();
   const m=document.getElementById("main");if(m&&activeTool!=="map")m.className="";F.s="";
   if(activeTool==="treasury"){
-    const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage};
-    // For non-admins, restrict to allowed pages
-    if(!isAdmin()&&!memberPages.includes(pg)){
-      m.innerHTML=tGoldRequest();
+    // If user has no guild, show the guild join page instead of the dashboard
+    if(pg==="wiki-join-guild"||(pg!=="site-profile"&&!isSiteAdmin()&&(!currentUser.guildId||currentUser.status==="pending"))){
+      pg="wiki-join-guild";
+      m.innerHTML=pgWiki();
+      initWikiBindings(()=>render());
     } else {
-      m.innerHTML=(pages[pg]||tGoldRequest)();
+      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage};
+      // For non-admins, restrict to allowed pages
+      if(!isAdmin()&&!memberPages.includes(pg)){
+        m.innerHTML=tGoldRequest();
+      } else {
+        m.innerHTML=(pages[pg]||tGoldRequest)();
+      }
     }
   } else if(activeTool==="crafting"){
     if(!toolEnabled('crafting')){
@@ -5173,6 +6552,7 @@ function render(){
     if(pg==="player-xp-editor")initPlayerXpEditorBindings();
   } else if(activeTool==="wiki"){
     m.innerHTML=pgWiki();
+    initWikiBindings(()=>render());
   }
   bindAll();
 }
@@ -5182,20 +6562,30 @@ function render(){
 // ═══════════════════════════════════════════════════════════
 function bindAll(){
   // Tool switcher
-  document.querySelectorAll("[data-tool]:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",()=>{const tk=el.dataset.tool;if(tk!=="treasury"&&!toolEnabled(tk)){toast(`${TOOLS.find(t=>t.k===tk)?.l||"This tool"} is coming soon!`,"warn");return;}activeTool=tk;pg="dashboard";render()})});
-  // Logout
-  bindOnce(document.getElementById("my-profile-btn"),"click","my-profile",()=>modalMyProfile());
-  bindOnce(document.getElementById("logout-btn"),"click","logout",()=>{currentUser=null;render()});
-  bindOnce(document.getElementById("global-settings-btn"),"click","global-settings",()=>{activeTool="treasury";pg="settings";render();});
-  bindOnce(document.getElementById("shopdb-dupe-page-btn"),"click","shopdb-dupe-page",()=>modalShopEntryDuplicates());
-  bindOnce(document.getElementById("itemdb-dupe-page-btn"),"click","itemdb-dupe-page",()=>modalItemDatabaseDuplicates());
-  // Nav
-  document.querySelectorAll("[data-page]:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",()=>{pg=el.dataset.page;render()})});
+  document.querySelectorAll("[data-tool]:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",()=>{
+    const tk=el.dataset.tool;
+    if(tk==="treasury"){
+      if(!currentUser.guildId||currentUser.status==="pending"){activeTool="treasury";pg="wiki-join-guild";render();return;}
+    }
+    if(tk!=="treasury"&&!toolEnabled(tk)){toast(`${TOOLS.find(t=>t.k===tk)?.l||"This tool"} is coming soon!`,"warn");return;}
+    activeTool=tk;pg="dashboard";render();
+  })});
+  // Nav — handle wiki category clicks
+  document.querySelectorAll("[data-page]:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",()=>{
+    if(el.dataset.wikiCat!==undefined) F.wikiCat=el.dataset.wikiCat;
+    pg=el.dataset.page;render();
+  })});
   document.querySelectorAll(".plink:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",e=>{e.stopPropagation();selP=el.dataset.pid;pg="player-detail";F.dTab="gold";activeTool="treasury";render()})});
   bindOnce(document.getElementById("back-btn"),"click","back-to-players",()=>{pg="players";render()});
   document.querySelectorAll("[data-tab]").forEach(el=>el.addEventListener("click",()=>{F.dTab=el.dataset.tab;render()}));
   document.querySelectorAll("[data-lbtab]").forEach(el=>el.addEventListener("click",()=>{F.lbTab=el.dataset.lbtab;render()}));
   bindOnce(document.getElementById("mob-toggle"),"click","mobile-toggle",()=>{sOpen=!sOpen;document.getElementById("sidebar")?.classList.toggle("hide",!sOpen)});
+  // Profile and logout — always re-bind directly (not with bindOnce) so they survive re-renders
+  document.getElementById("my-profile-btn")?.addEventListener("click",()=>modalMyProfile());
+  document.getElementById("logout-btn")?.addEventListener("click",()=>{currentUser=null;currentGuildId=null;clearSession();render();});
+  bindOnce(document.getElementById("global-settings-btn"),"click","global-settings",()=>{activeTool="treasury";pg="settings";render();});
+  bindOnce(document.getElementById("shopdb-dupe-page-btn"),"click","shopdb-dupe-page",()=>modalShopEntryDuplicates());
+  bindOnce(document.getElementById("itemdb-dupe-page-btn"),"click","itemdb-dupe-page",()=>modalItemDatabaseDuplicates());
 
   // Filters
   const bS=(id,key)=>{const el=document.getElementById(id);if(el)el.addEventListener("change",()=>{F[key]=el.value;render()})};
@@ -5378,6 +6768,52 @@ function bindAll(){
       document.querySelectorAll("[data-skill-group]").forEach(grp=>{
         const visible=Array.from(grp.querySelectorAll(".recipe-item")).some(i=>i.style.display!=="none");
         grp.style.display=visible?"":"none";
+      });
+    });
+  });
+  // Profile: load build from profile tab
+  document.querySelectorAll(".cb-load-build-profile").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      e.stopPropagation();
+      const b=D.savedBuilds?.find(x=>x.id===btn.dataset.id);
+      if(!b){toast("Build not found","error");return;}
+      activeTool="charbuilder";pg="cb-builder";
+      render();
+      toast(`Build "${b.name}" loaded!`);
+    });
+  });
+  // Profile: delete build from profile tab
+  document.querySelectorAll(".cb-del-build-profile").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      e.stopPropagation();
+      const b=D.savedBuilds?.find(x=>x.id===btn.dataset.id);
+      if(!b)return;
+      confirmAction(`Delete build "${b.name}"?`,()=>{
+        D.savedBuilds=D.savedBuilds.filter(x=>x.id!==btn.dataset.id);
+        persist();render();toast("Build deleted!");
+      });
+    });
+  });
+  // Profile: apply to join a guild
+  document.querySelectorAll(".profile-apply-guild").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      e.stopPropagation();
+      const guildId=btn.dataset.guildId;
+      const guildName=btn.dataset.guildName;
+      if(!currentUser){toast("Sign in required","error");return;}
+      confirmAction(`Apply to join "${guildName}"? The Guild Leader will need to approve your request.`,()=>{
+        // Set the user's guildId and status to pending
+        const u=D.users.find(x=>x.id===currentUser.id);
+        if(u){
+          u.guildId=guildId;
+          u.status="pending";
+          currentUser=u;
+          saveSession(currentUser,guildId);
+          addLog("Guild Application",`${currentUser.displayName} applied to join ${guildName}`);
+          persist();
+          render();
+          toast(`Application sent to ${guildName}!`);
+        }
       });
     });
   });
@@ -5578,6 +7014,17 @@ function bindAll(){
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
+// Restore session before first render so user stays logged in on refresh
+(function restoreSession(){
+  const sess = loadSession();
+  if(!sess || !sess.userId) return;
+  const user = D.users.find(u => u.id === sess.userId);
+  if(!user) return;
+  currentUser = user;
+  currentGuildId = sess.guildId || user.guildId || null;
+  if(isSiteAdmin() && !currentGuildId && D.guilds.length) currentGuildId = D.guilds[0].id;
+  rebuildG();
+})();
 render();
 // Pull latest data from Cloudflare KV (runs after first render so the page isn't blank while fetching)
 initKvSync();
