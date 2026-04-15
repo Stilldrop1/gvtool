@@ -245,119 +245,243 @@ tbody td{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:middl
 @media(max-width:900px){.cb-container{flex-direction:column}.cb-left{width:100%}}
 
 @media(max-width:768px){#sidebar{position:fixed;z-index:50;height:100%}.mbt{display:flex}#main{padding:12px;padding-top:44px}.cg{grid-template-columns:1fr}.tool-sw{flex-wrap:wrap}}
+
+/* Theme toggle */
+.theme-btn{background:none;border:1px solid var(--bd);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);font-size:13px;flex-shrink:0;transition:all .12s}
+.theme-btn:hover{border-color:var(--ac);color:var(--ac)}
+
+/* Light theme */
+html.light-theme{
+  --bg0:#f5f5f5;--bg1:#ffffff;--bg2:#f0f0f0;--bg3:#e8e8e8;--bgi:#fafafa;--bgh:#ebebeb;
+  --bd:#d4d4d4;--bd2:#bbb;
+  --t1:#1a1a1a;--t2:#555;--tm:#888;--tf:#aaa;
+  --ac:#6c5ce7;--acd:#5a4bd1;--acg:rgba(108,92,231,.1);--acs:rgba(108,92,231,.18);
+  --red:#dc2626;--redd:rgba(220,38,38,.1);--grn:#16a34a;--grnd:rgba(22,163,74,.1);
+  --blu:#2563eb;--blud:rgba(37,99,235,.1);--org:#d97706;--orgd:rgba(217,119,6,.1);
+  --yl:#ca8a04;--yld:rgba(202,138,4,.1);--pk:#9333ea;--pkd:rgba(147,51,234,.1);
+  --cn:#0891b2;--cnd:rgba(8,145,178,.1);
+}
+
+/* Keyboard shortcut hint badges */
+.kb-hint{font-size:9px;color:var(--tf);background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:0 4px;margin-left:auto;font-family:monospace;line-height:1.6;flex-shrink:0}
+
+/* Toast improvements */
+.sn{position:fixed;top:12px;right:12px;z-index:200;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:500;animation:slideInRight .2s;display:flex;align-items:center;gap:8px;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* Smooth page transitions */
+#main>*{animation:fadeIn .15s both}
+
+/* Scrollbar improvements */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:10px}::-webkit-scrollbar-thumb:hover{background:var(--ac)}
+
+/* Better focus rings */
+*:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+/* Table row highlight on click */
+tbody tr{cursor:default}
+tbody tr.row-selected{background:var(--acg)!important}
+
+/* Sticky table headers */
+.tw{position:relative}
+.tw thead th{position:sticky;top:0;background:var(--bg1);z-index:1}
+
+/* Improved card hover */
+.card{transition:border-color .12s}
+
+/* Quick-action floating button */
+#quick-add-btn{position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:var(--ac);border:none;color:#fff;font-size:22px;cursor:pointer;z-index:90;box-shadow:0 4px 16px rgba(127,109,242,.4);transition:all .15s;display:none;align-items:center;justify-content:center;line-height:1}
+#quick-add-btn:hover{background:var(--acd);transform:scale(1.08);box-shadow:0 6px 22px rgba(127,109,242,.5)}
+#quick-add-btn.visible{display:flex}
+#quick-add-menu{position:fixed;bottom:72px;right:20px;background:var(--bg1);border:1px solid var(--bd);border-radius:8px;padding:6px;z-index:91;box-shadow:0 4px 20px rgba(0,0,0,.3);display:none;flex-direction:column;gap:2px;min-width:160px;animation:fadeIn .15s}
+#quick-add-menu.open{display:flex}
+.qa-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;cursor:pointer;font-size:12px;color:var(--t2);transition:all .1s}
+.qa-item:hover{background:var(--acg);color:var(--ac)}
+.qa-item .qa-icon{font-size:14px;width:18px;text-align:center}
+
+/* Global search overlay */
+#global-search-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:flex-start;justify-content:center;padding-top:80px;backdrop-filter:blur(3px)}
+#global-search-overlay.open{display:flex;animation:fadeIn .12s}
+#global-search-box{background:var(--bg1);border:1px solid var(--ac);border-radius:10px;width:560px;max-width:92vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+#global-search-input{width:100%;padding:14px 18px;font-size:15px;background:transparent;border:none;color:var(--t1);font-family:inherit;outline:none}
+#global-search-input::placeholder{color:var(--tm)}
+#global-search-results{max-height:360px;overflow-y:auto;border-top:1px solid var(--bd)}
+.gs-result{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:background .08s;border-bottom:1px solid var(--bd)}
+.gs-result:hover,.gs-result.gs-active{background:var(--acg)}
+.gs-result-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.gs-result-main{flex:1;min-width:0}
+.gs-result-name{font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs-result-sub{font-size:10px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs-result-badge{font-size:9px;color:var(--tm);background:var(--bgi);padding:1px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+#global-search-hint{padding:8px 16px;font-size:10px;color:var(--tm);border-top:1px solid var(--bd);display:flex;justify-content:space-between}
+
 </style>
 </head>
 <body>
 <div id="root"></div>
 <div id="toast" class="sn" style="display:none"></div>
 <button class="mbt" id="mob-toggle" style="display:none">☰</button>
+<button id="quick-add-btn" title="Quick add (A)">+</button>
+<div id="quick-add-menu"></div>
+<div id="global-search-overlay">
+  <div id="global-search-box">
+    <input id="global-search-input" placeholder="Search members, gold, items… (Esc to close)" autocomplete="off" spellcheck="false">
+    <div id="global-search-results"></div>
+    <div id="global-search-hint"><span>↑↓ navigate</span><span>Enter to open</span><span>Esc to close</span></div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
 // STORAGE & UTILS
 // ═══════════════════════════════════════════════════════════
+
+// ── Password hashing (WebCrypto SHA-256 + salt) ────────────
+// Passwords are stored as "salt:hash" — never plaintext.
+async function hashPassword(plain, salt){
+  if(!salt) salt = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const enc = new TextEncoder();
+  const keyMat = await crypto.subtle.importKey("raw", enc.encode(plain+salt), {name:"PBKDF2"}, false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode(salt),iterations:100000,hash:"SHA-256"}, keyMat, 256);
+  const hash = Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  return salt+":"+hash;
+}
+async function verifyPassword(plain, stored){
+  // Legacy: plain-text stored passwords (before this patch) — migrate on first successful login
+  if(!stored || !stored.includes(":")) return plain === stored;
+  const salt = stored.split(":")[0];
+  const candidate = await hashPassword(plain, salt);
+  return candidate === stored;
+}
+// Migrate a user's plaintext password to hashed on login
+async function migratePasswordIfNeeded(user, enteredPlain){
+  if(!user.password || !user.password.includes(":")){
+    user.password = await hashPassword(enteredPlain);
+    persist();
+  }
+}
+
 const SK="gv_platform_v1";
 const SK_SESSION="gv_session_v1";
 const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds","wikiPages","wikiDrafts"];
 
+// ── Session: stored in sessionStorage so it lasts the browser tab but not shared ──
 function saveSession(user, guildId){
-  try{localStorage.setItem(SK_SESSION,JSON.stringify({userId:user?.id||null,guildId:guildId||null}));}catch(e){}
+  try{sessionStorage.setItem(SK_SESSION,JSON.stringify({userId:user?.id||null,guildId:guildId||null}));}catch(e){}
 }
 function clearSession(){
-  try{localStorage.removeItem(SK_SESSION);}catch(e){}
+  try{sessionStorage.removeItem(SK_SESSION);}catch(e){}
 }
 function loadSession(){
-  try{return JSON.parse(localStorage.getItem(SK_SESSION))||null;}catch(e){return null;}
+  try{return JSON.parse(sessionStorage.getItem(SK_SESSION))||null;}catch(e){return null;}
 }
 
-// ── Cloudflare KV backend ──────────────────────────────────
-// Set this to the URL of your deployed Cloudflare Worker.
-// Example: "https://guild-hub-api.YOUR-SUBDOMAIN.workers.dev"
+// ── Cloudflare KV backend — SOLE source of truth ──────────
 const CF_WORKER_URL = "https://guild-hub-api.caleb-tomlinson16.workers.dev";
-
-// All KV keys the app uses
-const ALL_KV_KEYS = [SK,"gv_custom_items","gv_resources","gv_skill_xp_tables","gv_player_xp_table","gv_potion_effects"];
 
 // Debounce timer so rapid calls collapse into one write
 let _persistTimer=null;
-let _persistPending=false;
 
-function load(){
-  // Return localStorage cache immediately so the app boots fast.
-  // A background sync from KV fires after boot (see initKvSync).
-  try{return JSON.parse(localStorage.getItem(SK))||null}catch(e){return null}
-}
+// load() is now a no-op stub — data comes exclusively from KV via initKvSync()
+function load(){ return null; }
 
 async function _pushToKV(key,value){
-  try{
-    await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`,{
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({value})
-    });
-  }catch(e){/* offline — localStorage already updated, will drift until next push */}
+  const r=await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json","x-api-key":(document.getElementById("ss-api-key")?.value||"").trim()},
+    body:JSON.stringify({value})
+  });
+  if(!r.ok) throw new Error(`KV write failed: ${r.status}`);
 }
 
 async function _pullFromKV(key){
-  try{
-    const r=await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`);
-    if(!r.ok)return null;
-    const j=await r.json();
-    return j.value??null;
-  }catch(e){return null}
+  const r=await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`);
+  if(!r.ok) throw new Error(`KV read failed: ${r.status}`);
+  const j=await r.json();
+  return j.value??null;
 }
 
+// persist() writes to KV. Debounced 400ms so rapid changes collapse into one write.
+// Shows a saving indicator so users know their change is going through.
 function persist(){
-  // 1. Write to localStorage immediately (keeps UI snappy)
-  try{const o={};DKEYS.forEach(k=>o[k]=D[k]);localStorage.setItem(SK,JSON.stringify(o))}catch(e){}
-  // 2. Debounce the KV write (500 ms) to avoid hammering on rapid changes
-  _persistPending=true;
+  _showSavingIndicator();
   if(_persistTimer)clearTimeout(_persistTimer);
   _persistTimer=setTimeout(async()=>{
-    _persistPending=false;
     try{
       const o={};DKEYS.forEach(k=>o[k]=D[k]);
       await _pushToKV(SK,o);
-    }catch(e){}
-  },500);
+      _showSavedIndicator();
+    }catch(e){
+      console.error("KV write failed:",e);
+      _showSaveErrorIndicator();
+    }
+  },400);
 }
 
-// Pull all keys from KV on first load, merge into app state, then re-render.
+// ── Save status indicator (small dot in corner) ────────────
+function _showSavingIndicator(){
+  let el=document.getElementById("_save_indicator");
+  if(!el){el=document.createElement("div");el.id="_save_indicator";Object.assign(el.style,{position:"fixed",bottom:"10px",left:"10px",fontSize:"10px",padding:"3px 8px",borderRadius:"4px",zIndex:"9999",fontFamily:"inherit",pointerEvents:"none",transition:"opacity .3s"});document.body.appendChild(el);}
+  el.textContent="⏳ Saving…";el.style.background="var(--orgd)";el.style.color="var(--org)";el.style.border="1px solid rgba(210,153,34,.3)";el.style.opacity="1";
+}
+function _showSavedIndicator(){
+  const el=document.getElementById("_save_indicator");if(!el)return;
+  el.textContent="✓ Saved";el.style.background="var(--grnd)";el.style.color="var(--grn)";el.style.border="1px solid rgba(86,211,100,.3)";
+  setTimeout(()=>{el.style.opacity="0"},1500);
+}
+function _showSaveErrorIndicator(){
+  const el=document.getElementById("_save_indicator");if(!el)return;
+  el.textContent="✗ Save failed";el.style.background="var(--redd)";el.style.color="var(--red)";el.style.border="1px solid rgba(229,83,75,.3)";el.style.opacity="1";
+}
+
+// ── Loading screen shown while fetching from KV on boot ───
+function _showLoadingScreen(){
+  const el=document.createElement("div");
+  el.id="_loading_screen";
+  el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:12px"><div style="font-size:28px">⚔️</div><div style="font-size:15px;font-weight:600;color:var(--t1)">Gloria Victis — Guild Hub</div><div style="font-size:12px;color:var(--tm)">Loading guild data…</div></div>`;
+  Object.assign(el.style,{position:"fixed",inset:"0",background:"var(--bg0)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:"9999",fontFamily:"inherit"});
+  document.body.appendChild(el);
+}
+function _hideLoadingScreen(){
+  document.getElementById("_loading_screen")?.remove();
+}
+
+// Pull all data from KV on boot, populate D, then render.
 async function initKvSync(){
+  _showLoadingScreen();
   try{
-    // Pull main data
+    // Pull main data blob
     const main=await _pullFromKV(SK);
     if(main&&typeof main==="object"){
       DKEYS.forEach(k=>{if(main[k]!==undefined)D[k]=main[k];});
-      try{localStorage.setItem(SK,JSON.stringify(main));}catch(e){}
     }
     // Pull craft sub-keys
-    const ciRaw=await _pullFromKV("gv_custom_items");
-    if(ciRaw){craftItems=Array.isArray(ciRaw)?ciRaw:JSON.parse(ciRaw);try{localStorage.setItem("gv_custom_items",JSON.stringify(craftItems))}catch(e){}}
-    const crRaw=await _pullFromKV("gv_resources");
-    if(crRaw){craftResources=Array.isArray(crRaw)?crRaw:JSON.parse(crRaw);try{localStorage.setItem("gv_resources",JSON.stringify(craftResources))}catch(e){}}
-    const xtRaw=await _pullFromKV("gv_skill_xp_tables");
-    if(xtRaw){craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);try{localStorage.setItem("gv_skill_xp_tables",JSON.stringify(craftSkillXpTables))}catch(e){}}
-    const ptRaw=await _pullFromKV("gv_player_xp_table");
-    if(ptRaw){playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){}}
-    const peRaw=await _pullFromKV("gv_potion_effects");
-    if(peRaw){try{localStorage.setItem("gv_potion_effects",JSON.stringify(Array.isArray(peRaw)?peRaw:JSON.parse(peRaw)))}catch(e){}}
-    // Re-resolve currentUser from fresh data (IDs are stable, data may have changed)
-    if(currentUser){
-      const freshUser=D.users.find(u=>u.id===currentUser.id);
-      if(freshUser) currentUser=freshUser;
+    try{const ciRaw=await _pullFromKV("gv_custom_items");if(ciRaw)craftItems=Array.isArray(ciRaw)?ciRaw:JSON.parse(ciRaw);}catch(e){}
+    try{const crRaw=await _pullFromKV("gv_resources");if(crRaw)craftResources=Array.isArray(crRaw)?crRaw:JSON.parse(crRaw);}catch(e){}
+    try{const xtRaw=await _pullFromKV("gv_skill_xp_tables");if(xtRaw)craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);}catch(e){}
+    try{const ptRaw=await _pullFromKV("gv_player_xp_table");if(ptRaw)playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);}catch(e){}
+    // Re-resolve currentUser from fresh KV data
+    const sess=loadSession();
+    if(sess?.userId){
+      const user=D.users.find(u=>u.id===sess.userId);
+      if(user){ currentUser=user; currentGuildId=sess.guildId||user.guildId||null; if(isSiteAdmin()&&!currentGuildId&&D.guilds.length)currentGuildId=D.guilds[0].id; }
       else { currentUser=null; currentGuildId=null; clearSession(); }
     }
     rebuildG();
-    render();
-  }catch(e){console.warn("KV sync failed, running from local cache:",e);}
+  }catch(e){
+    console.error("KV load failed:",e);
+    // Show error but still render (will show login with empty/default state)
+    _showSaveErrorIndicator();
+  }
+  _hideLoadingScreen();
+  render();
 }
 function toast(m,t){const el=document.getElementById("toast");el.textContent=m;el.style.display="block";el.style.background=t==="error"?"var(--redd)":t==="warn"?"var(--orgd)":"var(--grnd)";el.style.color=t==="error"?"var(--red)":t==="warn"?"var(--org)":"var(--grn)";el.style.border="1px solid "+(t==="error"?"rgba(229,83,75,.25)":t==="warn"?"rgba(210,153,34,.25)":"rgba(86,211,100,.25)");setTimeout(()=>el.style.display="none",2200)}
 function exportJSON(){const o={};DKEYS.forEach(k=>o[k]=D[k]);o._craftItems=craftItems;o._craftResources=craftResources;o._craftSkillXpTables=craftSkillXpTables;const b=new Blob([JSON.stringify(o,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="guild-hub-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Exported!")}
 function exportCSV(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fn;a.click();toast("CSV exported!")}
-function importJSON(file){const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);DKEYS.forEach(k=>{if(d[k])D[k]=d[k]});if(d._craftItems){craftItems=d._craftItems;saveCraftItems()}if(d._craftResources){craftResources=d._craftResources;saveCraftResources()}if(d._craftSkillXpTables){craftSkillXpTables=d._craftSkillXpTables;saveCraftSkillXpTables()}persist();toast("Imported!");render()}catch(err){toast("Invalid file","error")}};r.readAsText(file)}
+function importJSON(file){const r=new FileReader();r.onload=async e=>{try{const d=JSON.parse(e.target.result);DKEYS.forEach(k=>{if(d[k])D[k]=d[k]});if(d._craftItems){craftItems=d._craftItems;saveCraftItems()}if(d._craftResources){craftResources=d._craftResources;saveCraftResources()}if(d._craftSkillXpTables){craftSkillXpTables=d._craftSkillXpTables;saveCraftSkillXpTables()}persist();toast("Imported!");render()}catch(err){toast("Invalid file","error")}};r.readAsText(file)}
 
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const uid=()=>Date.now().toString(36)+Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b=>b.toString(16).padStart(2,"0")).join("");
 const fmt=n=>n.toLocaleString();
 const fmtD=d=>new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 const fmtDT=d=>new Date(d).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
@@ -367,7 +491,7 @@ const fmtDT=d=>new Date(d).toLocaleString("en-US",{month:"short",day:"numeric",h
 // ═══════════════════════════════════════════════════════════
 const saved=load();
 const DEFAULT_CFG={guildName:"My Guild",ranks:["Guild Leader","Officer","Member","Recruit"],tags:["Tank","Healer","DPS","Crafter","Gatherer","Scout"]};
-const DEFAULT_SITE_ADMIN={id:"__site_admin__",username:"admin",password:"admin",role:"site_admin",displayName:"Site Admin",discord:"",guildId:null};
+const DEFAULT_SITE_ADMIN={id:"__site_admin__",username:"admin",password:"admin",role:"site_admin",displayName:"Site Admin",discord:"",guildId:null,_mustChangePassword:true};
 const D={
   guilds:saved?.guilds||[],    // [{id, name, createdBy, cfg:{guildName,ranks,tags}}]
   users:saved?.users||[DEFAULT_SITE_ADMIN],
@@ -461,8 +585,11 @@ function bindOnce(el,event,key,handler){
   el.setAttribute(attr,"1");
   el.addEventListener(event,handler);
 }
+// Fast lookup maps — rebuilt by rebuildG(), used by pN() and iN()
+let _playerMap = {}, _itemMap = {};
+
 function rebuildG(){
-  if(!currentGuildId){G={p:[],gt:[],it:[],items:[],log:[],events:[],orders:[],requests:[],announcements:[],gear:[],goldRequests:[]};return;}
+  if(!currentGuildId){G={p:[],gt:[],it:[],items:[],log:[],events:[],orders:[],requests:[],announcements:[],gear:[],goldRequests:[]};_playerMap={};_itemMap={};return;}
   const gid=currentGuildId;
   G.p=D.p.filter(x=>x.guildId===gid);
   G.gt=D.gt.filter(x=>x.guildId===gid);
@@ -475,6 +602,9 @@ function rebuildG(){
   G.announcements=D.announcements.filter(x=>x.guildId===gid);
   G.gear=D.gear.filter(x=>x.guildId===gid);
   G.goldRequests=D.goldRequests.filter(x=>x.guildId===gid);
+  // Build fast lookup maps
+  _playerMap={};G.p.forEach(p=>{_playerMap[p.id]=p.name});
+  _itemMap={};G.items.forEach(i=>{_itemMap[i.id]=i.name});
 }
 function currentGuildCfg(){
   const g=D.guilds.find(x=>x.id===currentGuildId);
@@ -482,27 +612,47 @@ function currentGuildCfg(){
 }
 // isSiteAdmin: can see/manage all guilds
 const isSiteAdmin=()=>currentUser?.role==="site_admin"||currentUser?.role==="admin";
-// isAdmin: guild leader / admin within current guild (or site admin)
-const isAdmin=()=>isSiteAdmin()||currentUser?.role==="guild_leader";
+// isAdmin: guild leader / officer / admin within current guild (or site admin)
+const isAdmin=()=>isSiteAdmin()||currentUser?.role==="guild_leader"||currentUser?.role==="officer";
+// isOfficer: officer-level but not full admin (can't change settings/roles)
+const isOfficer=()=>currentUser?.role==="officer";
 // isContributor: can edit GLOBAL shared databases (crafting DB, XP tables, shop entries, map markers)
 // Only explicit contributor role or site_admin/admin
 const isContributor=()=>isSiteAdmin()||currentUser?.role==="contributor";
 const canManageDatabase=()=>isAdmin();
 // isGuildMember: is the user a member of the current guild
 const isGuildMember=()=>isSiteAdmin()||currentUser?.guildId===currentGuildId;
-const pN=id=>G.p.find(x=>x.id===id)?.name||"Unknown";
-const iN=id=>G.items.find(x=>x.id===id)?.name||"Unknown";
-const B=(t,c)=>`<span class="badge ${({ac:"bac",g:"bgr",r:"bre",b:"bbl",o:"bor",y:"byl",p:"bpk",cn:"bcn"})[c]||"bac"}">${t}</span>`;
+const pN=id=>_playerMap[id]||G.p.find(x=>x.id===id)?.name||"Unknown";
+const iN=id=>_itemMap[id]||G.items.find(x=>x.id===id)?.name||"Unknown";
+// ── XSS escape helper — always use esc() before injecting user strings into innerHTML ──
+const _esc_el=document.createElement("div");
+function esc(s){_esc_el.textContent=String(s??'');return _esc_el.innerHTML;}
+
+const B=(t,c)=>`<span class="badge ${({ac:"bac",g:"bgr",r:"bre",b:"bbl",o:"bor",y:"byl",p:"bpk",cn:"bcn"})[c]||"bac"}">${esc(t)}</span>`;
 const rankB=r=>r==="Guild Leader"?B(r,"ac"):r==="Officer"?B(r,"b"):r==="Recruit"?B(r,"o"):B(r,"g");
 const statusB=s=>s==="Active"?B(s,"g"):B(s,"r");
 const txB=t=>t.includes("Deposit")||t.includes("Donate")||t==="Donated"?B(t,"g"):t.includes("Repay")||t==="Returned"?B(t,"b"):B(t,"r");
 const dot=t=>{const c=t.includes("Deposit")||t.includes("Donate")||t==="Donated"?"var(--grn)":t.includes("Repay")||t==="Returned"?"var(--blu)":"var(--red)";return`<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${c};flex-shrink:0"></span>`};
-const stat=(l,v,c)=>`<div class="card" style="animation:fadeIn .25s both"><div class="sv" style="color:${c||'var(--t1)'}">${v}</div><div class="sl">${l}</div></div>`;
+const stat=(l,v,c)=>`<div class="card" style="animation:fadeIn .25s both"><div class="sv" style="color:${c||'var(--t1)'}">${v}</div><div class="sl">${esc(l)}</div></div>`;
 const bar=(v,mx,c)=>`<div class="pb" style="width:60px"><div class="pf" style="width:${Math.min(v/(mx||1)*100,100)}%;background:${c}"></div></div>`;
-const empty=(ico,title,sub,btn,id)=>`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div>${btn&&isAdmin()?`<button class="btn bp" id="${id}">${btn}</button>`:""}</div>`;
+const empty=(ico,title,sub,btn,id)=>`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-title">${esc(title)}</div><div class="empty-sub">${esc(sub)}</div>${btn&&isAdmin()?'<button class="btn bp" id="'+esc(id)+'">'+esc(btn)+'</button>':""}</div>`;
 const adminOnly=()=>!isAdmin()?`<div style="font-size:11px;color:var(--tm);font-style:italic;margin-top:8px">🔒 Admin access required to make changes</div>`:"";
 
-function addLog(a,d){D.log.unshift({id:uid(),date:new Date().toISOString(),action:a,detail:d,user:currentUser?.displayName||"?",guildId:currentGuildId});if(G.log.length>500){const keep=new Set(G.log.slice(0,500).map(x=>x.id));D.log=D.log.filter(x=>x.guildId!==currentGuildId||keep.has(x.id));}persist()}
+// FIX: addLog no longer calls persist() — callers must persist themselves.
+// This prevents the double-persist bug where addLog+persist fired twice per action.
+// FIX: log trim now checks D.log entries for this guild (not G.log which is a filtered view).
+function addLog(a,d){
+  D.log.unshift({id:uid(),date:new Date().toISOString(),action:a,detail:d,user:currentUser?.displayName||"?",guildId:currentGuildId});
+  // Trim: keep at most 500 entries per guild in the global log
+  const guildLogCount=D.log.filter(x=>x.guildId===currentGuildId).length;
+  if(guildLogCount>500){
+    let kept=0;
+    D.log=D.log.filter(x=>{
+      if(x.guildId!==currentGuildId)return true;
+      return ++kept<=500;
+    });
+  }
+}
 // Gold math:
 // Player debt = borrowed - repaid - donated (clamped to 0)
 //   Donations pay off debt first, any excess goes to guild treasury
@@ -511,7 +661,13 @@ function addLog(a,d){D.log.unshift({id:uid(),date:new Date().toISOString(),actio
 //   Simpler: treasury = sum of all inflows - sum of all outflows
 //   Inflows: donations, repayments. Outflows: borrows.
 //   Treasury = donated + repaid - borrowed
+// ── Per-render pGold memo cache ─────────────────────────────
+// Invalidated at the start of every render() call via clearRenderCache()
+let _pGoldCache = {};
+function clearRenderCache(){ _pGoldCache = {}; }
+
 function pGold(pid){
+  if(_pGoldCache[pid]) return _pGoldCache[pid];
   // Process transactions chronologically - deposits reduce existing debt first
   const tx=G.gt.filter(t=>t.playerId===pid).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
   let debt=0, totalBorrowed=0, totalDeposited=0;
@@ -520,12 +676,13 @@ function pGold(pid){
       debt+=t.amount;
       totalBorrowed+=t.amount;
     } else if(t.type==="Deposit Gold"||t.type==="Repay Gold"||t.type==="Donate Gold"){
-      // All deposits reduce existing debt first
       debt=Math.max(0,debt-t.amount);
       totalDeposited+=t.amount;
     }
   });
-  return{borrowed:totalBorrowed,deposited:totalDeposited,debt}
+  const result={borrowed:totalBorrowed,deposited:totalDeposited,debt};
+  _pGoldCache[pid]=result;
+  return result;
 }
 function gStats(){
   const deposits=G.gt.filter(t=>t.type==="Deposit Gold"||t.type==="Donate Gold"||t.type==="Repay Gold").reduce((s,t)=>s+t.amount,0);
@@ -653,11 +810,11 @@ function renderGuest(){
     const dupeCount=getDatabaseDuplicateGroups().length;
     h+=`<div class="ns"><div class="nst">Database</div>`;
     h+=`<div class="ni${pg==="db-home"||pg==="dashboard"?" a":""}" data-page="db-home"><span style="font-size:13px;width:16px;text-align:center">DB</span>Overview</div>`;
-    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">ðŸ“</span>Item Database${craftItems.length?`<span class="cnt">${craftItems.length}</span>`:""}</div>`;
-    h+=`<div class="ni${pg==="shop-cities"?" a":""}" data-page="shop-cities"><span style="font-size:13px;width:16px;text-align:center">ðŸ˜ï¸</span>Shop Entry DB${D.cities.length?`<span class="cnt">${D.cities.length}</span>`:""}</div>`;
-    h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">ðŸ“ˆ</span>Skill XP Tables</div>`;
-    h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">ðŸ§</span>Character XP Table</div>`;
-    h+=`<div class="ni${pg==="database-duplicates"?" a":""}" data-page="database-duplicates"><span style="font-size:13px;width:16px;text-align:center">âš </span>Duplicates${dupeCount?`<span class="cnt">${dupeCount}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📋</span>Item Database${craftItems.length?`<span class="cnt">${craftItems.length}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="shop-cities"?" a":""}" data-page="shop-cities"><span style="font-size:13px;width:16px;text-align:center">🏘️</span>Shop Entry DB${D.cities.length?`<span class="cnt">${D.cities.length}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">📈</span>Skill XP Tables</div>`;
+    h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">🧬</span>Character XP Table</div>`;
+    h+=`<div class="ni${pg==="database-duplicates"?" a":""}" data-page="database-duplicates"><span style="font-size:13px;width:16px;text-align:center">⚠️</span>Duplicates${dupeCount?`<span class="cnt">${dupeCount}</span>`:""}</div>`;
     h+=`</div>`;
   } else if(activeTool==="wiki"){
     h=buildWikiSidebarNav(h);
@@ -736,10 +893,17 @@ function renderLogin(){
       ${err}
       <div style="margin-top:16px;text-align:center;font-size:12px;color:var(--t2)">No account? <span id="goto-register" style="color:var(--ac);cursor:pointer;font-weight:500">Create one</span></div>`);
   } else if(mode==="register"){
+    const pendingInvCode=window._pendingInviteCode;
+    const invCheck=pendingInvCode?validateInviteCode(pendingInvCode):null;
+    const invGuild=invCheck?.ok?D.guilds.find(g=>g.id===invCheck.code.guildId):null;
+    const inviteBanner=invGuild
+      ?`<div style="padding:10px 12px;background:var(--grnd);border:1px solid rgba(86,211,100,.3);border-radius:5px;font-size:12px;color:var(--grn);margin-bottom:14px">✅ You've been invited to join <strong>${esc(invGuild.name)}</strong>. Register to auto-join!</div>`
+      :(pendingInvCode?`<div style="padding:10px 12px;background:var(--redd);border:1px solid rgba(229,83,75,.25);border-radius:5px;font-size:12px;color:var(--red);margin-bottom:14px">⚠ Invite code is invalid or expired. You can still register and join a guild manually.</div>`:"");
     html=wrap(`${logo}<div class="login-title">Create Account</div><div class="login-sub" style="margin-bottom:16px">Fill in your details to get started</div>
+      ${inviteBanner}
       <div class="fg"><label class="fl">In-Game Name *</label><input class="inp" id="login-user" placeholder="Your character name" autofocus></div>
       <div class="fg"><label class="fl">Discord *</label><input class="inp" id="login-discord" placeholder="username or user#0000"></div>
-      <div class="fg"><label class="fl">Password *</label><input class="inp" type="password" id="login-pass" placeholder="Choose a password"></div>
+      <div class="fg"><label class="fl">Password *</label><input class="inp" type="password" id="login-pass" placeholder="Choose a password (min 8 chars)"></div>
       <div class="fg"><label class="fl">Confirm Password *</label><input class="inp" type="password" id="login-pass2" placeholder="Confirm password"></div>
       <button class="btn bp" id="login-btn" style="width:100%;justify-content:center;padding:8px;margin-top:4px">Create Account</button>
       ${err}
@@ -797,11 +961,16 @@ function renderLogin(){
   window._regData=window._regData||{};
 
   if(mode==="login"){
-    const doLogin=()=>{
+    const doLogin=async()=>{
       const u=document.getElementById("login-user").value.trim();
       const p=document.getElementById("login-pass").value;
-      const user=D.users.find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.password===p);
-      if(!user){showErr("Invalid username or password");return}
+      const userFound=D.users.find(x=>x.username.toLowerCase()===u.toLowerCase());
+      if(!userFound){showErr("Invalid username or password");return}
+      const ok=await verifyPassword(p, userFound.password);
+      if(!ok){showErr("Invalid username or password");return}
+      const user=userFound;
+      // Migrate plaintext password to hashed on successful login
+      await migratePasswordIfNeeded(user, p);
       if(user.status==="pending"){
         // Show pending screen directly
         currentUser=user;currentGuildId=user.guildId||null;
@@ -822,18 +991,39 @@ function renderLogin(){
     document.getElementById("login-pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
     document.getElementById("goto-register").addEventListener("click",()=>{loginMode="register";renderLogin()});
   } else if(mode==="register"){
-    document.getElementById("login-btn").addEventListener("click",()=>{
-      const name=document.getElementById("login-user").value.trim();
-      const discord=document.getElementById("login-discord").value.trim();
+    document.getElementById("login-btn").addEventListener("click",async()=>{
       const pass=document.getElementById("login-pass").value;
       const pass2=document.getElementById("login-pass2").value;
       if(!name){showErr("In-game name is required");return}
       if(!discord){showErr("Discord is required");return}
-      if(!pass||pass.length<3){showErr("Password must be at least 3 characters");return}
+      if(!pass||pass.length<8){showErr("Password must be at least 8 characters");return}
       if(pass!==pass2){showErr("Passwords don't match");return}
       if(D.users.find(x=>x.username.toLowerCase()===name.toLowerCase())){showErr("Username already taken");return}
-      // Create account with no guild — they can join/create one from the Guild Manager tab
-      const newUser={id:uid(),username:name,discord,password:pass,displayName:name,role:"member",guildId:null,status:"active"};
+      // Hash password before storing
+      const hashedPass = await hashPassword(pass);
+      // Check for pending invite code
+      const pendingCode=window._pendingInviteCode;
+      const inv=pendingCode?validateInviteCode(pendingCode):null;
+      if(pendingCode&&inv&&inv.ok){
+        // Auto-approve into the guild this code belongs to
+        const invGuild=D.guilds.find(g=>g.id===inv.code.guildId);
+        const newUser={id:uid(),username:name,discord,password:hashedPass,displayName:name,role:"member",guildId:inv.code.guildId,status:"active"};
+        D.users.push(newUser);
+        inv.code.uses=(inv.code.uses||0)+1;
+        currentUser=newUser;
+        currentGuildId=inv.code.guildId;
+        saveSession(currentUser,currentGuildId);
+        rebuildG();
+        addLog("Joined via Invite",name);
+        persist();
+        window._regData={};
+        window._pendingInviteCode=null;
+        activeTool="treasury";pg="dashboard";
+        render();
+        toast(`Welcome, ${name}! You've joined ${invGuild?.name||"the guild"}.`);
+        return;
+      }
+      const newUser={id:uid(),username:name,discord,password:hashedPass,displayName:name,role:"member",guildId:null,status:"active"};
       D.users.push(newUser);
       currentUser=newUser;
       currentGuildId=null;
@@ -846,7 +1036,7 @@ function renderLogin(){
     });
     document.getElementById("goto-login").addEventListener("click",()=>{loginMode="login";renderLogin()});
   } else if(mode==="create-guild"){
-    document.getElementById("create-guild-btn").addEventListener("click",()=>{
+    document.getElementById("create-guild-btn").addEventListener("click",async()=>{
       const guildName=document.getElementById("reg-guild-name").value.trim();
       if(!guildName){showErr("Guild name is required");return}
       // Works for both logged-in users and new registrations via _regData
@@ -854,7 +1044,8 @@ function renderLogin(){
       if(!user){
         const {name,discord,pass}=window._regData||{};
         if(!name){loginMode="register";renderLogin();return}
-        user={id:uid(),username:name,discord,password:pass,displayName:name,role:"guild_leader",guildId:null,status:"active"};
+        const hashedPass2 = await hashPassword(pass);
+        user={id:uid(),username:name,discord,password:hashedPass2,displayName:name,role:"guild_leader",guildId:null,status:"active"};
         D.users.push(user);
       }
       const guildId=uid();
@@ -890,11 +1081,12 @@ function renderLogin(){
         if(btn)btn.disabled=false;
       });
     });
-    document.getElementById("apply-guild-btn").addEventListener("click",()=>{
+    document.getElementById("apply-guild-btn").addEventListener("click",async()=>{
       if(!selectedGuildId){showErr("Select a guild first");return}
       const {name,discord,pass}=window._regData;
       if(!name){loginMode="register";renderLogin();return}
-      const newUser={id:uid(),username:name,discord,password:pass,displayName:name,role:"member",guildId:selectedGuildId,status:"pending"};
+      const hashedPass3 = await hashPassword(pass);
+      const newUser={id:uid(),username:name,discord,password:hashedPass3,displayName:name,role:"member",guildId:selectedGuildId,status:"pending"};
       D.users.push(newUser);
       persist();window._regData={};
       // Show waiting screen
@@ -3453,24 +3645,92 @@ function tLeaderboards(){const gd=topN("Donate Gold","gold",20),id=topN("Donated
 
 function tActivity(){const f=feed().filter(e=>{if(F.actF==="All")return true;if(F.actF==="Gold")return e.type.includes("Gold");return["Borrowed","Returned","Donated"].includes(e.type)});let h=`<div class="ph"><div class="pt">Activity</div><select class="inp" id="factf" style="width:110px">${["All","Gold","Items"].map(o=>`<option${F.actF===o?" selected":""}>${o}</option>`).join("")}</select></div>`;if(!f.length)return h+`<div class="card">${empty("📋","No activity","")}</div>`;h+=`<div class="card">`;f.slice(0,50).forEach((e,i)=>{h+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;${i<49?"border-bottom:1px solid var(--bd)":""}">${dot(e.type)}<span style="font-size:10px;color:var(--tm);min-width:68px">${fmtD(e.date)}</span><span style="font-size:12px;flex:1;color:var(--t2)">${e.text}</span>${txB(e.type)}</div>`});h+=`</div>`;return h}
 
-function tAudit(){let h=`<div class="ph"><div class="pt">Audit Log</div>${isAdmin()?`<button class="btn bg bs" id="clear-log">Clear</button>`:""}</div>`;if(!G.log.length)return h+`<div class="card">${empty("📝","No entries","")}</div>`;h+=`<div class="card tw"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>`;G.log.slice(0,100).forEach(l=>{h+=`<tr><td style="font-size:11px;color:var(--tm);white-space:nowrap">${fmtDT(l.date)}</td><td style="font-size:11px;color:var(--ac)">${l.user||"?"}</td><td style="font-weight:500">${l.action}</td><td style="color:var(--tm);font-size:12px">${l.detail||""}</td></tr>`});h+=`</tbody></table></div>`;return h}
+function tAudit(){
+  const logFilter=(window._auditUserFilter||"").toLowerCase().trim();
+  const logSearch=(window._auditSearch||"").toLowerCase().trim();
+  const filteredLog=G.log.filter(l=>{
+    if(logFilter&&(l.user||"?").toLowerCase()!==logFilter)return false;
+    if(logSearch){const hay=[(l.action||""),(l.detail||""),(l.user||"")].join(" ").toLowerCase();if(!hay.includes(logSearch))return false;}
+    return true;
+  });
+  const uniqueUsers=[...new Set(G.log.map(l=>l.user||"?"))].sort();
+  let h=`<div class="ph"><div class="pt">Audit Log</div><div style="display:flex;gap:6px;flex-wrap:wrap">${isAdmin()?`<button class="btn bg bs" id="csv-audit">⬇ CSV</button><button class="btn bg bs" id="clear-log">🗑 Clear</button>`:""}</div></div>`;
+  h+=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+  h+=`<div class="sb" style="flex:1;min-width:180px"><span style="color:var(--tm)">🔍</span><input id="audit-search-inp" placeholder="Search actions…" value="${esc(window._auditSearch||'')}"></div>`;
+  h+=`<select class="inp" id="audit-user-filter" style="width:160px"><option value="">All Users</option>${uniqueUsers.map(u=>`<option value="${esc(u)}"${(window._auditUserFilter||"")===(u)?" selected":""}>${esc(u)}</option>`).join("")}</select>`;
+  h+=`</div>`;
+  if(!filteredLog.length)return h+`<div class="card">${empty("📝","No entries","")}</div>`;
+  h+=`<div class="card tw"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody>`;
+  filteredLog.slice(0,500).forEach(l=>{h+=`<tr><td style="font-size:11px;color:var(--tm);white-space:nowrap">${fmtDT(l.date)}</td><td style="font-size:11px;color:var(--ac)">${esc(l.user||"?")}</td><td style="font-weight:500">${esc(l.action)}</td><td style="color:var(--tm);font-size:12px">${esc(l.detail||"")}</td></tr>`});
+  h+=`</tbody></table></div>`;return h
+}
+
+// ── Invite code storage (lives in D.inviteCodes, scoped by guildId) ────────────
+// Each code: {id, code, guildId, createdBy, createdAt, expiresAt, uses, maxUses, disabled}
+if(!D.inviteCodes) D.inviteCodes=[];
+if(!DKEYS.includes("inviteCodes")) DKEYS.push("inviteCodes");
+
+function generateInviteCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b=>chars[b%chars.length]).join("");
+}
+function getInviteCode(code){
+  return D.inviteCodes.find(c=>c.code===code&&!c.disabled);
+}
+function validateInviteCode(code){
+  const c=getInviteCode(code);
+  if(!c)return{ok:false,reason:"Invalid or expired invite code."};
+  if(c.expiresAt&&new Date(c.expiresAt)<new Date())return{ok:false,reason:"This invite code has expired."};
+  if(c.maxUses>0&&c.uses>=c.maxUses)return{ok:false,reason:"This invite code has reached its maximum uses."};
+  return{ok:true,code:c};
+}
 
 function tSettings(){
-const kb=(new Blob([localStorage.getItem(SK)||""]).size/1024).toFixed(1);
+const kb="KV";
 let h=`<div class="ph"><div class="pt">Settings</div></div>`;
 // My Account section (for all users)
 h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">My Account</div>`;
-h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)"><div><span style="font-weight:500">${currentUser.displayName||currentUser.username}</span><span style="color:var(--tm);font-size:11px;margin-left:8px">(${currentUser.role})</span></div></div>`;
+h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)"><div><span style="font-weight:500">${esc(currentUser.displayName||currentUser.username)}</span><span style="color:var(--tm);font-size:11px;margin-left:8px">(${esc(currentUser.role)})</span></div></div>`;
 h+=`<div style="margin-top:12px"><button class="btn bg" id="change-pw-btn">🔑 Change Password</button></div>`;
 h+=`</div>`;
 if(!isAdmin())return h+`<div class="card">${empty("🔒","Admin Only","Additional settings can only be changed by admin users.")}</div>`;
-h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Guild Name</div><div style="display:flex;gap:8px"><input class="inp" id="cfg-name" value="${currentGuildCfg().guildName}" style="max-width:300px"><button class="btn bp bs" id="save-name">Save</button></div></div>`;
+h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Guild Name</div><div style="display:flex;gap:8px"><input class="inp" id="cfg-name" value="${esc(currentGuildCfg().guildName)}" style="max-width:300px"><button class="btn bp bs" id="save-name">Save</button></div></div>`;
+
+// ── Invite Codes ────────────────────────────────────────────
+const guildCodes=(D.inviteCodes||[]).filter(c=>c.guildId===currentGuildId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+const inviteBase=window.location.href.split("?")[0];
+h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">🔗 Invite Links</div><button class="btn bp bs" id="gen-invite-btn">+ Generate Link</button></div>`;
+h+=`<div style="font-size:11px;color:var(--tm);margin-bottom:10px">Share an invite link so new members can join without manually applying. Each link can optionally expire or limit total uses.</div>`;
+if(!guildCodes.length){
+  h+=`<div style="color:var(--tm);font-size:12px;text-align:center;padding:12px">No invite links yet. Generate one above.</div>`;
+}else{
+  guildCodes.forEach(c=>{
+    const expired=c.expiresAt&&new Date(c.expiresAt)<new Date();
+    const maxed=c.maxUses>0&&c.uses>=c.maxUses;
+    const inactive=c.disabled||expired||maxed;
+    const link=`${inviteBase}?invite=${c.code}`;
+    const statusColor=inactive?"var(--red)":"var(--grn)";
+    const statusLabel=c.disabled?"Disabled":expired?"Expired":maxed?"Maxed Out":"Active";
+    h+=`<div style="padding:10px;border:1px solid ${inactive?"rgba(229,83,75,.25)":"var(--bd)"};border-radius:5px;margin-bottom:6px;background:var(--bgi)">`;
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">`;
+    h+=`<code style="flex:1;font-size:11px;color:var(--ac);background:var(--bg2);padding:3px 7px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(link)}</code>`;
+    h+=`<button class="btn bg bs copy-invite-btn" data-link="${esc(link)}" title="Copy link">📋</button>`;
+    h+=`<span style="font-size:10px;font-weight:600;color:${statusColor};white-space:nowrap">${statusLabel}</span>`;
+    h+=`<button class="btn bd bs del-invite-btn" data-code="${esc(c.code)}" title="Delete">✕</button>`;
+    h+=`</div>`;
+    h+=`<div style="font-size:10px;color:var(--tm)">Uses: ${c.uses}${c.maxUses>0?" / "+c.maxUses:" (unlimited)"} · Created by ${esc(c.createdBy)} on ${fmtD(c.createdAt)}${c.expiresAt?" · Expires "+fmtD(c.expiresAt):""}`;
+    if(!inactive)h+=` · <button class="btn bg bs" style="font-size:9px;padding:1px 5px" id="disable-invite-${esc(c.code)}" data-code="${esc(c.code)}">Disable</button>`;
+    h+=`</div></div>`;
+  });
+}
+h+=`</div>`;
+
 // Pending applications for this guild
 const pendingApps=D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending");
 if(pendingApps.length){
   h+=`<div class="card" style="margin-bottom:12px;border-color:var(--org)"><div style="font-size:10px;font-weight:600;color:var(--org);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">⏳ Pending Applications (${pendingApps.length})</div>`;
   pendingApps.forEach(u=>{
-    h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-weight:600">${u.displayName}</div><div style="font-size:11px;color:var(--tm)">${u.discord||""}</div></div><button class="btn bgrn bs approve-user" data-id="${u.id}">✓ Approve</button><button class="btn bd bs deny-user" data-id="${u.id}">✕ Deny</button></div>`;
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-weight:600">${esc(u.displayName)}</div><div style="font-size:11px;color:var(--tm)">${esc(u.discord||"")}</div></div><button class="btn bgrn bs approve-user" data-id="${esc(u.id)}">✓ Approve</button><button class="btn bd bs deny-user" data-id="${esc(u.id)}">✕ Deny</button></div>`;
   });
   h+=`</div>`;
 }
@@ -3481,8 +3741,8 @@ const guildUsers=isSiteAdmin()
 const userSectionTitle=isSiteAdmin()?"All Users (Site Admin)":"Guild Members";
 h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">${userSectionTitle}</div><div class="tw"><table><thead><tr><th>Username</th><th>Discord</th><th>Role</th><th>Status</th><th style="width:60px"></th></tr></thead><tbody>`;
 guildUsers.forEach(u=>{
-  const roleColor=u.role==="site_admin"?"r":u.role==="guild_leader"?"ac":u.role==="contributor"?"b":u.role==="admin"?"cn":"g";
-  h+=`<tr><td style="font-weight:500">${u.username}</td><td style="color:var(--tm);font-size:12px">${u.discord||"—"}</td><td>${B(u.role.charAt(0).toUpperCase()+u.role.slice(1),roleColor)}</td><td>${u.tempPassword?`<span class="badge bor">Temp PW</span>`:u.status==="pending"?`<span class="badge byl">Pending</span>`:`<span class="badge bgr">Active</span>`}</td><td><button class="btn bg bs edit-user" data-id="${u.id}">✎</button></td></tr>`;
+  const roleColor=u.role==="site_admin"?"r":u.role==="guild_leader"?"ac":u.role==="officer"?"b":u.role==="contributor"?"cn":u.role==="admin"?"cn":"g";
+  h+=`<tr><td style="font-weight:500">${esc(u.username)}</td><td style="color:var(--tm);font-size:12px">${esc(u.discord||"—")}</td><td>${B(u.role.charAt(0).toUpperCase()+u.role.slice(1),roleColor)}</td><td>${u.tempPassword?`<span class="badge bor">Temp PW</span>`:u.status==="pending"?`<span class="badge byl">Pending</span>`:`<span class="badge bgr">Active</span>`}</td><td><button class="btn bg bs edit-user" data-id="${esc(u.id)}">✎</button></td></tr>`;
 });
 h+=`</tbody></table></div><button class="btn bp bs" id="add-user-btn" style="margin-top:8px">+ Add User</button></div>`;
 // Site admin: show all guilds
@@ -3491,11 +3751,11 @@ if(isSiteAdmin()){
   D.guilds.forEach(g=>{
     const isActive=g.id===currentGuildId;
     const memberCount=D.p.filter(p=>p.guildId===g.id).length;
-    h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-weight:600">${g.name}</div><div style="font-size:11px;color:var(--tm)">${memberCount} members • Created ${fmtD(g.createdDate||new Date().toISOString())}</div></div>${isActive?`<span class="badge bgr">Active</span>`:`<button class="btn bg bs switch-guild-btn" data-gid="${g.id}">Switch</button>`}</div>`;
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-weight:600">${esc(g.name)}</div><div style="font-size:11px;color:var(--tm)">${memberCount} members · Created ${fmtD(g.createdDate||new Date().toISOString())}</div></div>${isActive?`<span class="badge bgr">Active</span>`:`<button class="btn bg bs switch-guild-btn" data-gid="${esc(g.id)}">Switch</button>`}</div>`;
   });
   h+=`</div>`;
 }
-h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Tags</div><div style="margin-bottom:8px">${currentGuildCfg().tags.map(t=>`<span class="tag">${t}</span>`).join(" ")}</div><div style="display:flex;gap:8px"><input class="inp" id="cfg-tag" placeholder="New tag..." style="max-width:200px"><button class="btn bp bs" id="add-tag">Add</button></div></div>`;
+h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Tags</div><div style="margin-bottom:8px">${currentGuildCfg().tags.map(t=>`<span class="tag">${esc(t)}</span>`).join(" ")}</div><div style="display:flex;gap:8px"><input class="inp" id="cfg-tag" placeholder="New tag..." style="max-width:200px"><button class="btn bp bs" id="add-tag">Add</button></div></div>`;
 
 // Tool Availability (site_admin only)
 if(isSiteAdmin()){
@@ -3514,7 +3774,7 @@ if(isSiteAdmin()){
     h+=`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">`;
     h+=`<div style="display:flex;align-items:center;gap:8px;flex:1">
       <input type="checkbox" class="tool-avail-toggle" data-tool-key="${t.k}" ${enabled?"checked":""} style="width:15px;height:15px;accent-color:var(--grn);cursor:pointer;flex-shrink:0">
-      <div><div style="font-weight:600;font-size:13px">${t.i} ${t.l}</div><div style="font-size:11px;color:var(--tm)">${t.desc}</div></div>
+      <div><div style="font-weight:600;font-size:13px">${t.i} ${esc(t.l)}</div><div style="font-size:11px;color:var(--tm)">${esc(t.desc)}</div></div>
     </div>`;
     h+=`<span class="badge ${enabled?"bgr":"bor"}" style="white-space:nowrap;font-size:10px">${enabled?"Live":"Coming Soon"}</span>`;
     h+=`</div>`;
@@ -3535,6 +3795,32 @@ return h}
 // ═══════════════════════════════════════════════════════════
 function modalPlayer(e){if(!isAdmin())return;e=e||{};openModal(e.id?"Edit Member":"Add Member",body=>{const tH=currentGuildCfg().tags.map(t=>`<label style="display:inline-flex;align-items:center;gap:4px;margin:3px;cursor:pointer;font-size:12px"><input type="checkbox" class="tag-cb" value="${t}"${(e.tags||[]).includes(t)?" checked":""}>${t}</label>`).join("");body.innerHTML=`<div class="fg"><label class="fl">Name *</label><input class="inp" id="mf-name" value="${e.name||""}"></div><div class="fg"><label class="fl">Discord</label><input class="inp" id="mf-disc" value="${e.discord||""}"></div><div class="fg"><label class="fl">Rank</label><select class="inp" id="mf-rank">${currentGuildCfg().ranks.map(r=>`<option${(e.rank||currentGuildCfg().ranks[currentGuildCfg().ranks.length-1])===r?" selected":""}>${r}</option>`).join("")}</select></div><div class="fg"><label class="fl">Status</label><select class="inp" id="mf-status"><option${(e.status||"Active")==="Active"?" selected":""}>Active</option><option${e.status==="Inactive"?" selected":""}>Inactive</option></select></div><div class="fg"><label class="fl">Tags</label><div>${tH||'<span style="color:var(--tm);font-size:12px">Add tags in Settings</span>'}</div></div><div class="fg"><label class="fl">Notes</label><textarea class="inp" id="mf-notes">${e.notes||""}</textarea></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Add"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const name=document.getElementById("mf-name").value.trim();if(!name){toast("Name required","error");return}const tags=[...document.querySelectorAll(".tag-cb:checked")].map(c=>c.value);if(e.id){const p=G.p.find(x=>x.id===e.id);if(p){p.name=name;p.discord=document.getElementById("mf-disc").value;p.rank=document.getElementById("mf-rank").value;p.status=document.getElementById("mf-status").value;p.notes=document.getElementById("mf-notes").value;p.tags=tags;addLog("Member Edited",name)}}else{D.p.push({id:uid(),name,discord:document.getElementById("mf-disc").value,rank:document.getElementById("mf-rank").value,joinDate:new Date().toISOString().slice(0,10),notes:document.getElementById("mf-notes").value,status:document.getElementById("mf-status").value,tags,guildId:currentGuildId});addLog("Member Added",name)}persist();closeModal();render();toast(e.id?"Updated!":"Added!")}),0)})}
 
+function modalGenerateInvite(){
+  if(!isAdmin())return;
+  openModal("Generate Invite Link",body=>{
+    body.innerHTML=`
+      <div class="fg"><label class="fl">Max Uses <span style="color:var(--tm);font-weight:400">(0 = unlimited)</span></label><input class="inp" id="inv-max" type="number" min="0" value="0" placeholder="0 = unlimited"></div>
+      <div class="fg"><label class="fl">Expires After</label><select class="inp" id="inv-exp">
+        <option value="">Never</option>
+        <option value="1">1 day</option>
+        <option value="3">3 days</option>
+        <option value="7">7 days</option>
+        <option value="30">30 days</option>
+      </select></div>
+      <div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="inv-create">Generate</button></div>`;
+    setTimeout(()=>document.getElementById("inv-create")?.addEventListener("click",()=>{
+      const maxUses=parseInt(document.getElementById("inv-max")?.value)||0;
+      const expDays=parseInt(document.getElementById("inv-exp")?.value)||0;
+      const expiresAt=expDays>0?new Date(Date.now()+expDays*864e5).toISOString().slice(0,10):null;
+      const code=generateInviteCode();
+      D.inviteCodes=D.inviteCodes||[];
+      D.inviteCodes.push({id:uid(),code,guildId:currentGuildId,createdBy:currentUser.displayName||currentUser.username,createdAt:new Date().toISOString().slice(0,10),expiresAt,uses:0,maxUses,disabled:false});
+      addLog("Invite Created",`Code: ${code.slice(0,4)}… (max ${maxUses||"∞"} uses)`);
+      persist();closeModal();render();toast("Invite link created!");
+    }),0);
+  });
+}
+
 function modalGoldTx(e){if(!isAdmin())return;e=e||{};openModal(e.id?"Edit":"Record Gold",body=>{body.innerHTML=`<div class="fg"><label class="fl">Player *</label><select class="inp" id="mf-player"><option value="">Select...</option>${G.p.map(p=>`<option value="${p.id}"${e.playerId===p.id?" selected":""}>${p.name}</option>`).join("")}</select></div><div class="fg"><label class="fl">Type</label><select class="inp" id="mf-type">${["Deposit Gold","Borrow Gold"].map(o=>`<option${(e.type||"Deposit Gold")===o?" selected":""}>${o}</option>`).join("")}</select></div><div class="fg"><label class="fl">Amount *</label><input class="inp" id="mf-amt" type="number" value="${e.amount||""}"></div><div class="fg"><label class="fl">Date</label><input class="inp" id="mf-date" type="date" value="${e.date||new Date().toISOString().slice(0,10)}"></div><div class="fg"><label class="fl">Notes</label><input class="inp" id="mf-notes" value="${e.notes||""}"></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Record"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const pid=document.getElementById("mf-player").value,amt=parseInt(document.getElementById("mf-amt").value);if(!pid||!amt){toast("Required","error");return}const tx={playerId:pid,date:document.getElementById("mf-date").value,amount:amt,type:document.getElementById("mf-type").value,notes:document.getElementById("mf-notes").value};if(e.id){Object.assign(G.gt.find(x=>x.id===e.id),tx);addLog("Gold Tx Edited",`${pN(pid)} ${tx.type} ${amt}g`)}else{tx.id=uid();tx.guildId=currentGuildId;D.gt.push(tx);addLog("Gold Tx",`${pN(pid)} ${tx.type} ${amt}g`)}persist();closeModal();render();toast("Done!")}),0)})}
 
 function modalItemTx(e){if(!isAdmin())return;e=e||{};let selItemId=e.itemId||"";openModal(e.id?"Edit":"Record Item",body=>{body.innerHTML=`<div class="fg"><label class="fl">Player *</label><select class="inp" id="mf-player"><option value="">Select...</option>${G.p.map(p=>`<option value="${p.id}"${e.playerId===p.id?" selected":""}>${p.name}</option>`).join("")}</select></div><div class="fg"><label class="fl">Item *</label><div id="mf-combo"></div></div><div class="fg" id="mf-cat-wrap" style="display:none"><label class="fl">Category</label><select class="inp" id="mf-cat"><option value="">Uncategorized</option><option>Weapons</option><option>Armor</option><option>Materials</option><option>Consumables</option><option>Mounts</option><option>Siege</option><option>Tools</option><option>Misc</option></select></div><div class="fg"><label class="fl">Type</label><select class="inp" id="mf-type">${["Borrowed","Returned","Donated"].map(o=>`<option${(e.type||"Borrowed")===o?" selected":""}>${o}</option>`).join("")}</select></div><div class="fg"><label class="fl">Qty *</label><input class="inp" id="mf-qty" type="number" value="${e.qty||""}"></div><div class="fg"><label class="fl">Date</label><input class="inp" id="mf-date" type="date" value="${e.date||new Date().toISOString().slice(0,10)}"></div><div class="fg"><label class="fl">Notes</label><input class="inp" id="mf-notes" value="${e.notes||""}"></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Record"}</button></div>`;setTimeout(()=>{combobox(document.getElementById("mf-combo"),id=>{selItemId=id;const it=G.items.find(i=>i.id===id);document.getElementById("mf-cat-wrap").style.display=it?.category==="Uncategorized"?"block":"none"});if(e.itemId){const inp=document.getElementById("mf-combo")?.querySelector("input");if(inp)inp.value=iN(e.itemId)}document.getElementById("mf-save").addEventListener("click",()=>{const pid=document.getElementById("mf-player").value,qty=parseInt(document.getElementById("mf-qty").value);if(!pid||!selItemId||!qty){toast("Required","error");return}const cat=document.getElementById("mf-cat")?.value;if(cat){const it=G.items.find(i=>i.id===selItemId);if(it?.category==="Uncategorized")it.category=cat}const tx={playerId:pid,itemId:selItemId,qty,type:document.getElementById("mf-type").value,date:document.getElementById("mf-date").value,notes:document.getElementById("mf-notes").value};if(e.id){Object.assign(G.it.find(x=>x.id===e.id),tx)}else{tx.id=uid();tx.guildId=currentGuildId;D.it.push(tx)}addLog("Item Tx",`${pN(pid)} ${tx.type} ${qty} ${iN(selItemId)}`);persist();closeModal();render();toast("Done!")})},0)})}
@@ -3547,12 +3833,26 @@ function modalOrder(e){if(!isAdmin())return;e=e||{};openModal(e.id?"Edit Order":
 
 function modalRequest(e){if(!isAdmin())return;e=e||{};openModal(e.id?"Edit":"New Request",body=>{body.innerHTML=`<div class="fg"><label class="fl">Requested By *</label><select class="inp" id="mf-player"><option value="">Select...</option>${G.p.map(p=>`<option value="${p.id}"${e.playerId===p.id?" selected":""}>${p.name}</option>`).join("")}</select></div><div class="fg"><label class="fl">Item *</label><input class="inp" id="mf-item" value="${e.itemName||""}"></div><div class="fg"><label class="fl">Qty</label><input class="inp" id="mf-qty" type="number" value="${e.qty||1}"></div><div class="fg"><label class="fl">Priority</label><select class="inp" id="mf-pri">${["Low","Medium","High"].map(o=>`<option${(e.priority||"Medium")===o?" selected":""}>${o}</option>`).join("")}</select></div><div class="fg"><label class="fl">Notes</label><input class="inp" id="mf-notes" value="${e.notes||""}"></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Post"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const pid=document.getElementById("mf-player").value,item=document.getElementById("mf-item").value.trim();if(!pid||!item){toast("Required","error");return}const r={playerId:pid,itemName:item,qty:parseInt(document.getElementById("mf-qty").value)||1,priority:document.getElementById("mf-pri").value,notes:document.getElementById("mf-notes").value,status:e.status||"Open",date:e.date||new Date().toISOString().slice(0,10)};if(e.id){Object.assign(G.requests.find(x=>x.id===e.id),r)}else{r.id=uid();r.guildId=currentGuildId;D.requests.push(r)}addLog("Request "+(e.id?"Edited":"Created"),item);persist();closeModal();render();toast("Done!")}),0)})}
 
-function modalUser(e){e=e||{};openModal(e.id?"Edit User":"Add User",body=>{body.innerHTML=`<div class="fg"><label class="fl">In-Game Name / Username *</label><input class="inp" id="mf-user" value="${e.username||""}"></div><div class="fg"><label class="fl">Discord</label><input class="inp" id="mf-discord" value="${e.discord||""}" placeholder="username or user#0000"></div><div class="fg"><label class="fl">${e.id?"New Password":"Temporary Password *"}</label><input class="inp" type="password" id="mf-pass" value="" placeholder="${e.id?"Leave blank to keep current":"User will be prompted to change"}"></div>${!e.id?`<div style="font-size:11px;color:var(--org);margin-top:-8px;margin-bottom:12px">⚠ User will be required to change this password on first login</div>`:""}<div class="fg"><label class="fl">Display Name</label><input class="inp" id="mf-dn" value="${e.displayName||""}" placeholder="Optional (defaults to username)"></div><div class="fg"><label class="fl">Role</label><select class="inp" id="mf-role"><option value="guild_leader"${(e.role||"member")==="guild_leader"?" selected":""}>Guild Leader</option><option value="admin"${(e.role||"member")==="admin"?" selected":""}>Admin</option><option value="contributor"${(e.role||"member")==="contributor"?" selected":""}>Contributor</option><option value="member"${(e.role||"member")==="member"?" selected":""}>Member</option>${isSiteAdmin()?`<option value="site_admin"${(e.role||"member")==="site_admin"?" selected":""}>Site Admin</option>`:""}
-</select></div><div style="font-size:11px;color:var(--tm);margin-top:-8px;margin-bottom:12px">Guild Leader: Full guild admin • Contributor: Can edit global databases • Member: Basic access</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">Save</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const uname=document.getElementById("mf-user").value.trim(),discord=document.getElementById("mf-discord").value.trim(),pass=document.getElementById("mf-pass").value,dn=document.getElementById("mf-dn").value.trim(),role=document.getElementById("mf-role").value;if(!uname){toast("Username required","error");return}if(e.id){const u=D.users.find(x=>x.id===e.id);if(u){u.username=uname;u.discord=discord;if(pass){u.password=pass;u.tempPassword=true;}u.displayName=dn||uname;u.role=role}}else{if(!pass){toast("Password required","error");return}if(D.users.find(x=>x.username.toLowerCase()===uname.toLowerCase())){toast("Username already exists","error");return}D.users.push({id:uid(),username:uname,discord,password:pass,displayName:dn||uname,role,tempPassword:true,guildId:role==="site_admin"||role==="contributor"?null:currentGuildId})}addLog("User "+(e.id?"Edited":"Created"),uname);persist();closeModal();render();toast("Done!")}),0)})}
+function modalUser(e){e=e||{};openModal(e.id?"Edit User":"Add User",body=>{body.innerHTML=`<div class="fg"><label class="fl">In-Game Name / Username *</label><input class="inp" id="mf-user" value="${e.username||""}"></div><div class="fg"><label class="fl">Discord</label><input class="inp" id="mf-discord" value="${e.discord||""}" placeholder="username or user#0000"></div><div class="fg"><label class="fl">${e.id?"New Password":"Temporary Password *"}</label><input class="inp" type="password" id="mf-pass" value="" placeholder="${e.id?"Leave blank to keep current":"User will be prompted to change"}"></div>${!e.id?`<div style="font-size:11px;color:var(--org);margin-top:-8px;margin-bottom:12px">⚠ User will be required to change this password on first login</div>`:""}<div class="fg"><label class="fl">Display Name</label><input class="inp" id="mf-dn" value="${e.displayName||""}" placeholder="Optional (defaults to username)"></div><div class="fg"><label class="fl">Role</label><select class="inp" id="mf-role"><option value="guild_leader"${(e.role||"member")==="guild_leader"?" selected":""}>Guild Leader</option><option value="officer"${(e.role||"member")==="officer"?" selected":""}>Officer</option><option value="contributor"${(e.role||"member")==="contributor"?" selected":""}>Contributor</option><option value="member"${(e.role||"member")==="member"?" selected":""}>Member</option>${isSiteAdmin()?`<option value="site_admin"${(e.role||"member")==="site_admin"?" selected":""}>Site Admin</option>`:""}
+</select></div><div style="font-size:11px;color:var(--tm);margin-top:-8px;margin-bottom:12px">Guild Leader: Full guild admin • Contributor: Can edit global databases • Member: Basic access</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">Save</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",async()=>{const uname=document.getElementById("mf-user").value.trim(),discord=document.getElementById("mf-discord").value.trim(),pass=document.getElementById("mf-pass").value,dn=document.getElementById("mf-dn").value.trim(),role=document.getElementById("mf-role").value;if(!uname){toast("Username required","error");return}if(e.id){const u=D.users.find(x=>x.id===e.id);if(u){u.username=uname;u.discord=discord;if(pass){u.password=await hashPassword(pass);u.tempPassword=true;}u.displayName=dn||uname;u.role=role}}else{if(!pass){toast("Password required","error");return}if(D.users.find(x=>x.username.toLowerCase()===uname.toLowerCase())){toast("Username already exists","error");return}const hashedAdminPw=await hashPassword(pass);D.users.push({id:uid(),username:uname,discord,password:hashedAdminPw,displayName:dn||uname,role,tempPassword:true,guildId:role==="site_admin"||role==="contributor"?null:currentGuildId})}addLog("User "+(e.id?"Edited":"Created"),uname);persist();closeModal();render();toast("Done!")}),0)})}
 
-function modalChangePassword(){openModal("Change Password",body=>{body.innerHTML=`<div class="fg"><label class="fl">Current Password</label><input class="inp" type="password" id="mf-oldpass"></div><div class="fg"><label class="fl">New Password *</label><input class="inp" type="password" id="mf-newpass" placeholder="At least 3 characters"></div><div class="fg"><label class="fl">Confirm New Password *</label><input class="inp" type="password" id="mf-newpass2"></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">Change Password</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const oldP=document.getElementById("mf-oldpass").value,newP=document.getElementById("mf-newpass").value,newP2=document.getElementById("mf-newpass2").value;if(!currentUser.tempPassword&&oldP!==currentUser.password){toast("Current password is incorrect","error");return}if(!newP||newP.length<3){toast("New password must be at least 3 characters","error");return}if(newP!==newP2){toast("Passwords don't match","error");return}const u=D.users.find(x=>x.id===currentUser.id);if(u){u.password=newP;u.tempPassword=false;currentUser=u;addLog("Password Changed",u.username);persist();closeModal();render();toast("Password changed!")}}),0)})}
-
-function modalForceChangePassword(){openModal("Set New Password",body=>{body.innerHTML=`<div style="margin-bottom:16px;padding:12px;background:var(--orgd);border:1px solid rgba(210,153,34,.3);border-radius:6px;color:var(--org);font-size:12px">⚠ Your account was created by an admin with a temporary password. Please set a new password to continue.</div><div class="fg"><label class="fl">New Password *</label><input class="inp" type="password" id="mf-newpass" placeholder="At least 3 characters"></div><div class="fg"><label class="fl">Confirm New Password *</label><input class="inp" type="password" id="mf-newpass2"></div><div class="actions" style="margin-top:14px"><button class="btn bp" id="mf-save" style="width:100%">Set Password & Continue</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const newP=document.getElementById("mf-newpass").value,newP2=document.getElementById("mf-newpass2").value;if(!newP||newP.length<3){toast("Password must be at least 3 characters","error");return}if(newP!==newP2){toast("Passwords don't match","error");return}const u=D.users.find(x=>x.id===currentUser.id);if(u){u.password=newP;u.tempPassword=false;currentUser=u;addLog("Password Set",u.username);persist();closeModal();render();toast("Password set successfully!")}}),0)})}
+function modalChangePassword(){
+  openModal("Change Password",body=>{
+    body.innerHTML=`<div class="fg"><label class="fl">Current Password</label><input class="inp" type="password" id="mf-oldpass"></div><div class="fg"><label class="fl">New Password *</label><input class="inp" type="password" id="mf-newpass" placeholder="At least 8 characters"></div><div class="fg"><label class="fl">Confirm New Password *</label><input class="inp" type="password" id="mf-newpass2"></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">Change Password</button></div>`;
+    setTimeout(()=>document.getElementById("mf-save").addEventListener("click",async()=>{
+      const oldP=document.getElementById("mf-oldpass").value,newP=document.getElementById("mf-newpass").value,newP2=document.getElementById("mf-newpass2").value;
+      const u=D.users.find(x=>x.id===currentUser.id);
+      if(!currentUser.tempPassword){
+        const oldOk=await verifyPassword(oldP,u?.password||"");
+        if(!oldOk){toast("Current password is incorrect","error");return}
+      }
+      if(!newP||newP.length<8){toast("New password must be at least 8 characters","error");return}
+      if(newP!==newP2){toast("Passwords don't match","error");return}
+      if(u){u.password=await hashPassword(newP);u.tempPassword=false;currentUser=u;addLog("Password Changed",u.username);persist();closeModal();render();toast("Password changed!")}
+    }),0);
+  });
+}
+function modalForceChangePassword(){openModal("Set New Password",body=>{body.innerHTML=`<div style="margin-bottom:16px;padding:12px;background:var(--orgd);border:1px solid rgba(210,153,34,.3);border-radius:6px;color:var(--org);font-size:12px">⚠ Your account was created by an admin with a temporary password. Please set a new password to continue.</div><div class="fg"><label class="fl">New Password *</label><input class="inp" type="password" id="mf-newpass" placeholder="At least 8 characters"></div><div class="fg"><label class="fl">Confirm New Password *</label><input class="inp" type="password" id="mf-newpass2"></div><div class="actions" style="margin-top:14px"><button class="btn bp" id="mf-save" style="width:100%">Set Password & Continue</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",async()=>{const newP=document.getElementById("mf-newpass").value,newP2=document.getElementById("mf-newpass2").value;if(!newP||newP.length<8){toast("Password must be at least 8 characters","error");return}if(newP!==newP2){toast("Passwords don't match","error");return}const u=D.users.find(x=>x.id===currentUser.id);if(u){u.password=await hashPassword(newP);u.tempPassword=false;currentUser=u;addLog("Password Set",u.username);persist();closeModal();render();toast("Password set successfully!")}}),0)})}
 
 function modalGear(e,playerId){if(!isAdmin())return;e=e||{};openModal(e.id?"Edit Gear Assignment":"Assign Gear",body=>{body.innerHTML=`<div class="fg"><label class="fl">Item Name *</label><input class="inp" id="mf-gname" value="${e.itemName||""}" placeholder="e.g., Steel Longsword +2"></div><div class="fg"><label class="fl">Date</label><input class="inp" type="date" id="mf-gdate" value="${e.date||new Date().toISOString().slice(0,10)}"></div><div class="fg"><label class="fl">Notes</label><input class="inp" id="mf-gnotes" value="${e.notes||""}" placeholder="Optional — condition, enchantments, etc."></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Assign"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const name=document.getElementById("mf-gname").value.trim();if(!name){toast("Item name required","error");return}const g={itemName:name,date:document.getElementById("mf-gdate").value||new Date().toISOString().slice(0,10),notes:document.getElementById("mf-gnotes").value,assignedBy:currentUser?.displayName||currentUser?.username||"?"};if(e.id){const x=G.gear.find(v=>v.id===e.id);if(x)Object.assign(x,g)}else{g.id=uid();g.playerId=playerId;g.guildId=currentGuildId;D.gear.push(g)}addLog("Gear "+(e.id?"Edited":"Assigned"),name+" → "+pN(playerId));persist();closeModal();render();toast(e.id?"Updated!":"Gear assigned!")}),0)})}
 
@@ -3571,20 +3871,8 @@ let craftItems=[];let craftResources=[];let craftCurMats={};let craftXpMods={0:1
 let craftSkillXpTables={};// {skill: {2:xp, 3:xp, ... 100:x
 let playerXpTable={};// {2:xp, 3:xp, ... 100:xp} — character level XP requirementsp}} - XP needed to go from lv N-1 to N
 (function loadCraft(){try{
-  const i=localStorage.getItem("gv_custom_items");if(i)craftItems=JSON.parse(i);
-  const r=localStorage.getItem("gv_resources");
-  if(r){
-    const parsed=JSON.parse(r);
-    // Migrate old string format to new object format
-    if(parsed.length&&typeof parsed[0]==='string'){
-      craftResources=parsed.map(name=>({name,materials:{}}));
-      saveCraftResources();
-    }else{
-      craftResources=parsed;
-    }
-  }
-  const xt=localStorage.getItem("gv_skill_xp_tables");if(xt)craftSkillXpTables=JSON.parse(xt);
-  const pt=localStorage.getItem("gv_player_xp_table");if(pt)playerXpTable=JSON.parse(pt);
+  // craftItems/craftResources/craftSkillXpTables/playerXpTable are populated from KV in initKvSync().
+  // This block is intentionally left empty — the data arrives asynchronously before render().
 }catch(e){}
 // Built-in XP tables — applied on every load so they always reflect correct values
 const BUILTIN_XP_TABLES={"weapon_forging": {"2": 100, "3": 300, "4": 500, "5": 700, "6": 900, "7": 1100, "8": 1300, "9": 1500, "10": 1700, "11": 1900, "12": 2100, "13": 2300, "14": 2500, "15": 2700, "16": 2900, "17": 3100, "18": 3300, "19": 3500, "20": 3700, "21": 3900, "22": 4100, "23": 4300, "24": 4500, "25": 4700, "26": 4900, "27": 5100, "28": 5300, "29": 5500, "30": 5700, "31": 5900, "32": 6100, "33": 6300, "34": 6500, "35": 6700, "36": 6900, "37": 7100, "38": 7300, "39": 7500, "40": 7700, "41": 7900, "42": 8100, "43": 8300, "44": 8500, "45": 8700, "46": 8900, "47": 9100, "48": 9300, "49": 9500, "50": 9700, "51": 9900, "52": 10100, "53": 10300, "54": 10500, "55": 10700, "56": 10900, "57": 11100, "58": 11300, "59": 11500, "60": 11700, "61": 11900, "62": 12100, "63": 12300, "64": 12500, "65": 12700, "66": 12900, "67": 13100, "68": 13300, "69": 13500, "70": 13700, "71": 13900, "72": 14100, "73": 14300, "74": 14500, "75": 14700, "76": 14900, "77": 15100, "78": 15300, "79": 15500, "80": 15700, "81": 15900, "82": 16100, "83": 16300, "84": 16500, "85": 16700, "86": 16900, "87": 17100, "88": 17300, "89": 17500, "90": 17700, "91": 17900, "92": 18100, "93": 18300, "94": 18500, "95": 18700, "96": 18900, "97": 19100, "98": 19300, "99": 19500, "100": 19700}, "armour_smithing": {"2": 100, "3": 300, "4": 500, "5": 700, "6": 900, "7": 1100, "8": 1300, "9": 1500, "10": 1700, "11": 1900, "12": 2100, "13": 2300, "14": 2500, "15": 2700, "16": 2900, "17": 3100, "18": 3300, "19": 3500, "20": 3700, "21": 3900, "22": 4100, "23": 4300, "24": 4500, "25": 4700, "26": 4900, "27": 5100, "28": 5300, "29": 5500, "30": 5700, "31": 5900, "32": 6100, "33": 6300, "34": 6500, "35": 6700, "36": 6900, "37": 7100, "38": 7300, "39": 7500, "40": 7700, "41": 7900, "42": 8100, "43": 8300, "44": 8500, "45": 8700, "46": 8900, "47": 9100, "48": 9300, "49": 9500, "50": 9700, "51": 9900, "52": 10100, "53": 10300, "54": 10500, "55": 10700, "56": 10900, "57": 11100, "58": 11300, "59": 11500, "60": 11700, "61": 11900, "62": 12100, "63": 12300, "64": 12500, "65": 12700, "66": 12900, "67": 13100, "68": 13300, "69": 13500, "70": 13700, "71": 13900, "72": 14100, "73": 14300, "74": 14500, "75": 14700, "76": 14900, "77": 15100, "78": 15300, "79": 15500, "80": 15700, "81": 15900, "82": 16100, "83": 16300, "84": 16500, "85": 16700, "86": 16900, "87": 17100, "88": 17300, "89": 17500, "90": 17700, "91": 17900, "92": 18100, "93": 18300, "94": 18500, "95": 18700, "96": 18900, "97": 19100, "98": 19300, "99": 19500, "100": 19700}, "engineering": {"2": 100, "3": 300, "4": 500, "5": 700, "6": 900, "7": 1100, "8": 1300, "9": 1500, "10": 1700, "11": 1900, "12": 2100, "13": 2300, "14": 2500, "15": 2700, "16": 2900, "17": 3100, "18": 3300, "19": 3500, "20": 3700, "21": 3900, "22": 4100, "23": 4300, "24": 4500, "25": 4700, "26": 4900, "27": 5100, "28": 5300, "29": 5500, "30": 5700, "31": 5900, "32": 6100, "33": 6300, "34": 6500, "35": 6700, "36": 6900, "37": 7100, "38": 7300, "39": 7500, "40": 7700, "41": 7900, "42": 8100, "43": 8300, "44": 8500, "45": 8700, "46": 8900, "47": 9100, "48": 9300, "49": 9500, "50": 9700, "51": 9900, "52": 10100, "53": 10300, "54": 10500, "55": 10700, "56": 10900, "57": 11100, "58": 11300, "59": 11500, "60": 11700, "61": 11900, "62": 12100, "63": 12300, "64": 12500, "65": 12700, "66": 12900, "67": 13100, "68": 13300, "69": 13500, "70": 13700, "71": 13900, "72": 14100, "73": 14300, "74": 14500, "75": 14700, "76": 14900, "77": 15100, "78": 15300, "79": 15500, "80": 15700, "81": 15900, "82": 16100, "83": 16300, "84": 16500, "85": 16700, "86": 16900, "87": 17100, "88": 17300, "89": 17500, "90": 17700, "91": 17900, "92": 18100, "93": 18300, "94": 18500, "95": 18700, "96": 18900, "97": 19100, "98": 19300, "99": 19500, "100": 19700}, "tailoring_leatherworking": {"2": 100, "3": 300, "4": 500, "5": 700, "6": 900, "7": 1100, "8": 1300, "9": 1500, "10": 1700, "11": 1900, "12": 2100, "13": 2300, "14": 2500, "15": 2700, "16": 2900, "17": 3100, "18": 3300, "19": 3500, "20": 3700, "21": 3900, "22": 4100, "23": 4300, "24": 4500, "25": 4700, "26": 4900, "27": 5100, "28": 5300, "29": 5500, "30": 5700, "31": 5900, "32": 6100, "33": 6300, "34": 6500, "35": 6700, "36": 6900, "37": 7100, "38": 7300, "39": 7500, "40": 7700, "41": 7900, "42": 8100, "43": 8300, "44": 8500, "45": 8700, "46": 8900, "47": 9100, "48": 9300, "49": 9500, "50": 9700, "51": 9900, "52": 10100, "53": 10300, "54": 10500, "55": 10700, "56": 10900, "57": 11100, "58": 11300, "59": 11500, "60": 11700, "61": 11900, "62": 12100, "63": 12300, "64": 12500, "65": 12700, "66": 12900, "67": 13100, "68": 13300, "69": 13500, "70": 13700, "71": 13900, "72": 14100, "73": 14300, "74": 14500, "75": 14700, "76": 14900, "77": 15100, "78": 15300, "79": 15500, "80": 15700, "81": 15900, "82": 16100, "83": 16300, "84": 16500, "85": 16700, "86": 16900, "87": 17100, "88": 17300, "89": 17500, "90": 17700, "91": 17900, "92": 18100, "93": 18300, "94": 18500, "95": 18700, "96": 18900, "97": 19100, "98": 19300, "99": 19500, "100": 19700}, "cooking_herbalism": {"2": 100, "3": 300, "4": 500, "5": 700, "6": 900, "7": 1100, "8": 1300, "9": 1500, "10": 1700, "11": 1900, "12": 2100, "13": 2300, "14": 2500, "15": 2700, "16": 2900, "17": 3100, "18": 3300, "19": 3500, "20": 3700, "21": 3900, "22": 4100, "23": 4300, "24": 4500, "25": 4700, "26": 4900, "27": 5100, "28": 5300, "29": 5500, "30": 5700, "31": 5900, "32": 6100, "33": 6300, "34": 6500, "35": 6700, "36": 6900, "37": 7100, "38": 7300, "39": 7500, "40": 7700, "41": 7900, "42": 8100, "43": 8300, "44": 8500, "45": 8700, "46": 8900, "47": 9100, "48": 9300, "49": 9500, "50": 9700, "51": 9900, "52": 10100, "53": 10300, "54": 10500, "55": 10700, "56": 10900, "57": 11100, "58": 11300, "59": 11500, "60": 11700, "61": 11900, "62": 12100, "63": 12300, "64": 12500, "65": 12700, "66": 12900, "67": 13100, "68": 13300, "69": 13500, "70": 13700, "71": 13900, "72": 14100, "73": 14300, "74": 14500, "75": 14700, "76": 14900, "77": 15100, "78": 15300, "79": 15500, "80": 15700, "81": 15900, "82": 16100, "83": 16300, "84": 16500, "85": 16700, "86": 16900, "87": 17100, "88": 17300, "89": 17500, "90": 17700, "91": 17900, "92": 18100, "93": 18300, "94": 18500, "95": 18700, "96": 18900, "97": 19100, "98": 19300, "99": 19500, "100": 19700}};
@@ -3610,10 +3898,10 @@ if(!craftItems.length){
   if(added)saveCraftItems();
 }
 })();
-function saveCraftItems(){try{localStorage.setItem("gv_custom_items",JSON.stringify(craftItems))}catch(e){}  _pushToKV("gv_custom_items",craftItems);}
-function saveCraftSkillXpTables(){try{localStorage.setItem("gv_skill_xp_tables",JSON.stringify(craftSkillXpTables))}catch(e){} _pushToKV("gv_skill_xp_tables",craftSkillXpTables);}
-function savePlayerXpTable(){try{localStorage.setItem("gv_player_xp_table",JSON.stringify(playerXpTable))}catch(e){} _pushToKV("gv_player_xp_table",playerXpTable);}
-function saveCraftResources(){try{localStorage.setItem("gv_resources",JSON.stringify(craftResources))}catch(e){} _pushToKV("gv_resources",craftResources);}
+function saveCraftItems(){_pushToKV("gv_custom_items",craftItems).catch(e=>console.error("saveCraftItems failed:",e));}
+function saveCraftSkillXpTables(){_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(e=>console.error("saveCraftSkillXpTables failed:",e));}
+function savePlayerXpTable(){_pushToKV("gv_player_xp_table",playerXpTable).catch(e=>console.error("savePlayerXpTable failed:",e));}
+function saveCraftResources(){_pushToKV("gv_resources",craftResources).catch(e=>console.error("saveCraftResources failed:",e));}
 const normRecipeName=name=>(name||"").trim().toLowerCase();
 function removeRecipeIdsFromPlayers(ids){
   const idSet=new Set((ids||[]).map(String));
@@ -5087,6 +5375,30 @@ function pgCraftResCalc(){
   return h;
 }
 
+function ssImporterHTML(){
+  return '<div class="card" style="margin-bottom:14px" id="screenshot-importer-card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    +'<div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">&#128247; Import from Screenshot</div>'
+    +'<button class="btn bg bs" id="ss-toggle-btn" style="font-size:11px">&#9654; Show</button>'
+    +'</div>'
+    +'<div id="ss-importer-body" style="display:none">'+'<div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:var(--tm);display:block;margin-bottom:4px">Anthropic API Key</label>'+'<input class="inp" id="ss-api-key" type="password" placeholder="sk-ant-..." style="width:100%;font-size:12px;font-family:monospace" oninput="try{localStorage.setItem(\'gv_ss_apikey\',this.value)}catch(e){}">'+'<div style="font-size:10px;color:var(--tm);margin-top:3px">Stored locally in your browser only. Get yours at <a href=\"https://console.anthropic.com\" target=\"_blank\" style=\"color:var(--ac)\">console.anthropic.com</a></div></div>'
+    +'<div id="ss-dropzone" style="border:2px dashed var(--ac);border-radius:8px;padding:24px;text-align:center;cursor:pointer;background:var(--bgi)" ondragover="event.preventDefault();this.style.background=\'var(--bg2)\'" ondragleave="this.style.background=\'var(--bgi)\'" ondrop="window.ssHandleDrop(event)">'
+    +'<input type="file" id="ss-file-input" accept="image/*" style="display:none" onchange="window.ssHandleFiles(this.files)">'
+    +'<div style="font-size:28px;margin-bottom:8px">&#128248;</div>'
+    +'<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Drop a screenshot here</div>'
+    +'<div style="font-size:11px;color:var(--tm)">or <span style="color:var(--ac);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'ss-file-input\').click()">browse to upload</span></div>'
+    +'<div style="font-size:10px;color:var(--tm);margin-top:6px">Supports JPG, PNG, HEIC &bull; One at a time for best accuracy</div>'
+    +'</div>'
+    +'<div id="ss-status" style="display:none;margin-top:12px"></div>'
+    +'<div id="ss-preview-panel" style="display:none;margin-top:12px;border:1px solid var(--ac);border-radius:6px;overflow:hidden">'
+    +'<div style="background:var(--ac);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;text-transform:uppercase;letter-spacing:.06em">&#9989; Review Extracted Data &#8212; Check Everything Before Saving</div>'
+    +'<div id="ss-preview-body" style="padding:12px"></div>'
+    +'<div style="display:flex;gap:8px;padding:10px 12px;background:var(--bgi);border-top:1px solid var(--bd)">'
+    +'<button class="btn bp" id="ss-apply-btn" style="flex:2">&#11015;&#65039; Load into Form</button>'
+    +'<button class="btn bg" id="ss-discard-btn">&#10005; Discard</button>'
+    +'</div></div></div></div>';
+}
+
 function pgCraftItemDB(){
   const skillOpts=Object.entries(SKILL_NAMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   // Combine all items as material options
@@ -5098,6 +5410,7 @@ function pgCraftItemDB(){
   let h=`<div class="ph"><div class="pt">Item & Resource Database</div>${canManageDatabase()?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:""}</div>`;
   // Add/Edit form
   if(canManageDatabase()){
+    h+=ssImporterHTML();
     h+=`<div class="card" style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Add / Edit Entry</div>`;
     // Type toggle
     h+=`<div class="fg" style="margin-bottom:10px"><label class="fl">Entry Type</label><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">`;
@@ -5183,15 +5496,23 @@ function pgCraftItemDB(){
     h+=`</div>`;
   }
   // Saved entries list
-  h+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">Saved Entries</div><div style="display:flex;gap:6px;align-items:center"><div style="display:flex;gap:2px;flex-wrap:wrap;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px" id="cdb-type-btns">
+  h+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">Saved Entries</div><div style="display:flex;gap:6px;align-items:center"><div style="display:flex;gap:2px;flex-wrap:wrap;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px" id="cdb-type-btns">
   <button class="cdb-type-btn a" data-val="all" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--ac);color:#fff;font-family:inherit;transition:all .12s">All</button>
   ${Object.entries(SKILL_NAMES).map(([k,v])=>`<button class="cdb-type-btn" data-val="skill:${k}" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">${v}</button>`).join("")}
   <button class="cdb-type-btn" data-val="resource" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">📦 Resources</button>
   <button class="cdb-type-btn" data-val="recipe" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">📜 Recipes</button>
-</div></div></div>`;
+</div></div></div>
+  <div class="sb" style="margin-bottom:10px"><span style="color:var(--tm);padding:0 2px">🔍</span><input type="text" id="cdb-search-inp" placeholder="Search entries by name, skill, material…" autocomplete="off" value="${(window._cdbSearchQ||'').replace(/"/g,'&quot;')}"><button id="cdb-search-clear" style="display:${window._cdbSearchQ?'inline':'none'};background:none;border:none;color:var(--tm);cursor:pointer;font-size:11px;padding:0 4px" title="Clear search">✕</button></div>`;
   h+=`<div id="cdb-list">`;
+  const _cdbQ=(window._cdbSearchQ||"").toLowerCase().trim();
+  const _itemsToShow=!craftItems.length?[]:craftItems.filter((item,idx)=>{
+    if(!_cdbQ)return true;
+    const hay=[item.name,item.skill?SKILL_NAMES[item.skill]:"",item.isResource?"resource":"",item.isRecipe?"recipe":"",item.isFood?"food":"",item.isPotion?"potion":"",Object.keys(item.materials||{}).join(" ")].join(" ").toLowerCase();
+    return hay.includes(_cdbQ);
+  });
   if(!craftItems.length) h+=`<div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">No entries saved yet.</div></div>`;
-  else craftItems.forEach((item,idx)=>{
+  else if(_cdbQ&&!_itemsToShow.length) h+=`<div class="empty"><div class="empty-ico">🔍</div><div class="empty-title">No results</div><div class="empty-sub">No entries match "${esc(_cdbQ)}"</div></div>`;
+  else _itemsToShow.forEach((item)=>{const idx=craftItems.indexOf(item);
     const xpLvs=Object.keys(item.xpByLevel||{}).length;
     const hasMats=item.materials&&Object.keys(item.materials).length>0;
     if(item.isFood){
@@ -5746,23 +6067,38 @@ function initCraftBindings(){
     },50);
   }));
   document.querySelectorAll(".cdb-del").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();const item=craftItems[parseInt(el.dataset.idx)];if(item&&confirm(`Delete "${item.name}"?`)){craftItems.splice(parseInt(el.dataset.idx),1);saveCraftItems();addLog("Entry Deleted",item.name);render();toast("Deleted!")}}));
-  // Filters - apply both type and skill filters
+  // Filters - apply both type and skill filters, also respects search query
   let _cdbTypeFilter='all';
   const applyFilters=()=>{
     const typeVal=_cdbTypeFilter;
+    const q=(window._cdbSearchQ||"").toLowerCase().trim();
     document.querySelectorAll(".cdb-entry").forEach(el=>{
       const t=el.dataset.type;const s=el.dataset.skill;
+      const name=(el.querySelector(".cdb-entry-name")?.textContent||el.textContent||"").toLowerCase();
       let show=true;
       if(typeVal==='all'){show=true;}
       else if(typeVal==='resource'){show=t==='resource';}
       else if(typeVal==='recipe'){show=t==='recipe';}
-      else if(typeVal.startsWith('skill:')){
-        const sk=typeVal.slice(6);
-        show=t==='craft'&&s===sk;
-      }else{show=t===typeVal;}
+      else if(typeVal.startsWith('skill:')){const sk=typeVal.slice(6);show=t==='craft'&&s===sk;}
+      else{show=t===typeVal;}
+      if(show&&q){show=name.includes(q)||el.textContent.toLowerCase().includes(q);}
       el.style.display=show?'grid':'none';
     });
   };
+  // Item DB search bar
+  document.getElementById("cdb-search-inp")?.addEventListener("input",e=>{
+    window._cdbSearchQ=e.target.value;
+    const clr=document.getElementById("cdb-search-clear");
+    if(clr)clr.style.display=window._cdbSearchQ?"inline":"none";
+    applyFilters();
+  });
+  document.getElementById("cdb-search-clear")?.addEventListener("click",()=>{
+    window._cdbSearchQ="";
+    const inp=document.getElementById("cdb-search-inp");
+    if(inp)inp.value="";
+    document.getElementById("cdb-search-clear").style.display="none";
+    applyFilters();
+  });
   document.querySelectorAll(".cdb-type-btn").forEach(btn=>{
     btn.addEventListener("click",()=>{
       _cdbTypeFilter=btn.dataset.val;
@@ -5774,6 +6110,187 @@ function initCraftBindings(){
       applyFilters();
     });
   });
+
+  // ── Screenshot Importer ──────────────────────────────────────────────────────
+  (function(){
+    // Restore saved API key
+    try{const saved=localStorage.getItem('gv_ss_apikey');if(saved){const ki=document.getElementById('ss-api-key');if(ki)ki.value=saved;}}catch(e){}
+    const toggleBtn=document.getElementById("ss-toggle-btn");
+    const body=document.getElementById("ss-importer-body");
+    if(toggleBtn&&body){
+      toggleBtn.addEventListener("click",()=>{
+        const open=body.style.display==="none";
+        body.style.display=open?"block":"none";
+        toggleBtn.textContent=open?"▼ Hide":"▶ Show";
+      });
+    }
+
+    window.ssHandleDrop=function(e){
+      e.preventDefault();
+      document.getElementById("ss-dropzone").style.background="var(--bgi)";
+      const files=e.dataTransfer.files;
+      if(files&&files.length)window.ssHandleFiles(files);
+    };
+
+    window.ssHandleFiles=function(files){
+      const file=files[0];
+      if(!file){return;}
+      const allowed=["image/jpeg","image/png","image/webp","image/heic","image/heif"];
+      if(!allowed.includes(file.type)&&!file.name.match(/\.(jpe?g|png|webp|heic|heif)$/i)){
+        ssSetStatus("error","❌ Please upload an image file (JPG, PNG, WEBP, HEIC).");return;
+      }
+      ssSetStatus("loading","🔍 Reading screenshot with AI — this takes a few seconds...");
+      document.getElementById("ss-preview-panel").style.display="none";
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        const b64=ev.target.result.split(",")[1];
+        const mediaType=file.type||"image/jpeg";
+        ssCallAPI(b64,mediaType);
+      };
+      reader.readAsDataURL(file);
+    };
+
+    function ssSetStatus(type,msg){
+      const el=document.getElementById("ss-status");
+      if(!el)return;
+      el.style.display="block";
+      const colors={loading:"var(--ac)",error:"var(--red)",success:"var(--grn)"};
+      el.style.cssText=`display:block;padding:10px 14px;border-radius:6px;font-size:12px;background:var(--bgi);border:1px solid ${colors[type]||"var(--bd)"};color:${colors[type]||"var(--t1)"}`;
+      el.textContent=msg;
+    }
+
+    async function ssCallAPI(b64,mediaType){
+      const skillMap={
+        "weapon forging":"weapon_forging","weaponforging":"weapon_forging",
+        "armour smithing":"armour_smithing","armor smithing":"armour_smithing","armoursmithing":"armour_smithing",
+        "engineering":"engineering",
+        "tailoring":"tailoring_leatherworking","leatherworking":"tailoring_leatherworking",
+        "tailoring & leatherworking":"tailoring_leatherworking","tailoring and leatherworking":"tailoring_leatherworking",
+        "cooking":"cooking_herbalism","herbalism":"cooking_herbalism",
+        "cooking & herbalism":"cooking_herbalism","cooking and herbalism":"cooking_herbalism"
+      };
+      const prompt=`You are reading a Gloria Victis game screenshot of a crafting recipe screen. Extract ALL visible data extremely carefully — accuracy is critical.
+
+Return ONLY a valid JSON object with these fields (use null for anything not visible):
+{
+  "name": "item name exactly as shown",
+  "type": "craft|resource|recipe|food|potion",
+  "skill": "one of: weapon_forging, armour_smithing, engineering, tailoring_leatherworking, cooking_herbalism",
+  "requiredLevel": number or null,
+  "craftTimeSeconds": number or null,
+  "materials": [{"name":"material name exactly","qty": number}],
+
+  "notes": "any other visible info"
+}
+
+Rules:
+- For skill: look at the skill name shown at the top (e.g. LEATHERWORKING = tailoring_leatherworking, WEAPON FORGING = weapon_forging, COOKING = cooking_herbalism)
+- For materials: read both the name AND the number after the slash (e.g. "0/3" means qty 3)
+- type is "craft" unless it's clearly a raw material (resource), a recipe scroll (recipe), food, or potion
+- Be exact with item names — spelling errors in names cause major database problems
+- Return ONLY the JSON, no markdown, no explanation`;
+
+      const apiKey=(document.getElementById('ss-api-key')?.value||'').trim();
+      if(!apiKey){ssSetStatus('error','❌ Please enter your Anthropic API key above first.');return;}
+      try{
+        const resp=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-api-key":(document.getElementById("ss-api-key")?.value||"").trim(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({
+            model:"claude-sonnet-4-20250514",
+            max_tokens:1000,
+            messages:[{role:"user",content:[
+              {type:"image",source:{type:"base64",media_type:mediaType,data:b64}},
+              {type:"text",text:prompt}
+            ]}]
+          })
+        });
+        const data=await resp.json();
+        if(!resp.ok){ssSetStatus("error","❌ API error: "+(data.error?.message||resp.status));return;}
+        const raw=data.content?.find(c=>c.type==="text")?.text||"";
+        let parsed;
+        try{
+          const cleaned=raw.replace(/```json|```/g,"").trim();
+          parsed=JSON.parse(cleaned);
+        }catch(e){ssSetStatus("error","❌ Could not parse AI response. Try again or enter manually.\n\nRaw: "+raw.slice(0,200));return;}
+        // Normalise skill key
+        if(parsed.skill){
+          const sk=parsed.skill.toLowerCase().trim();
+          parsed.skill=skillMap[sk]||parsed.skill;
+        }
+        ssShowPreview(parsed);
+      }catch(e){
+        ssSetStatus("error","❌ Request failed: "+e.message);
+      }
+    }
+
+    function ssShowPreview(d){
+      ssSetStatus("success","✅ AI extracted the data below. Review carefully before loading into the form.");
+      const panel=document.getElementById("ss-preview-panel");
+      const body=document.getElementById("ss-preview-body");
+      if(!panel||!body)return;
+      const skillLabels={weapon_forging:"Weapon Forging",armour_smithing:"Armour Smithing",engineering:"Engineering",tailoring_leatherworking:"Tailoring & Leatherworking",cooking_herbalism:"Cooking & Herbalism"};
+      const mats=Array.isArray(d.materials)?d.materials:[];
+      const row=(label,val,warn)=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px"><span style="min-width:140px;color:var(--tm);font-weight:600">${label}</span><span style="color:${warn?"var(--org)":"var(--t1)"};font-weight:${warn?700:400}">${val||'<span style="color:var(--tm);font-style:italic">not detected</span>'}</span></div>`;
+      body.innerHTML=
+        row("Item Name",d.name,!d.name)+
+        row("Type",d.type)+
+        row("Skill",skillLabels[d.skill]||d.skill,!skillLabels[d.skill])+
+        row("Required Level",d.requiredLevel)+
+        row("Craft Time",d.craftTimeSeconds?d.craftTimeSeconds+"s":null)+
+
+        `<div style="padding:5px 0;font-size:12px"><span style="color:var(--tm);font-weight:600;display:block;margin-bottom:4px">Materials (${mats.length})</span>${
+          mats.length?mats.map(m=>`<div style="padding:2px 8px;background:var(--bgi);border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between"><span>${m.name}</span><span style="color:var(--ac);font-weight:700">×${m.qty}</span></div>`).join("")
+          :`<span style="color:var(--tm);font-style:italic">none</span>`
+        }</div>`+
+        (d.notes?row("Notes",d.notes):"");
+      panel.style.display="block";
+      window._ssExtracted=d;
+
+      document.getElementById("ss-apply-btn")?.addEventListener("click",()=>ssApply(d));
+      document.getElementById("ss-discard-btn")?.addEventListener("click",()=>{
+        panel.style.display="none";
+        document.getElementById("ss-status").style.display="none";
+        window._ssExtracted=null;
+        document.getElementById("ss-file-input").value="";
+      });
+    }
+
+    function ssApply(d){
+      // Set type
+      const typeMap={craft:"cdb-type-craft",resource:"cdb-type-resource",recipe:"cdb-type-recipe",food:"cdb-type-food",potion:"cdb-type-potion"};
+      const typeId=typeMap[d.type]||"cdb-type-craft";
+      document.getElementById(typeId)?.click();
+      setTimeout(()=>{
+        // Name
+        const nm=document.getElementById("cdb-name");
+        if(nm)nm.value=d.name||"";
+        // Skill
+        const skField=["craft","food","potion"].includes(d.type)?
+          (d.type==="craft"?"cdb-skill":d.type==="food"?"cdb-food-skill":"cdb-pot-skill")
+          :"cdb-recipe-skill";
+        const sk=document.getElementById(skField);
+        if(sk&&d.skill){sk.value=d.skill;sk.dispatchEvent(new Event("change"));}
+        // Level
+        const lvField=d.type==="craft"?"cdb-reqlv":d.type==="food"?"cdb-food-minlv":d.type==="potion"?"cdb-pot-minlv":"cdb-recipe-minlv";
+        const lv=document.getElementById(lvField);
+        if(lv&&d.requiredLevel)lv.value=d.requiredLevel;
+        // Craft time
+        const tm=document.getElementById("cdb-time");
+        if(tm&&d.craftTimeSeconds)tm.value=d.craftTimeSeconds;
+        // Materials — clear existing and add new
+        craftCurMats={};
+        if(Array.isArray(d.materials)){
+          d.materials.forEach(m=>{if(m.name&&m.qty)craftCurMats[m.name]=m.qty;});
+        }
+        updateCraftMatsUI&&updateCraftMatsUI();
+
+        toast("✅ Data loaded into form — review and hit Save!");
+        // Scroll to form
+        document.getElementById("cdb-name")?.scrollIntoView({behavior:"smooth",block:"center"});
+      },150);
+    }
+  })();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6348,7 +6865,7 @@ function renderSidebar(){
   const pendingGoldReq=G.goldRequests.filter(r=>r.status==="Pending").length;
   const pendingAppsCount=isAdmin()?D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending").length:0;
   // Header
-  const roleLabel=currentUser?.role==="guild_leader"?"Guild Leader":currentUser?.role==="site_admin"?"Site Admin":currentUser?.role==="contributor"?"Contributor":"Member";
+  const roleLabel=currentUser?.role==="guild_leader"?"Guild Leader":currentUser?.role==="site_admin"?"Site Admin":currentUser?.role==="contributor"?"Contributor":currentUser?.role==="officer"?"Officer":"Member";
   const userInitial=(currentUser?.displayName||currentUser?.username||"?").charAt(0).toUpperCase();
   let h=`<div style="padding:8px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">
     <button id="my-profile-btn" style="display:flex;align-items:center;gap:8px;flex:1;background:none;border:none;padding:0;cursor:pointer;text-align:left;min-width:0">
@@ -6359,9 +6876,16 @@ function renderSidebar(){
       </div>
     </button>
     <button id="logout-btn" title="Sign out" style="background:none;border:1px solid var(--bd);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);font-size:13px;flex-shrink:0;transition:all .12s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--tm)'">⏻</button>
+    <button id="theme-toggle-btn" class="theme-btn" title="Toggle light/dark theme">☀</button>
   </div>`;
-  // Tool switcher
-  h+=`<div class="tool-sw">${TOOLS.map(t=>{const locked=t.k!=="treasury"&&!toolEnabled(t.k);return`<div class="tool-btn${activeTool===t.k?" a":""}${locked?" tool-btn-locked":""}" data-tool="${t.k}" title="${locked?"Coming Soon":""}"><span class="tool-icon">${t.i}</span><span class="tool-label">${t.l}</span>${locked?`<span class="tool-badge">🔒</span>`:""}</div>`;}).join("")}</div>`;
+  // Tool switcher with notification badges
+  const _pendingGRBadge=isAdmin()&&pendingGoldReq>0?`<span style="min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:auto">${pendingGoldReq}</span>`:"";
+  const _pendingAppBadge=isAdmin()&&pendingAppsCount>0?`<span style="min-width:16px;height:16px;border-radius:8px;background:var(--org);color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:auto">${pendingAppsCount}</span>`:"";
+  h+=`<div class="tool-sw">${TOOLS.map(t=>{
+    const locked=t.k!=="treasury"&&!toolEnabled(t.k);
+    const badge=t.k==="treasury"?(_pendingGRBadge||_pendingAppBadge):"";
+    return`<div class="tool-btn${activeTool===t.k?" a":""}${locked?" tool-btn-locked":""}" data-tool="${t.k}" title="${locked?"Coming Soon":""}"><span class="tool-icon">${t.i}</span><span class="tool-label">${t.l}</span>${locked?`<span class="tool-badge">🔒</span>`:badge}</div>`;
+  }).join("")}</div>`;
   if(canManageDatabase()){
     h+=`<div class="tool-sw" style="padding-top:0"><div class="tool-btn${activeTool==="database"?" a":""}" data-tool="database"><span class="tool-icon">${DATABASE_TOOL.i}</span><span class="tool-label">${DATABASE_TOOL.l}</span></div></div>`;
   }
@@ -6452,6 +6976,7 @@ function modalMyProfile(){
   render();
 }
 function render(){
+  clearRenderCache();
   // Guest mode: allow browsing public tools without login
   // Guild Manager always requires login
   if(!currentUser){
@@ -6591,8 +7116,17 @@ function bindAll(){
   const bS=(id,key)=>{const el=document.getElementById(id);if(el)el.addEventListener("change",()=>{F[key]=el.value;render()})};
   bS("frank","rank");bS("fstat","status");bS("fgttype","gtType");bS("fittype","itType");bS("finvcat","invCat");bS("factf","actF");bS("fevf","evF");bS("fordf","ordF");bS("freqf","reqF");bS("fannf","annF");bS("fgoldreqf","goldReqF");
 
-  // Search
-  ["psearch","gsearch","isearch"].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener("input",()=>{F.s=el.value;document.getElementById("main").innerHTML=(pg==="players"?tPlayers:pg==="gold"?tGold:tItemTx)();bindAll();document.getElementById(id)?.focus()})});
+  // Search — debounced to avoid full re-render on every keypress
+  let _searchTimer=null;
+  ["psearch","gsearch","isearch"].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener("input",()=>{
+    F.s=el.value;
+    clearTimeout(_searchTimer);
+    _searchTimer=setTimeout(()=>{
+      document.getElementById("main").innerHTML=(pg==="players"?tPlayers:pg==="gold"?tGold:tItemTx)();
+      bindAll();
+      document.getElementById(id)?.focus();
+    },120);
+  })});
 
   // Add buttons (admin only)
   const ab=(id,fn)=>{document.getElementById(id)?.addEventListener("click",fn)};
@@ -6986,10 +7520,38 @@ function bindAll(){
   ab("csv-players",()=>{exportCSV([["Name","Discord","Rank","Tags","Debt","Status"],...G.p.map(p=>{const gs=pGold(p.id);return[p.name,p.discord,p.rank,(p.tags||[]).join("; "),gs.debt,p.status]})],"members.csv")});
   ab("csv-gold",()=>{exportCSV([["Date","Player","Type","Amount","Notes"],...G.gt.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[t.date,pN(t.playerId),t.type,t.amount,t.notes||""])],"gold.csv")});
   ab("csv-items",()=>{exportCSV([["Date","Player","Item","Type","Qty","Notes"],...G.it.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[t.date,pN(t.playerId),iN(t.itemId),t.type,t.qty,t.notes||""])],"items.csv")});
+  ab("csv-audit",()=>{exportCSV([["Date","User","Action","Detail"],...G.log.map(l=>[new Date(l.date).toLocaleString(),l.user||"?",l.action,l.detail||""])],"audit-log.csv")});
+  // Audit log live filters (no full re-render — just DOM filter)
+  document.getElementById("audit-search-inp")?.addEventListener("input",e=>{window._auditSearch=e.target.value;render();});
+  document.getElementById("audit-user-filter")?.addEventListener("change",e=>{window._auditUserFilter=e.target.value;render();});
   // Settings
   ab("save-name",()=>{const g=D.guilds.find(x=>x.id===currentGuildId);if(g){g.cfg=g.cfg||{...DEFAULT_CFG};g.cfg.guildName=document.getElementById("cfg-name").value.trim()||"My Guild";}persist();render();toast("Saved!")});
   ab("add-tag",()=>{const v=document.getElementById("cfg-tag").value.trim();const g=D.guilds.find(x=>x.id===currentGuildId);if(g&&v&&!currentGuildCfg().tags.includes(v)){g.cfg=g.cfg||{...DEFAULT_CFG};g.cfg.tags.push(v);persist();render();toast("Added!")}});
   ab("change-pw-btn",()=>modalChangePassword());
+  // Invite code bindings
+  ab("gen-invite-btn",()=>modalGenerateInvite());
+  document.querySelectorAll(".copy-invite-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      navigator.clipboard.writeText(btn.dataset.link).then(()=>toast("Invite link copied!")).catch(()=>{
+        // fallback
+        const inp=document.createElement("input");inp.value=btn.dataset.link;document.body.appendChild(inp);inp.select();document.execCommand("copy");document.body.removeChild(inp);toast("Copied!");
+      });
+    });
+  });
+  document.querySelectorAll(".del-invite-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      confirmAction("Delete this invite link?",()=>{
+        D.inviteCodes=D.inviteCodes.filter(c=>c.code!==btn.dataset.code);
+        persist();render();toast("Invite deleted!");
+      });
+    });
+  });
+  document.querySelectorAll("[id^='disable-invite-']").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const c=D.inviteCodes.find(x=>x.code===btn.dataset.code);
+      if(c){c.disabled=true;persist();render();toast("Invite disabled!");}
+    });
+  });
   ab("export-btn",exportJSON);ab("import-btn",()=>document.getElementById("import-file")?.click());
   document.getElementById("import-file")?.addEventListener("change",e=>{if(e.target.files[0])importJSON(e.target.files[0])});
   ab("reset-btn",()=>confirmAction("Delete guild data? This will remove all members, gold, items and logs for this guild.",()=>{
@@ -7009,24 +7571,248 @@ function bindAll(){
   persist();pg="dashboard";render();toast("Guild data cleared!");
 }));
   ab("clear-log",()=>confirmAction("Clear log?",()=>{D.log=D.log.filter(x=>x.guildId!==currentGuildId);persist();render();toast("Cleared!")}));
+  // ── UX bindings (theme, quick-add, scroll restore) ──────
+  document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+  const qaBtn=document.getElementById('quick-add-btn');
+  if(qaBtn){
+    updateQuickAddBtn();
+    qaBtn.addEventListener('click', e=>{
+      e.stopPropagation();
+      document.getElementById('quick-add-menu')?.classList.toggle('open');
+    });
+  }
+  document.addEventListener('click', ()=>document.getElementById('quick-add-menu')?.classList.remove('open'), {once:true});
+  restoreScroll();
+  applyTheme();
 }
+
+// ═══════════════════════════════════════════════════════════
+// UX SYSTEMS
+// ═══════════════════════════════════════════════════════════
+
+// ── Theme toggle ─────────────────────────────────────────
+let _lightTheme = false;
+try{ _lightTheme = localStorage.getItem('gv_light_theme') === '1'; }catch(e){}
+function applyTheme(){
+  document.documentElement.classList.toggle('light-theme', _lightTheme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if(btn) btn.textContent = _lightTheme ? '🌙' : '☀';
+}
+applyTheme();
+function toggleTheme(){
+  _lightTheme = !_lightTheme;
+  try{ localStorage.setItem('gv_light_theme', _lightTheme ? '1' : '0'); }catch(e){}
+  applyTheme();
+}
+
+// ── Scroll position memory ────────────────────────────────
+// Saves #main scroll position per page key, restores after render
+const _scrollMemory = {};
+function saveScroll(){ const m=document.getElementById('main'); if(m) _scrollMemory[activeTool+':'+pg]=m.scrollTop; }
+function restoreScroll(){ const m=document.getElementById('main'); if(m){ const saved=_scrollMemory[activeTool+':'+pg]; if(saved) requestAnimationFrame(()=>{ m.scrollTop=saved; }); } }
+
+// ── Global search ─────────────────────────────────────────
+let _gsIdx = 0;
+function buildGlobalSearchResults(q){
+  if(!q||q.length<2||!currentUser) return [];
+  const lq = q.toLowerCase();
+  const results = [];
+
+  // Members
+  if(currentGuildId) G.p.filter(p=>(p.name||'').toLowerCase().includes(lq)).slice(0,4).forEach(p=>{
+    const gs=pGold(p.id);
+    results.push({icon:'👤',name:p.name,sub:`${p.rank||'Member'} · ${gs.debt>0?fmt(gs.debt)+'g debt':'No debt'}`,badge:'Member',action:()=>{activeTool='treasury';pg='player-detail';selP=p.id;F.dTab='gold';render();}});
+  });
+
+  // Gold transactions
+  if(currentGuildId) G.gt.filter(t=>pN(t.playerId).toLowerCase().includes(lq)||((t.notes||'').toLowerCase().includes(lq))).slice(0,3).forEach(t=>{
+    results.push({icon:'💰',name:`${pN(t.playerId)} — ${t.type}`,sub:`${fmt(t.amount)}g · ${fmtD(t.date)}${t.notes?' · '+t.notes:''}`,badge:'Gold',action:()=>{activeTool='treasury';pg='gold';F.s=pN(t.playerId);render();}});
+  });
+
+  // Item DB
+  craftItems.filter(i=>i.name.toLowerCase().includes(lq)).slice(0,4).forEach(i=>{
+    const kind=i.isRecipe?'Recipe':i.isResource?'Resource':i.isFood?'Food':i.isPotion?'Potion':'Crafted';
+    results.push({icon:'⚒️',name:i.name,sub:`${kind}${i.skill?' · '+(SKILL_NAMES[i.skill]||i.skill):''}${i.requiredLevel?' · Lv '+i.requiredLevel:''}`,badge:'Item DB',action:()=>{activeTool='database';pg='craft-items';window._cdbSearchQ=q;render();}});
+  });
+
+  // Shop items
+  D.vendorItems.filter(vi=>vi.itemName.toLowerCase().includes(lq)).slice(0,3).forEach(vi=>{
+    const vendor=D.vendors.find(v=>v.id===vi.vendorId);
+    const city=vendor?D.cities.find(c=>c.id===vendor.cityId):null;
+    results.push({icon:'🏘️',name:vi.itemName,sub:`${vendor?.name||'Unknown vendor'}${city?' · '+city.name:''}`,badge:'Shop',action:()=>{activeTool='itemsearch';pg='shop-search';window._shopSearchQ=q;render();}});
+  });
+
+  // Wiki pages
+  (D.wikiPages||[]).filter(p=>p.title.toLowerCase().includes(lq)||(p.summary||'').toLowerCase().includes(lq)).slice(0,3).forEach(p=>{
+    results.push({icon:'📖',name:p.title,sub:p.category||'Wiki',badge:'Wiki',action:()=>{activeTool='wiki';F.wikiPage=p.id;pg='wiki-article';render();}});
+  });
+
+  // Map markers
+  D.mapData.filter(m=>(m.name||m.markerType||'').toLowerCase().includes(lq)).slice(0,3).forEach(m=>{
+    results.push({icon:'🗺️',name:m.name||m.markerType,sub:`${m.markerType||''}${m.region?' · '+m.region:''}`,badge:'Map',action:()=>{activeTool='map';mapState.selectedMarker=m.id;render();}});
+  });
+
+  return results.slice(0, 12);
+}
+
+function renderGlobalSearch(q){
+  const overlay = document.getElementById('global-search-overlay');
+  const resultsEl = document.getElementById('global-search-results');
+  if(!overlay||!resultsEl) return;
+  const results = buildGlobalSearchResults(q);
+  _gsIdx = 0;
+  if(!results.length){
+    resultsEl.innerHTML = q.length>=2
+      ? `<div style="padding:20px;text-align:center;color:var(--tm);font-size:13px">No results for "${esc(q)}"</div>`
+      : '';
+    return;
+  }
+  resultsEl.innerHTML = results.map((r,i)=>`
+    <div class="gs-result${i===0?' gs-active':''}" data-gs-idx="${i}">
+      <span class="gs-result-icon">${r.icon}</span>
+      <div class="gs-result-main">
+        <div class="gs-result-name">${esc(r.name)}</div>
+        <div class="gs-result-sub">${esc(r.sub)}</div>
+      </div>
+      <span class="gs-result-badge">${esc(r.badge)}</span>
+    </div>`).join('');
+  // Store results for keyboard nav
+  overlay._results = results;
+  // Click handlers
+  resultsEl.querySelectorAll('.gs-result').forEach((el,i)=>{
+    el.addEventListener('click',()=>{ closeGlobalSearch(); results[i].action(); });
+    el.addEventListener('mouseenter',()=>{ _gsIdx=i; highlightGsResult(); });
+  });
+}
+
+function highlightGsResult(){
+  document.querySelectorAll('.gs-result').forEach((el,i)=>el.classList.toggle('gs-active',i===_gsIdx));
+  document.querySelectorAll('.gs-result')[_gsIdx]?.scrollIntoView({block:'nearest'});
+}
+
+function openGlobalSearch(){
+  const overlay=document.getElementById('global-search-overlay');
+  const inp=document.getElementById('global-search-input');
+  if(!overlay||!inp) return;
+  overlay.classList.add('open');
+  inp.value='';
+  document.getElementById('global-search-results').innerHTML='';
+  setTimeout(()=>inp.focus(),50);
+}
+function closeGlobalSearch(){
+  document.getElementById('global-search-overlay')?.classList.remove('open');
+}
+
+// Global search input handler
+(function initGlobalSearch(){
+  let _gsTimer=null;
+  document.addEventListener('DOMContentLoaded',()=>{
+    const inp=document.getElementById('global-search-input');
+    const overlay=document.getElementById('global-search-overlay');
+    if(!inp||!overlay) return;
+    inp.addEventListener('input',()=>{
+      clearTimeout(_gsTimer);
+      _gsTimer=setTimeout(()=>renderGlobalSearch(inp.value.trim()),100);
+    });
+    inp.addEventListener('keydown',e=>{
+      const results=overlay._results||[];
+      if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,results.length-1);highlightGsResult();}
+      else if(e.key==='ArrowUp'){e.preventDefault();_gsIdx=Math.max(_gsIdx-1,0);highlightGsResult();}
+      else if(e.key==='Enter'){e.preventDefault();if(results[_gsIdx]){closeGlobalSearch();results[_gsIdx].action();}}
+      else if(e.key==='Escape'){closeGlobalSearch();}
+    });
+    overlay.addEventListener('click',e=>{if(e.target===overlay)closeGlobalSearch();});
+  });
+})();
+
+// ── Quick-add floating menu ───────────────────────────────
+function updateQuickAddBtn(){
+  const btn=document.getElementById('quick-add-btn');
+  const menu=document.getElementById('quick-add-menu');
+  if(!btn||!menu) return;
+  // Show on treasury pages where quick-add makes sense
+  const showPages=['dashboard','players','gold','itemtx','events','orders','requests'];
+  const show = currentUser&&isAdmin()&&activeTool==='treasury'&&showPages.includes(pg);
+  btn.classList.toggle('visible', show);
+  if(!show){ menu.classList.remove('open'); return; }
+
+  const items=[];
+  if(G.p.length>0||pg==='players'){ items.push({icon:'👤',label:'Add Member',action:()=>modalPlayer()}); }
+  items.push({icon:'💰',label:'Record Gold',action:()=>modalGoldTx()});
+  items.push({icon:'⚔',label:'Record Item',action:()=>modalItemTx()});
+  if(pg==='events'||pg==='dashboard') items.push({icon:'📅',label:'Create Event',action:()=>modalEvent()});
+  if(pg==='orders'||pg==='dashboard') items.push({icon:'🔨',label:'New Order',action:()=>modalOrder()});
+  if(pg==='requests'||pg==='dashboard') items.push({icon:'📋',label:'Material Request',action:()=>modalRequest()});
+
+  menu.innerHTML = items.map((it,i)=>`<div class="qa-item" data-qa="${i}"><span class="qa-icon">${it.icon}</span>${esc(it.label)}</div>`).join('');
+  menu.querySelectorAll('.qa-item').forEach((el,i)=>{
+    el.addEventListener('click',()=>{ menu.classList.remove('open'); items[i].action(); });
+  });
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────
+(function initKeyboardShortcuts(){
+  document.addEventListener('keydown',e=>{
+    // Don't fire when typing in inputs
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable) return;
+
+    // Global search: Ctrl+K or /
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openGlobalSearch(); return; }
+    if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){ e.preventDefault(); openGlobalSearch(); return; }
+
+    // Navigation shortcuts (no modifier)
+    if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){
+      if(!currentUser) return;
+      switch(e.key){
+        case 'Escape': closeGlobalSearch(); closeModal(); break;
+        case 'a': case 'A':
+          // Quick add toggle
+          if(currentUser&&isAdmin()&&activeTool==='treasury'){
+            const menu=document.getElementById('quick-add-menu');
+            if(menu) menu.classList.toggle('open');
+          }
+          break;
+        case 'g': if(isAdmin()){ activeTool='treasury'; pg='gold'; render(); } break;
+        case 'm': if(isAdmin()){ activeTool='treasury'; pg='players'; render(); } break;
+        case 'd': if(currentUser){ activeTool='treasury'; pg='dashboard'; render(); } break;
+        case 'c': activeTool='crafting'; pg='craft-calc'; render(); break;
+        case 'n': if(activeTool==='map'||activeTool==='crafting') break; activeTool='announcements'; pg='dashboard'; render(); break;
+        case '?':
+          toast('Shortcuts: / Search · D Dashboard · M Members · G Gold · C Crafting · A Quick-add · Esc Close','');
+          break;
+      }
+    }
+  });
+})();
+
+// Save scroll before navigating
+// Intercept data-page clicks to save scroll first
+document.addEventListener('click', e=>{
+  const el=e.target.closest('[data-page],[data-tool]');
+  if(el) saveScroll();
+}, true);
 
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
-// Restore session before first render so user stays logged in on refresh
-(function restoreSession(){
-  const sess = loadSession();
-  if(!sess || !sess.userId) return;
-  const user = D.users.find(u => u.id === sess.userId);
-  if(!user) return;
-  currentUser = user;
-  currentGuildId = sess.guildId || user.guildId || null;
-  if(isSiteAdmin() && !currentGuildId && D.guilds.length) currentGuildId = D.guilds[0].id;
-  rebuildG();
+// Check for invite code in URL
+(function checkInviteUrl(){
+  try{
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get("invite");
+    if(code){
+      window._pendingInviteCode=code;
+      // Clean up URL without reloading
+      const url=new URL(window.location.href);
+      url.searchParams.delete("invite");
+      window.history.replaceState({},"",url.toString());
+    }
+  }catch(e){}
 })();
-render();
-// Pull latest data from Cloudflare KV (runs after first render so the page isn't blank while fetching)
+
+// Boot: load all data from KV (shows loading screen), then render.
+// Session is restored inside initKvSync() after fresh data arrives.
 initKvSync();
 </script>
 </body>
