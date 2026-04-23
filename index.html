@@ -844,6 +844,22 @@ function getUserProfile(userId){
   if(!Array.isArray(profile.recipeIds))profile.recipeIds=[];
   return profile;
 }
+// Per-user personal notes attached to a map marker. Stored under the user's
+// profile so each user sees only their own notes for each location.
+function getMarkerNote(userId,markerId){
+  const p=getUserProfile(userId);
+  if(!p||!markerId)return"";
+  return (p.markerNotes||{})[markerId]||"";
+}
+function setMarkerNote(userId,markerId,text){
+  const p=getUserProfile(userId);
+  if(!p||!markerId)return;
+  p.markerNotes=p.markerNotes||{};
+  const trimmed=(text||"").trim();
+  if(trimmed)p.markerNotes[markerId]=trimmed;
+  else delete p.markerNotes[markerId];
+  persist();
+}
 function getUserRecipeIds(user){
   const profile=getUserProfile(user?.id);
   if(!profile)return[];
@@ -1133,9 +1149,10 @@ function renderLogin(){
       if(localUser){Object.assign(localUser,admin);}
       else{D.users.push(admin);localUser=admin;}
       currentUser=localUser;
-      currentGuildId=D.guilds[0]?.id||null;
+      // Site admin doesn't belong to any guild. Start at the guild-list landing page.
+      currentGuildId=null;
       saveSession(currentUser,currentGuildId);
-      activeTool="treasury";pg="dashboard";
+      activeTool="treasury";pg="admin-guilds-list";
       loginMode="login";
       render();
       toast("Site admin created!");
@@ -1165,9 +1182,10 @@ function renderLogin(){
         return;
       }
       currentGuildId=user.guildId||null;
-      if(isSiteAdmin())currentGuildId=currentGuildId||D.guilds[0]?.id||null;
+      // Site admin is never "in" a guild — land on the cross-guild list.
+      if(isSiteAdmin())currentGuildId=null;
       saveSession(currentUser,currentGuildId);
-      activeTool="treasury";pg="dashboard";
+      activeTool="treasury";pg=isSiteAdmin()?"admin-guilds-list":"dashboard";
       window._regData={};
       render();
     };
@@ -1770,6 +1788,31 @@ function pgMap(){
 .map-info-notes{font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.4}
 .map-info-meta{font-size:10px;color:var(--tm);border-top:1px solid var(--bd);padding-top:8px;margin-top:8px}
 .map-info-actions{display:flex;gap:6px;margin-top:10px}
+/* ── Styled location info panel (shown for non-guild markers) ─────────── */
+.loc-panel{position:absolute;top:16px;right:16px;width:380px;max-width:calc(100vw - 32px);max-height:calc(100vh - 120px);overflow-y:auto;background:#1e1e1e;border:1px solid #333;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;color:#e5e5e5;font-size:13px}
+.loc-panel-close{position:absolute;top:8px;right:10px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;line-height:1;padding:2px 8px;font-family:inherit;border-radius:4px}
+.loc-panel-close:hover{color:#fff;background:#2a2a2a}
+.loc-panel-head{padding:16px 44px 12px 16px}
+.loc-panel-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;line-height:1.2}
+.loc-panel-sub{font-size:11px;color:#888}
+.loc-panel-img{position:relative;background:#111;border-top:1px solid #2a2a2a;border-bottom:1px solid #2a2a2a}
+.loc-panel-img img{display:block;width:100%;max-height:200px;object-fit:cover}
+.loc-panel-img-overlay{position:absolute;left:0;right:0;bottom:0;padding:6px 12px;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,0) 100%);display:flex;justify-content:space-between;align-items:center;font-size:10px}
+.loc-panel-img-overlay-l{color:#c8a84b;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.loc-panel-img-overlay-r{color:#999}
+.loc-panel-sec{padding:11px 16px;border-top:1px solid rgba(255,255,255,.08)}
+.loc-panel-sec-label{font-size:10px;font-weight:700;color:#c8a84b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.loc-pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:10px;margin:0 3px 3px 0;font-weight:500}
+.loc-pill-res{background:rgba(86,211,100,.15);color:#56d364;border:1px solid rgba(86,211,100,.3)}
+.loc-pill-fac{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.loc-panel-text{font-size:12px;color:#c8c8c8;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.loc-panel-yournotes{min-height:38px;padding:6px 8px;background:#151515;border:1px solid #2a2a2a;border-radius:4px;color:#999;font-style:italic;font-size:12px;line-height:1.5;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;outline:none}
+.loc-panel-yournotes:focus{border-color:#4ecdc4;color:#ddd}
+.loc-panel-coords-row{font-size:11px;color:#888;margin-bottom:8px;font-family:monospace}
+.loc-panel-copy{display:block;width:100%;padding:8px;background:#2a2a2a;border:1px solid #444;border-radius:4px;color:#4ecdc4;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.05em;transition:background .15s}
+.loc-panel-copy:hover{background:#333}
+.loc-panel-copy.copied{color:#56d364;border-color:#56d364}
+.loc-panel-admin{padding:10px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:6px}
 /* Leaflet custom styling */
 #leaflet-map{background:#314b62;width:100%;height:100%;display:block}.map-tiles{background:#314b62}.map-tiles img{background:#314b62}
 .leaflet-container{background:#314b62!important;font-family:inherit}
@@ -2187,23 +2230,51 @@ function initMapBindings(){
 
     // Nation location — open full modal window instead of side panel
     if(m.category === "guild") {
+      panel.style.display = "none";
       modalNationLocation(m, idx);
       return;
-    } else {
-      // Standard marker popup
-      panel.style.width = "280px";
-      const typeLabel = m.markerType || m.name || "";
-      panel.innerHTML = `
-        <div class="map-info-name"><span>${cat.icon}</span>${esc(m.locationName||typeLabel)}${regionTag}</div>
-        <div class="map-info-cat">${esc(cat.name)}</div>
-        ${m.notes ? `<div class="map-info-notes">${esc(m.notes)}</div>` : ""}
-        <div class="map-info-meta">Added by ${esc(m.addedBy || "Unknown")} • ${m.addedDate ? new Date(m.addedDate).toLocaleDateString() : ""}</div>
-        ${isContributor() ? `<div class="map-info-actions"><button class="btn bg bs" id="map-edit-marker" data-idx="${idx}">✎ Edit</button><button class="btn bd bs" id="map-delete-marker" data-idx="${idx}">✕ Delete</button></div>` : ""}
-      `;
     }
-    
+
+    // Styled location info panel for non-guild markers
+    panel.className = "loc-panel";
+    panel.removeAttribute("style");
+    const zone = m.region || cat.name || "";
+    const typeLabel = m.markerType || m.name || "";
+    const resources = Array.isArray(m.resources) ? m.resources : [];
+    const facilities = Array.isArray(m.facilities) ? m.facilities : [];
+    const mobs = Array.isArray(m.mobs) ? m.mobs : [];
+    const yourNote = currentUser ? getMarkerNote(currentUser.id, m.id) : "";
+
+    let h = "";
+    h += `<button class="loc-panel-close" id="loc-panel-close" title="Close">✕</button>`;
+    h += `<div class="loc-panel-head"><div class="loc-panel-title">${esc(m.locationName||m.name||typeLabel)}</div><div class="loc-panel-sub">${esc(typeLabel)}${typeLabel&&zone?" · ":""}${esc(zone)}</div></div>`;
+    if(m.imageUrl){
+      h += `<div class="loc-panel-img"><img src="${esc(m.imageUrl)}" alt="${esc(m.name||"")}" onerror="this.parentNode.style.display='none'"><div class="loc-panel-img-overlay"><span class="loc-panel-img-overlay-l">Location Photo</span><span class="loc-panel-img-overlay-r">Reference image</span></div></div>`;
+    }
+    if(resources.length){
+      h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Resources</div><div>${resources.map(r=>`<span class="loc-pill loc-pill-res">${esc(r)}</span>`).join("")}</div></div>`;
+    }
+    if(facilities.length){
+      h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Facilities</div><div>${facilities.map(f=>`<span class="loc-pill loc-pill-fac">${esc(f)}</span>`).join("")}</div></div>`;
+    }
+    if(mobs.length){
+      h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Animals / Mobs</div><div class="loc-panel-text">${esc(mobs.join(", "))}</div></div>`;
+    }
+    if(m.notes){
+      h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Global Notes</div><div class="loc-panel-text">${esc(m.notes)}</div></div>`;
+    }
+    if(currentUser){
+      h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Your Notes</div><textarea class="loc-panel-yournotes" id="loc-panel-yournotes" placeholder="Add a personal note about this location…">${esc(yourNote)}</textarea></div>`;
+    }
+    h += `<div class="loc-panel-sec"><div class="loc-panel-sec-label">Coords</div><div class="loc-panel-coords-row">Coords: X ${m.x?.toFixed(2)}, Y ${m.y?.toFixed(2)}</div><button class="loc-panel-copy" id="loc-panel-copy" type="button">Copy Coords</button></div>`;
+    if(isContributor()){
+      h += `<div class="loc-panel-admin"><button class="btn bg bs" id="map-edit-marker" data-idx="${idx}">✎ Edit</button><button class="btn bd bs" id="map-delete-marker" data-idx="${idx}">✕ Delete</button></div>`;
+    }
+
+    panel.innerHTML = h;
     panel.style.display = "block";
-    
+
+    document.getElementById("loc-panel-close")?.addEventListener("click", () => { panel.style.display = "none"; });
     document.getElementById("map-edit-marker")?.addEventListener("click", () => modalEditMarker(idx));
     document.getElementById("map-delete-marker")?.addEventListener("click", () => {
       if(confirm(`Delete marker "${m.name}"?`)) {
@@ -2216,6 +2287,33 @@ function initMapBindings(){
         toast("Marker deleted");
       }
     });
+    const notesEl = document.getElementById("loc-panel-yournotes");
+    if(notesEl){
+      notesEl.addEventListener("blur", () => {
+        if(!currentUser)return;
+        const cur = getMarkerNote(currentUser.id, m.id);
+        const next = notesEl.value.trim();
+        if(cur !== next) setMarkerNote(currentUser.id, m.id, next);
+      });
+    }
+    const copyBtn = document.getElementById("loc-panel-copy");
+    if(copyBtn){
+      copyBtn.addEventListener("click", async () => {
+        const text = `${m.x?.toFixed(2)}, ${m.y?.toFixed(2)}`;
+        try{ await navigator.clipboard.writeText(text); }
+        catch{
+          // Fallback for insecure origins / denied permission
+          const ta = document.createElement("textarea");
+          ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+          document.body.appendChild(ta); ta.select();
+          try{ document.execCommand("copy"); }catch{} ta.remove();
+        }
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "Copied!";
+        copyBtn.classList.add("copied");
+        setTimeout(() => { copyBtn.textContent = originalText; copyBtn.classList.remove("copied"); }, 1200);
+      });
+    }
   }
   
   // Click on map to close panels or place marker
@@ -2843,7 +2941,11 @@ function modalEditMarker(idx){
         ${(()=>{const mt=marker.markerType||"";const cfg={"Mine":{title:"⛏ Mine Resources",col1:"Veins",col2:"Deposits"},"Farm":{title:"🌾 Farm Produce",col1:"Qty",col2:"Notes"},"Lumbermill":{title:"🪵 Lumbermill Resources",col1:"Qty",col2:"Notes"}}[mt];if(!cfg||currCat!=="guild")return"";const rows=(marker.locResources||marker.mineResources||[]).map(r=>`<div class="loc-res-row" style="display:grid;grid-template-columns:1fr 65px 75px 22px;gap:4px;align-items:center"><input class="inp loc-res-name" type="text" value="${esc(r.resource||"")}" placeholder="e.g. Iron Ore..." style="padding:4px 6px;font-size:11px"><input class="inp loc-res-col1" type="text" value="${esc(r.col1||r.veins||"")}" placeholder="0" style="padding:4px 6px;font-size:11px;text-align:center"><input class="inp loc-res-col2" type="text" value="${esc(r.col2||r.deposits||"")}" placeholder="—" style="padding:4px 6px;font-size:11px;text-align:center"><button type="button" class="btn bd bs loc-res-del-edit" style="padding:2px 5px">✕</button></div>`).join("");return`<div id="edit-loc-resources"><div style="font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 4px">${cfg.title}</div><div style="display:grid;grid-template-columns:1fr 65px 75px 22px;gap:4px;font-size:9px;color:var(--tm);font-weight:600;padding:0 2px;margin-bottom:4px"><span>Name</span><span style="text-align:center">${cfg.col1}</span><span style="text-align:center">${cfg.col2}</span><span></span></div><div id="edit-loc-res-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;margin-bottom:6px">${rows}</div><button type="button" class="btn bg bs" id="edit-add-res-row" style="width:100%;justify-content:center;font-size:11px">+ Add Row</button></div>`;})()}
         <div class="fg"><label class="fl">Linked City (Item Search)</label><select class="inp" id="edit-city-link"><option value="">— None —</option>${D.cities.map(c=>`<option value="${c.id}"${marker.cityLink===c.id?" selected":""}>${esc(c.name||"")}</option>`).join("")}</select></div>
       </div>
-      <div class="fg"><label class="fl">Notes</label><textarea class="inp" id="edit-marker-notes" rows="3">${esc(marker.notes||"")}</textarea></div>
+      <div class="fg"><label class="fl">Image URL</label><input class="inp" id="edit-marker-image" value="${esc(marker.imageUrl||"")}" placeholder="https://… (shown in the location panel)"></div>
+      <div class="fg"><label class="fl">Resources <span style="font-weight:400;color:var(--tm)">(comma-separated)</span></label><input class="inp" id="edit-marker-resources" value="${esc((marker.resources||[]).join(", "))}" placeholder="Iron Ore, Coal, Stone"></div>
+      <div class="fg"><label class="fl">Facilities <span style="font-weight:400;color:var(--tm)">(comma-separated)</span></label><input class="inp" id="edit-marker-facilities" value="${esc((marker.facilities||[]).join(", "))}" placeholder="Forge, Anvil, Grindstone"></div>
+      <div class="fg"><label class="fl">Animals / Mobs <span style="font-weight:400;color:var(--tm)">(comma-separated)</span></label><input class="inp" id="edit-marker-mobs" value="${esc((marker.mobs||[]).join(", "))}" placeholder="Wolf, Boar, Bear"></div>
+      <div class="fg"><label class="fl">Global Notes</label><textarea class="inp" id="edit-marker-notes" rows="3">${esc(marker.notes||"")}</textarea></div>
       <div class="actions"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="save-marker">Save</button></div>
     `;
     body.querySelectorAll(".loc-res-del-edit").forEach(btn=>btn.addEventListener("click",()=>btn.closest(".loc-res-row").remove()));
@@ -2887,6 +2989,11 @@ function modalEditMarker(idx){
       marker.region=region;
       marker.category=cat;
       marker.notes=document.getElementById("edit-marker-notes")?.value.trim()||"";
+      marker.imageUrl=document.getElementById("edit-marker-image")?.value.trim()||"";
+      const splitList=s=>(s||"").split(",").map(x=>x.trim()).filter(Boolean);
+      marker.resources=splitList(document.getElementById("edit-marker-resources")?.value);
+      marker.facilities=splitList(document.getElementById("edit-marker-facilities")?.value);
+      marker.mobs=splitList(document.getElementById("edit-marker-mobs")?.value);
       if(cat==="guild"){
         featFields.forEach(f=>{marker[f.id]=document.getElementById("edit-"+f.id)?.checked||false;});
         marker.workshops=(document.getElementById("edit-workshops")?.value||"").split(",").map(s=>s.trim()).filter(Boolean);
@@ -3861,6 +3968,35 @@ function validateInviteCode(code){
   if(c.expiresAt&&new Date(c.expiresAt)<new Date())return{ok:false,reason:"This invite code has expired."};
   if(c.maxUses>0&&c.uses>=c.maxUses)return{ok:false,reason:"This invite code has reached its maximum uses."};
   return{ok:true,code:c};
+}
+
+// Site-admin landing page: a list of every guild with an Edit button. The site
+// admin is not a member of any guild; they pass through this list to manage a
+// specific guild, then return here via the "← All Guilds" sidebar link.
+function tAdminGuildList(){
+  if(!isSiteAdmin())return `<div class="card">${empty("🔒","Site admin only","")}</div>`;
+  const guilds=D.guilds.filter(g=>g.id!=="__legacy__");
+  let h=`<div class="ph"><div class="pt">All Guilds</div><span style="font-size:11px;color:var(--tm)">Site admin</span></div>`;
+  h+=`<div class="card" style="margin-bottom:14px;border-color:var(--ac);background:var(--acg)"><div style="font-size:12px;color:var(--t2);line-height:1.55">You're signed in as a site administrator. You're not a member of any guild — pick one below to manage it, then use <strong>← All Guilds</strong> in the sidebar to return.</div></div>`;
+  if(!guilds.length){
+    h+=`<div class="card">${empty("🏰","No guilds yet","No guilds have been created on this site. Use the create-guild flow during registration or ask a member to start one.")}</div>`;
+    return h;
+  }
+  guilds.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"")).forEach(g=>{
+    const leader=D.users.find(u=>u.guildId===g.id&&u.role==="guild_leader");
+    const memberCount=D.p.filter(p=>p.guildId===g.id).length;
+    const userCount=D.users.filter(u=>u.guildId===g.id).length;
+    const createdStr=g.createdDate?fmtD(g.createdDate):"";
+    h+=`<div class="card" style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:6px;background:var(--acg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏰</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">${esc(g.name||"")}</div>
+        <div style="font-size:11px;color:var(--tm);margin-top:2px">Led by ${esc(leader?.displayName||"—")} · ${memberCount} members · ${userCount} users${createdStr?` · Created ${createdStr}`:""}</div>
+      </div>
+      <button class="btn bp bs admin-edit-guild-btn" data-gid="${g.id}">Edit Guild →</button>
+    </div>`;
+  });
+  return h;
 }
 
 function tSettings(){
@@ -6848,8 +6984,12 @@ function renderSidebar(){
     h+=`<div style="flex:1;overflow-y:auto">`;
   }
   if(activeTool==="treasury"){
+    // Site admin on the guild list — render only the All Guilds entry.
+    if(isSiteAdmin()&&!currentGuildId){
+      h+=`<div class="ns"><div class="nst">Site Admin</div><div class="ni${pg==="admin-guilds-list"?" a":""}" data-page="admin-guilds-list"><span style="font-size:13px;width:16px;text-align:center">🏰</span>All Guilds</div></div>`;
+    }
     // User has no guild yet — show join prompt in sidebar
-    if(!isSiteAdmin()&&(!currentUser.guildId||currentUser.status==="pending")){
+    else if(!isSiteAdmin()&&(!currentUser.guildId||currentUser.status==="pending")){
       const pendingGuild=currentUser.status==="pending"?D.guilds.find(g=>g.id===currentUser.guildId):null;
       h+=`<div class="ns"><div class="nst">Guild Manager</div>
         <div style="padding:10px 8px">
@@ -6858,6 +6998,11 @@ function renderSidebar(){
         </div>
       </div>`;
     } else {
+      // Site admin viewing a specific guild — prepend "← All Guilds" so they can step back out.
+      if(isSiteAdmin()){
+        const gName=D.guilds.find(g=>g.id===currentGuildId)?.name||"";
+        h+=`<div class="ns"><div class="nst">Site Admin</div><div class="ni" data-page="admin-guilds-list" title="Back to guild list"><span style="font-size:13px;width:16px;text-align:center">←</span>All Guilds${gName?`<span style="font-size:9px;color:var(--tm);margin-left:4px">${esc(gName)}</span>`:""}</div></div>`;
+      }
       let sec;
       if(isAdmin()){
         sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
@@ -6943,7 +7088,11 @@ function render(){
   }
   // Set currentGuildId FIRST before any other logic
   if(!isSiteAdmin()&&currentUser.guildId)currentGuildId=currentUser.guildId;
-  if(isSiteAdmin()&&!currentGuildId&&D.guilds.length)currentGuildId=D.guilds[0].id;
+  // Site admin with no guild selected: route to the cross-guild list instead
+  // of silently auto-picking D.guilds[0]. They're not "in" any guild.
+  if(isSiteAdmin()&&!currentGuildId&&activeTool==="treasury"&&pg!=="admin-guilds-list"&&pg!=="site-profile"){
+    pg="admin-guilds-list";
+  }
   rebuildG();
   // Check if user needs to change temp password
   if(currentUser.tempPassword){
@@ -6975,7 +7124,7 @@ function render(){
       m.innerHTML=pgWiki();
       initWikiBindings(()=>render());
     } else {
-      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage};
+      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage,"admin-guilds-list":tAdminGuildList};
       // For non-admins, restrict to allowed pages
       if(!isAdmin()&&!memberPages.includes(pg)){
         m.innerHTML=tGoldRequest();
@@ -7052,7 +7201,14 @@ function bindAll(){
   // Nav — handle wiki category clicks
   document.querySelectorAll("[data-page]:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",()=>{
     if(el.dataset.wikiCat!==undefined) F.wikiCat=el.dataset.wikiCat;
-    pg=el.dataset.page;render();
+    const target=el.dataset.page;
+    // Site admin stepping back to the guild list — clear the active guild so
+    // they're fully "outside" any guild while browsing the list.
+    if(target==="admin-guilds-list"&&isSiteAdmin()){
+      currentGuildId=null;
+      saveSession(currentUser,null);
+    }
+    pg=target;render();
   })});
   document.querySelectorAll(".plink:not([data-bound])").forEach(el=>{el.setAttribute("data-bound","1");el.addEventListener("click",e=>{e.stopPropagation();selP=el.dataset.pid;pg="player-detail";F.dTab="gold";activeTool="treasury";render()})});
   bindOnce(document.getElementById("back-btn"),"click","back-to-players",()=>{pg="players";render()});
@@ -7341,6 +7497,14 @@ function bindAll(){
     e.stopPropagation();
     currentGuildId=el.dataset.gid;
     rebuildG();pg="dashboard";render();toast("Switched to "+D.guilds.find(g=>g.id===currentGuildId)?.name);
+  }));
+  // Site admin: "Edit Guild →" on the All Guilds landing page enters a guild.
+  document.querySelectorAll(".admin-edit-guild-btn").forEach(el=>el.addEventListener("click",e=>{
+    e.stopPropagation();
+    if(!isSiteAdmin())return;
+    currentGuildId=el.dataset.gid;
+    saveSession(currentUser,currentGuildId);
+    pg="dashboard";render();
   }));
   document.querySelectorAll(".database-dupe-open").forEach(el=>el.addEventListener("click",e=>{
     e.stopPropagation();
