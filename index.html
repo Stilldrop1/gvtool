@@ -402,7 +402,11 @@ let _persistTimer=null;
 
 async function _pushToKV(key,value){
   const tok=loadAuthToken();
-  if(!tok){throw new Error("Not signed in — writes require a session token.");}
+  if(!tok){
+    const err=new Error("Not signed in — writes require a session token.");
+    err.code="NO_TOKEN";
+    throw err;
+  }
   const r=await fetch(`${CF_WORKER_URL}/data/${encodeURIComponent(key)}`,{
     method:"PUT",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},
@@ -413,7 +417,9 @@ async function _pushToKV(key,value){
     clearSession();
     currentUser=null;currentGuildId=null;
     if(typeof render==="function")render();
-    throw new Error("Session expired — please sign in again.");
+    const err=new Error("Session expired — please sign in again.");
+    err.code="AUTH_EXPIRED";
+    throw err;
   }
   if(!r.ok) throw new Error(`KV write failed: ${r.status}`);
 }
@@ -445,7 +451,9 @@ async function _apiPost(path,body){
 
 // persist() writes to KV. Debounced 400ms so rapid changes collapse into one write.
 // Shows a saving indicator so users know their change is going through.
+// Silently skipped when the user isn't signed in — nothing to save TO without auth.
 function persist(){
+  if(!loadAuthToken())return;
   _showSavingIndicator();
   if(_persistTimer)clearTimeout(_persistTimer);
   _persistTimer=setTimeout(async()=>{
@@ -455,6 +463,7 @@ function persist(){
       await _pushToKV(SK,o);
       _showSavedIndicator();
     }catch(e){
+      if(e.code==="NO_TOKEN")return;
       console.error("KV write failed:",e);
       _showSaveErrorIndicator();
     }
@@ -1005,8 +1014,13 @@ function renderGuest(){
 
 
 function renderLogin(){
-  // If no site admin has a usable password, force the first-run setup flow.
-  const siteAdminReady=D.users.some(u=>(u.role==="site_admin"||u.role==="admin")&&u.password);
+  // If no site admin has a PROPERLY HASHED password (salt:hex), force the
+  // first-run setup flow. Legacy plaintext ("admin") doesn't count because the
+  // Worker won't accept it for login — treat those as not-yet-set-up.
+  const siteAdminReady=D.users.some(u=>
+    (u.role==="site_admin"||u.role==="admin")&&
+    typeof u.password==="string"&&u.password.includes(":")
+  );
   let mode=loginMode||"login"; // "login" | "register" | "create-guild" | "join-guild" | "setup"
   if(!siteAdminReady)mode="setup";
   const guilds=D.guilds.filter(g=>g.id!=="__legacy__")||[];
@@ -4062,10 +4076,13 @@ if(!craftItems.length){
   if(added)saveCraftItems();
 }
 })();
-function saveCraftItems(){_pushToKV("gv_custom_items",craftItems).catch(e=>console.error("saveCraftItems failed:",e));}
-function saveCraftSkillXpTables(){_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(e=>console.error("saveCraftSkillXpTables failed:",e));}
-function savePlayerXpTable(){_pushToKV("gv_player_xp_table",playerXpTable).catch(e=>console.error("savePlayerXpTable failed:",e));}
-function saveCraftResources(){_pushToKV("gv_resources",craftResources).catch(e=>console.error("saveCraftResources failed:",e));}
+// Craft-data save helpers. Silent when not signed in (boot-time seed writes are
+// expected to fail in that state — seed data re-applies from constants on every load).
+function _quietSaveFail(name){return e=>{if(e.code==="NO_TOKEN")return;console.error(name+" failed:",e);};}
+function saveCraftItems(){if(!loadAuthToken())return;_pushToKV("gv_custom_items",craftItems).catch(_quietSaveFail("saveCraftItems"));}
+function saveCraftSkillXpTables(){if(!loadAuthToken())return;_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(_quietSaveFail("saveCraftSkillXpTables"));}
+function savePlayerXpTable(){if(!loadAuthToken())return;_pushToKV("gv_player_xp_table",playerXpTable).catch(_quietSaveFail("savePlayerXpTable"));}
+function saveCraftResources(){if(!loadAuthToken())return;_pushToKV("gv_resources",craftResources).catch(_quietSaveFail("saveCraftResources"));}
 const normRecipeName=name=>(name||"").trim().toLowerCase();
 function removeRecipeIdsFromPlayers(ids){
   const idSet=new Set((ids||[]).map(String));
