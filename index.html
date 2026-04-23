@@ -691,11 +691,23 @@ let F={s:"",rank:"All",status:"All",gtType:"All",itType:"All",invCat:"All",lbTab
 let currentGuildId=null;
 // Guild view: all guild-scoped data filtered to currentGuildId
 let G={p:[],gt:[],it:[],items:[],log:[],events:[],orders:[],requests:[],announcements:[],gear:[],goldRequests:[]};
+// Prevents duplicate event listeners on the same target+event+key.
+// Element targets are tagged with a data-attr (survives DOM replacement checks).
+// Non-Element targets (document, window) use a module-level Set since they
+// don't support setAttribute/hasAttribute.
+const _bindOnceKeys=new Set();
 function bindOnce(el,event,key,handler){
   if(!el)return;
-  const attr=`data-bound-${key||event}`;
-  if(el.hasAttribute(attr))return;
-  el.setAttribute(attr,"1");
+  if(typeof el.hasAttribute==="function"){
+    const attr=`data-bound-${key||event}`;
+    if(el.hasAttribute(attr))return;
+    el.setAttribute(attr,"1");
+  }else{
+    // document, window, or any EventTarget without DOM attributes.
+    const k=`${event}:${key||event}`;
+    if(_bindOnceKeys.has(k))return;
+    _bindOnceKeys.add(k);
+  }
   el.addEventListener(event,handler);
 }
 // Fast lookup maps — rebuilt by rebuildG(), used by pN() and iN()
