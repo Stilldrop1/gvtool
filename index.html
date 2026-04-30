@@ -82,7 +82,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 
 /* Location cards — single column full width */
 .map-loc-cards{display:flex;flex-direction:column;gap:4px;padding:2px 0 6px 10px}
-.map-loc-card{background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:7px 28px 7px 10px;cursor:pointer;transition:all .13s;position:relative;min-width:0}
+.map-loc-card{background:var(--bg2);border:1px solid var(--bd);border-radius:5px;padding:7px 50px 7px 10px;cursor:pointer;transition:all .13s;position:relative;min-width:0}
 .map-loc-card:hover{border-color:var(--bd2);background:var(--bgh)}
 .map-loc-card.selected{border-color:var(--ac);background:var(--acg)}
 .map-loc-card-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -92,6 +92,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--t1);font
 .map-loc-fly{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:1px solid var(--bd);background:var(--bg1);display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;opacity:0;transition:opacity .12s;color:var(--t2);line-height:1}
 .map-loc-card:hover .map-loc-fly{opacity:1}
 .map-loc-fly:hover{background:var(--acg);border-color:var(--ac);color:var(--ac)}
+.map-loc-edit{position:absolute;top:50%;right:28px;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:1px solid var(--bd);background:var(--bg1);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;opacity:0;transition:opacity .12s;color:var(--t2);line-height:1;padding:0}
+.map-loc-card:hover .map-loc-edit{opacity:1}
+.map-loc-edit:hover{background:var(--acg);border-color:var(--ac);color:var(--ac)}
 
 /* Marker type sub-groups */
 .map-loc-type-sections{padding-bottom:4px}
@@ -299,21 +302,48 @@ tbody tr.row-selected{background:var(--acg)!important}
 .qa-item:hover{background:var(--acg);color:var(--ac)}
 .qa-item .qa-icon{font-size:14px;width:18px;text-align:center}
 
-/* Global search overlay */
+/* Command palette overlay */
 #global-search-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:flex-start;justify-content:center;padding-top:80px;backdrop-filter:blur(3px)}
 #global-search-overlay.open{display:flex;animation:fadeIn .12s}
-#global-search-box{background:var(--bg1);border:1px solid var(--ac);border-radius:10px;width:560px;max-width:92vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+#global-search-box{background:var(--bg1);border:1px solid var(--ac);border-radius:10px;width:640px;max-width:92vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;max-height:min(78vh,720px)}
 #global-search-input{width:100%;padding:14px 18px;font-size:15px;background:transparent;border:none;color:var(--t1);font-family:inherit;outline:none}
 #global-search-input::placeholder{color:var(--tm)}
-#global-search-results{max-height:360px;overflow-y:auto;border-top:1px solid var(--bd)}
-.gs-result{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:background .08s;border-bottom:1px solid var(--bd)}
+#global-search-results{overflow-y:auto;border-top:1px solid var(--bd);flex:1;min-height:0}
+.gs-empty{padding:28px 20px;text-align:center;color:var(--tm);font-size:12px}
+.gs-group-title{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;padding:8px 16px 4px;background:var(--bgi);border-top:1px solid var(--bd);font-weight:600}
+#global-search-results .gs-group:first-child .gs-group-title{border-top:none}
+.gs-result{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;transition:background .08s;border-bottom:1px solid var(--bd)}
 .gs-result:hover,.gs-result.gs-active{background:var(--acg)}
 .gs-result-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
 .gs-result-main{flex:1;min-width:0}
 .gs-result-name{font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gs-result-sub{font-size:10px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gs-result-badge{font-size:9px;color:var(--tm);background:var(--bgi);padding:1px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0}
-#global-search-hint{padding:8px 16px;font-size:10px;color:var(--tm);border-top:1px solid var(--bd);display:flex;justify-content:space-between}
+.gs-result-hint{font-size:9px;color:var(--tm);background:var(--bgi);padding:1px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0;font-family:monospace}
+.gs-show-more{padding:6px 16px;font-size:10px;color:var(--ac);cursor:pointer;text-align:center;background:var(--bgi);border-bottom:1px solid var(--bd)}
+.gs-show-more:hover{background:var(--acg)}
+#global-search-hint{padding:8px 16px;font-size:10px;color:var(--tm);border-top:1px solid var(--bd);display:flex;justify-content:space-between;gap:10px;flex-shrink:0}
+.cp-btn{background:none;border:1px solid var(--bd);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);font-size:13px;flex-shrink:0;transition:all .12s}
+.cp-btn:hover{border-color:var(--ac);color:var(--ac)}
+/* Shortcuts help modal */
+.kbd-section{margin-bottom:14px}
+.kbd-section-title{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.kbd-row{display:flex;align-items:center;gap:14px;padding:5px 0;font-size:12px}
+.kbd-row.kbd-locked{opacity:.45}
+.kbd-row .kbd-keys{flex-shrink:0;display:flex;align-items:center;gap:3px;min-width:120px}
+.kbd-row .kbd-desc{color:var(--t2);flex:1}
+.kbd-row .kbd-sep{color:var(--tm);font-size:10px;margin:0 1px}
+.kbd-row .kbd-lock{font-size:10px;margin-left:4px}
+kbd{display:inline-block;background:var(--bgi);border:1px solid var(--bd);border-bottom-width:2px;border-radius:3px;padding:1px 6px;font-family:monospace;font-size:10px;color:var(--t1);min-width:14px;text-align:center}
+/* Bulk member action bar */
+#bm-action-bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:150;background:var(--bg2);border:1px solid var(--bd);border-radius:24px;padding:10px 16px;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:12px;animation:fadeIn .15s}
+#bm-action-bar .btn{font-size:11px;padding:4px 12px}
+#bm-action-bar .inp{font-size:11px;padding:4px 8px;height:auto}
+.bm-row-cb,#bm-select-all{accent-color:var(--ac);cursor:pointer}
+/* First-run shortcuts hint pill */
+#shortcuts-hint{position:fixed;bottom:14px;right:14px;z-index:200;background:var(--bg2);border:1px solid var(--bd);border-radius:18px;padding:6px 10px 6px 12px;font-size:11px;color:var(--t2);box-shadow:0 4px 12px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;cursor:pointer;animation:fadeIn .25s}
+#shortcuts-hint:hover{border-color:var(--ac);color:var(--t1)}
+#shortcuts-hint button{background:none;border:none;color:var(--tm);font-size:14px;line-height:1;cursor:pointer;padding:0 2px}
+#shortcuts-hint button:hover{color:var(--red)}
 
 </style>
 </head>
@@ -325,9 +355,9 @@ tbody tr.row-selected{background:var(--acg)!important}
 <div id="quick-add-menu"></div>
 <div id="global-search-overlay">
   <div id="global-search-box">
-    <input id="global-search-input" placeholder="Search members, gold, items… (Esc to close)" autocomplete="off" spellcheck="false">
+    <input id="global-search-input" placeholder="Search everything — members, items, markers, wiki, pages…" autocomplete="off" spellcheck="false">
     <div id="global-search-results"></div>
-    <div id="global-search-hint"><span>↑↓ navigate</span><span>Enter to open</span><span>Esc to close</span></div>
+    <div id="global-search-hint"><span><kbd>↑↓</kbd> navigate</span><span><kbd>Home</kbd>/<kbd>End</kbd> jump</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
   </div>
 </div>
 
@@ -364,7 +394,7 @@ async function migratePasswordIfNeeded(user, enteredPlain){
 const SK="gv_platform_v1";
 const SK_SESSION="gv_session_v1";
 const SK_TOKEN="gv_token_v1";
-const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds","wikiPages","wikiDrafts","inviteCodes"];
+const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","announcements","users","mapData","gear","goldRequests","playerRecipes","userProfiles","cities","vendors","vendorItems","toolStatus","savedBuilds","wikiPages","wikiDrafts","inviteCodes","deletedBin","craftOrders","characters","roles","sieges"];
 
 // ── Session: stored in sessionStorage so it lasts the browser tab but not shared ──
 function saveSession(user, guildId){
@@ -449,6 +479,26 @@ async function _apiPost(path,body){
   return data;
 }
 
+// ── Incremental persistence (FR-14 scaffolding) ──────────
+// Tracks which DKEYS collections have been mutated since the last persist.
+// Today persist() still writes the full blob (single-source of truth = SK key).
+// When `window._gvIncSync` is set, persist() additionally fans out per-collection
+// writes to `gv:<key>` so the Worker can build an incremental sync model in a
+// follow-up. Callers can opt in to mark dirty collections via markDirty(...);
+// existing code that doesn't call markDirty() falls back to "all dirty," which
+// matches today's behavior exactly.
+const _dirty = new Set();
+function markDirty(...keys){ keys.forEach(k=>{ if(DKEYS.includes(k)) _dirty.add(k); }); }
+function _consumeDirty(){
+  if(_dirty.size===0){
+    // Nothing was explicitly marked — assume everything for backwards-compat.
+    DKEYS.forEach(k=>_dirty.add(k));
+  }
+  const arr=[..._dirty];
+  _dirty.clear();
+  return arr;
+}
+
 // persist() writes to KV. Debounced 400ms so rapid changes collapse into one write.
 // Shows a saving indicator so users know their change is going through.
 // Silently skipped when the user isn't signed in — nothing to save TO without auth.
@@ -458,9 +508,14 @@ function persist(){
   if(_persistTimer)clearTimeout(_persistTimer);
   _persistTimer=setTimeout(async()=>{
     _persistTimer=null;
+    const dirty=_consumeDirty();
     try{
       const o={};DKEYS.forEach(k=>o[k]=D[k]);
       await _pushToKV(SK,o);
+      // If incremental sync is enabled, fan out per-collection writes too.
+      if(window._gvIncSync && dirty.length){
+        await Promise.all(dirty.map(k=>_pushToKV('gv:'+k, D[k]).catch(err=>console.warn('inc-sync failed:',k,err))));
+      }
       _showSavedIndicator();
     }catch(e){
       if(e.code==="NO_TOKEN")return;
@@ -561,6 +616,12 @@ async function initKvSync(){
       clearSession();
     }
     rebuildG();
+    // Auto-expire bin entries past 30 days. Defer the toast/persist until after
+    // first render so toast() is mounted; persist requires an auth token.
+    const expired=autoExpireBin();
+    if(expired>0){
+      setTimeout(()=>{ try{ persist(); }catch(_){} toast(`${expired} item${expired===1?'':'s'} auto-purged from the bin.`); },1200);
+    }
   }catch(e){
     console.error("KV load failed:",e);
     // Show error but still render (will show login with empty/default state)
@@ -570,6 +631,59 @@ async function initKvSync(){
   render();
 }
 function toast(m,t){const el=document.getElementById("toast");el.textContent=m;el.style.display="block";el.style.background=t==="error"?"var(--redd)":t==="warn"?"var(--orgd)":"var(--grnd)";el.style.color=t==="error"?"var(--red)":t==="warn"?"var(--org)":"var(--grn)";el.style.border="1px solid "+(t==="error"?"rgba(229,83,75,.25)":t==="warn"?"rgba(210,153,34,.25)":"rgba(86,211,100,.25)");setTimeout(()=>el.style.display="none",2200)}
+
+// ── Discord webhook firing (FR-02) ────────────────────────
+// v1: client-side fetch directly to the webhook URL. The URL is therefore
+// readable by anyone running the Hub for that guild. Server-side routing via
+// the Worker is the production-safe path; deferred until the Worker endpoint
+// ships (FR-02 Step 2). Failed sends are logged; user actions never block on
+// webhook delivery.
+async function fireDiscordWebhook(guild, embed){
+  const url = guild?.cfg?.discordWebhookUrl;
+  if(!url) return false;
+  const body = {
+    username: guild.name || 'Guild Hub',
+    embeds: [{
+      title: String(embed.title||'').slice(0,256),
+      description: String(embed.description||'').slice(0,4000),
+      color: embed.color || 0x7f6df2,
+      timestamp: new Date().toISOString(),
+      footer: { text: 'Sent via Gloria Victis Guild Hub' },
+    }],
+  };
+  try{
+    const r = await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    if(!r.ok){
+      const txt = await r.text().catch(()=> '');
+      guild.cfg._discordLastError = `HTTP ${r.status}${txt?': '+String(txt).slice(0,80):''}`;
+      persist();
+      console.warn('Discord webhook failed',r.status,txt);
+      return false;
+    }
+    guild.cfg._discordLastSent = new Date().toLocaleString();
+    guild.cfg._discordLastError = '';
+    persist();
+    if(typeof toast==='function') toast('Sent to Discord.');
+    return true;
+  }catch(err){
+    guild.cfg._discordLastError = String(err?.message||err);
+    persist();
+    console.warn('Discord webhook exception',err);
+    return false;
+  }
+}
+function maybeFireDiscord(notifyKey, embed){
+  // Helper: fire only if the current guild has the matching notify flag enabled.
+  if(!currentGuildId) return;
+  const g = D.guilds.find(x=>x.id===currentGuildId); if(!g) return;
+  if(!g.cfg?.discordWebhookUrl) return;
+  if(g.cfg[notifyKey]===false) return; // explicit opt-out
+  fireDiscordWebhook(g, embed);
+}
 function exportJSON(){const o={};DKEYS.forEach(k=>o[k]=D[k]);o._craftItems=craftItems;o._craftResources=craftResources;o._craftSkillXpTables=craftSkillXpTables;const b=new Blob([JSON.stringify(o,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="guild-hub-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Exported!")}
 function exportCSV(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fn;a.click();toast("CSV exported!")}
 function importJSON(file){
@@ -632,10 +746,15 @@ const D={
   cities:[],
   vendors:[],
   vendorItems:[],
-  toolStatus:{crafting:true,charbuilder:true,announcements:true,map:true,itemsearch:true,wiki:true},
+  toolStatus:{crafting:true,charbuilder:true,announcements:true,map:true,itemsearch:true,wiki:true,warroom:true},
   savedBuilds:[],
   wikiPages:[],
   wikiDrafts:[],
+  deletedBin:[],
+  craftOrders:[],
+  characters:[],
+  roles:{},
+  sieges:[],
 };
 // ── Seed map markers from buddy's data if mapData is empty ──
 const GV_SEED_MARKERS=[
@@ -690,6 +809,131 @@ if(!D.mapData.length) D.mapData=GV_SEED_MARKERS.map(m=>({...m}));
   }
   persist(); // single persist after both migrations
 })();
+
+// ── Alt Character bootstrap migration ────────────────────
+// Each user gets a default "Main" character on first encounter so the
+// character switcher is non-empty. Builder/save-build paths can later attach
+// builds + gear to a specific characterId. Only runs once per user.
+(function migrateCharacters(){
+  if(!Array.isArray(D.characters)) D.characters=[];
+  const owned=new Set(D.characters.map(c=>c.userId));
+  let added=false;
+  D.users.forEach(u=>{
+    if(!u||!u.id||owned.has(u.id)) return;
+    D.characters.push({
+      id:uid(),
+      userId:u.id,
+      name:u.displayName||u.username||'Main',
+      class:'',
+      level:0,
+      isMain:true,
+      createdAt:new Date().toISOString(),
+    });
+    added=true;
+  });
+  if(added){
+    // No persist() here at module-eval time; initKvSync's first persist after
+    // user activity catches this up. (Identical strategy to migrateData.)
+  }
+})();
+function getMyCharacters(){ return (D.characters||[]).filter(c=>c.userId===currentUser?.id); }
+function getActiveCharacterId(){
+  if(!currentUser) return null;
+  const profile = (D.userProfiles=D.userProfiles||{})[currentUser.id]=D.userProfiles[currentUser.id]||{};
+  if(profile.activeCharacterId){
+    const exists=(D.characters||[]).some(c=>c.id===profile.activeCharacterId&&c.userId===currentUser.id);
+    if(exists) return profile.activeCharacterId;
+  }
+  // Fall back to the user's main, or the first character.
+  const mine=getMyCharacters();
+  const main=mine.find(c=>c.isMain)||mine[0];
+  if(main){ profile.activeCharacterId=main.id; return main.id; }
+  return null;
+}
+function setActiveCharacter(charId){
+  if(!currentUser) return;
+  const c=(D.characters||[]).find(x=>x.id===charId&&x.userId===currentUser.id);
+  if(!c) return;
+  const profile = (D.userProfiles=D.userProfiles||{})[currentUser.id]=D.userProfiles[currentUser.id]||{};
+  profile.activeCharacterId=c.id;
+  persist();
+}
+function modalCharacterSwitcher(){
+  if(!currentUser){ toast('Sign in first','warn'); return; }
+  openModal('My Characters', body=>{
+    const mine=getMyCharacters();
+    const active=getActiveCharacterId();
+    let h='';
+    if(!mine.length){
+      h+=`<div style="font-size:12px;color:var(--tm);margin-bottom:12px">No characters yet — your first one will be auto-created the next time you save data.</div>`;
+    } else {
+      h+=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">`;
+      mine.forEach(c=>{
+        h+=`<div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid ${c.id===active?'var(--ac)':'var(--bd)'}">`;
+        h+=`<div style="font-size:18px">${c.isMain?'⭐':'⚔️'}</div>`;
+        h+=`<div style="flex:1"><div style="font-weight:600">${esc(c.name||'(unnamed)')}</div><div style="font-size:11px;color:var(--tm)">${esc(c.class||'No class')}${c.level?' · Lv '+c.level:''}${c.isMain?' · Main':''}</div></div>`;
+        h+=`<div style="display:flex;gap:4px">`;
+        if(c.id!==active) h+=`<button class="btn bp bs cs-set-active" data-id="${c.id}">Set Active</button>`;
+        h+=`<button class="btn bg bs cs-edit" data-id="${c.id}">✎</button>`;
+        if(!c.isMain) h+=`<button class="btn bd bs cs-del" data-id="${c.id}">✕</button>`;
+        h+=`</div></div>`;
+      });
+      h+=`</div>`;
+    }
+    h+=`<div style="border-top:1px solid var(--bd);padding-top:12px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">Add new character</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <input class="inp" id="cs-new-name" placeholder="Name" style="flex:1;min-width:140px">
+        <input class="inp" id="cs-new-class" placeholder="Class (optional)" style="flex:1;min-width:120px">
+        <input class="inp" id="cs-new-level" type="number" placeholder="Lv" min="0" style="width:60px">
+        <button class="btn bp" id="cs-create">+ Create</button>
+      </div>
+      <div style="font-size:11px;color:var(--tm);margin-top:6px">Cap: 8 characters per account.</div>
+    </div>`;
+    body.innerHTML=h;
+    setTimeout(()=>{
+      document.querySelectorAll('.cs-set-active').forEach(b=>b.addEventListener('click',()=>{ setActiveCharacter(b.dataset.id); closeModal(); render(); toast('Active character changed.'); }));
+      document.querySelectorAll('.cs-edit').forEach(b=>b.addEventListener('click',()=>{
+        const c=D.characters.find(x=>x.id===b.dataset.id); if(!c) return;
+        openModal('Edit Character', body2=>{
+          body2.innerHTML=`<div class="fg"><label class="fl">Name</label><input class="inp" id="cse-name" value="${esc(c.name||'')}"></div>
+            <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="fl">Class</label><input class="inp" id="cse-class" value="${esc(c.class||'')}"></div><div class="fg" style="width:80px"><label class="fl">Level</label><input class="inp" id="cse-level" type="number" min="0" value="${c.level||0}"></div></div>
+            <div class="actions" style="margin-top:12px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="cse-save">Save</button></div>`;
+          setTimeout(()=>{
+            document.getElementById('cse-save').addEventListener('click',()=>{
+              c.name=document.getElementById('cse-name').value.trim()||c.name;
+              c.class=document.getElementById('cse-class').value.trim();
+              c.level=parseInt(document.getElementById('cse-level').value)||0;
+              persist(); closeModal(); modalCharacterSwitcher(); toast('Character updated.');
+            });
+          },0);
+        });
+      }));
+      document.querySelectorAll('.cs-del').forEach(b=>b.addEventListener('click',()=>{
+        const c=D.characters.find(x=>x.id===b.dataset.id); if(!c) return;
+        confirmAction(`Delete character "${esc(c.name)}"?`,()=>{
+          softDelete('characters',c);
+          D.characters=D.characters.filter(x=>x.id!==c.id);
+          // If this was the active character, fall back.
+          const profile=D.userProfiles?.[currentUser.id];
+          if(profile&&profile.activeCharacterId===c.id) profile.activeCharacterId=null;
+          persist(); closeModal(); render(); toast('Character deleted.');
+        });
+      }));
+      document.getElementById('cs-create').addEventListener('click',()=>{
+        const mine=getMyCharacters();
+        if(mine.length>=8){ toast('8-character cap reached.','warn'); return; }
+        const name=document.getElementById('cs-new-name').value.trim();
+        if(!name){ toast('Name required','error'); return; }
+        const cls=document.getElementById('cs-new-class').value.trim();
+        const lvl=parseInt(document.getElementById('cs-new-level').value)||0;
+        D.characters.push({id:uid(),userId:currentUser.id,name,class:cls,level:lvl,isMain:!mine.length,createdAt:new Date().toISOString()});
+        addLog('Character Created', name);
+        persist(); closeModal(); modalCharacterSwitcher(); toast('Character added.');
+      });
+    },0);
+  });
+}
 
 let currentUser=null; // set after login
 let activeTool="crafting"; // start on a public tool so no login required on open
@@ -756,6 +1000,76 @@ const isContributor=()=>isSiteAdmin()||currentUser?.role==="contributor";
 const canManageDatabase=()=>isAdmin();
 // isGuildMember: is the user a member of the current guild
 const isGuildMember=()=>isSiteAdmin()||currentUser?.guildId===currentGuildId;
+
+// ── Custom Roles & Permissions (FR-22 scaffolding) ────────
+// Capability catalog (string → human-readable label). Keep this list
+// data-driven so adding a new capability doesn't require touching the
+// roles editor — just append a row here.
+const CAPABILITIES = {
+  // Members
+  approve_applications: 'Approve member applications',
+  kick_member: 'Kick a member',
+  change_member_role: 'Change a member\'s role',
+  // Treasury
+  view_gold: 'View the gold ledger',
+  add_gold_tx: 'Record gold transactions',
+  approve_gold_request: 'Approve gold requests',
+  manage_bank: 'Withdraw / move bank items',
+  add_item_tx: 'Record item transactions',
+  // Wiki
+  create_article: 'Create wiki articles',
+  edit_own_article: 'Edit own wiki articles',
+  edit_any_article: 'Edit any wiki article',
+  review_drafts: 'Review wiki drafts',
+  delete_article: 'Delete wiki articles',
+  // Events / orders
+  create_event: 'Create events',
+  edit_any_event: 'Edit any event',
+  manage_orders: 'Manage crafting orders',
+  // Map
+  add_marker: 'Add map markers',
+  edit_any_marker: 'Edit any map marker',
+  // Settings
+  edit_guild_name: 'Edit guild name',
+  manage_invites: 'Manage invite codes',
+  manage_roles: 'Manage custom roles',
+  set_webhook: 'Configure Discord webhook',
+};
+const DEFAULT_ROLES_FACTORY = ()=>([
+  { id:'role_member', name:'Member', color:'#7d8590', isSystem:true,
+    permissions:['view_gold','create_article','edit_own_article','add_marker','create_event'] },
+  { id:'role_officer', name:'Officer', color:'#7f6df2', isSystem:true,
+    permissions:['view_gold','add_gold_tx','approve_gold_request','add_item_tx','approve_applications','kick_member','change_member_role','create_article','edit_own_article','edit_any_article','review_drafts','create_event','edit_any_event','manage_orders','add_marker','edit_any_marker','manage_invites'] },
+  { id:'role_leader', name:'Guild Leader', color:'#e5a83b', isSystem:true,
+    permissions:Object.keys(CAPABILITIES) },
+]);
+function ensureRolesForGuild(guildId){
+  if(!guildId) return [];
+  if(!D.roles) D.roles={};
+  if(!Array.isArray(D.roles[guildId])||!D.roles[guildId].length){
+    D.roles[guildId]=DEFAULT_ROLES_FACTORY();
+  }
+  return D.roles[guildId];
+}
+function _roleIdForUser(user, guildId){
+  if(!user) return null;
+  // Future: explicit user.roleId field. For now map legacy role strings to default ids.
+  if(user.role==='guild_leader') return 'role_leader';
+  if(user.role==='officer') return 'role_officer';
+  return 'role_member';
+}
+function hasPerm(userOrId, cap){
+  if(!cap) return false;
+  const user = (typeof userOrId==='string') ? D.users.find(u=>u.id===userOrId) : userOrId;
+  if(!user) return false;
+  // Site admin bypasses all gates by design (so a broken role config can be repaired).
+  if(user.role==='site_admin'||user.role==='admin') return true;
+  const roles=ensureRolesForGuild(currentGuildId);
+  const roleId=_roleIdForUser(user, currentGuildId);
+  const role=roles.find(r=>r.id===roleId);
+  if(!role) return false;
+  return role.permissions.includes(cap);
+}
 const pN=id=>_playerMap[id]||G.p.find(x=>x.id===id)?.name||"Unknown";
 const iN=id=>_itemMap[id]||G.items.find(x=>x.id===id)?.name||"Unknown";
 // ── XSS escape helper — always use esc() before injecting user strings into innerHTML ──
@@ -786,6 +1100,63 @@ function addLog(a,d){
       return ++kept<=500;
     });
   }
+}
+
+// ── Recently Deleted Bin ─────────────────────────────────
+// softDelete(source, record) — funnels a record into D.deletedBin instead of
+// vanishing it. source is a DKEYS key (e.g. "wikiPages", "gt", "events").
+// Caller is still responsible for removing the record from its source array
+// (we let the caller pick filter vs. splice) AND for calling persist().
+const BIN_TTL_MS = 30*24*60*60*1000;
+const BIN_LABELS = {p:'Member',gt:'Gold Tx',it:'Item Tx',items:'Item',events:'Event',orders:'Order',requests:'Material Request',announcements:'Announcement',gear:'Gear',goldRequests:'Gold Request',mapData:'Map Marker',wikiPages:'Wiki Article',wikiDrafts:'Wiki Draft',vendorItems:'Shop Item',vendors:'Vendor',cities:'City',savedBuilds:'Saved Build',users:'User'};
+function softDelete(source, record){
+  if(!D.deletedBin) D.deletedBin=[];
+  D.deletedBin.unshift({
+    binId: uid(),
+    source,
+    record: JSON.parse(JSON.stringify(record)),
+    deletedAt: new Date().toISOString(),
+    deletedBy: currentUser?.displayName||currentUser?.username||'?',
+    guildId: record&&record.guildId ? record.guildId : currentGuildId,
+  });
+  // Auto-cap to keep blob size sane: drop entries past 1000.
+  if(D.deletedBin.length>1000) D.deletedBin.length=1000;
+}
+function restoreFromBin(binId){
+  const idx=(D.deletedBin||[]).findIndex(e=>e.binId===binId);
+  if(idx<0) return false;
+  const e=D.deletedBin[idx];
+  if(!Array.isArray(D[e.source])) return false;
+  // Refuse if a record with the same id already exists.
+  const rid=e.record?.id;
+  if(rid!=null && D[e.source].some(x=>x.id===rid)){
+    toast(`A ${BIN_LABELS[e.source]||e.source} with this id already exists — restore blocked.`,'error');
+    return false;
+  }
+  D[e.source].push(e.record);
+  D.deletedBin.splice(idx,1);
+  addLog(`${BIN_LABELS[e.source]||e.source} Restored`, e.record?.name||e.record?.title||e.record?.id||'');
+  return true;
+}
+function purgeBin(binId){
+  const idx=(D.deletedBin||[]).findIndex(e=>e.binId===binId);
+  if(idx<0) return false;
+  const e=D.deletedBin[idx];
+  D.deletedBin.splice(idx,1);
+  addLog(`${BIN_LABELS[e.source]||e.source} Purged`, e.record?.name||e.record?.title||e.record?.id||'');
+  return true;
+}
+// Auto-expire entries older than BIN_TTL_MS. Called from initKvSync() after
+// the bin is loaded from KV so we operate on real data.
+function autoExpireBin(){
+  if(!Array.isArray(D.deletedBin)||!D.deletedBin.length) return 0;
+  const cutoff=Date.now()-BIN_TTL_MS;
+  const before=D.deletedBin.length;
+  D.deletedBin=D.deletedBin.filter(e=>{
+    const t=Date.parse(e.deletedAt||'');
+    return isFinite(t) ? t>=cutoff : true;
+  });
+  return before-D.deletedBin.length;
 }
 // Gold math:
 // Player debt = borrowed - repaid - donated (clamped to 0)
@@ -914,6 +1285,7 @@ function renderGuest(){
     <div style="width:24px;height:24px;border-radius:4px;background:var(--acs);display:inline-flex;align-items:center;justify-content:center;color:var(--ac);font-weight:700;font-size:10px">GV</div>
     <div style="flex:1"><div style="font-weight:600;color:var(--t1);font-size:12px">Gloria Victis Guild Hub</div>
     <div style="font-size:9px;color:var(--tm)">Browsing as guest</div></div></button>
+    <button id="cp-open-btn" class="cp-btn" title="Search everything (Ctrl/Cmd+K)">🔍</button>
     <button class="btn bp bs" id="guest-login-btn" style="font-size:10px;padding:3px 8px">Sign In</button>
   </div>`;
 
@@ -1332,9 +1704,11 @@ function modalAnnouncement(e){
     setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{
       const title=document.getElementById("mf-title").value.trim(),body2=document.getElementById("mf-body").value.trim();
       if(!title||!body2){toast("Title and body required","error");return}
+      const isNew=!e.id;
       if(e.id){const a=D.announcements.find(x=>x.id===e.id);if(a){a.title=title;a.body=body2}addLog("Announcement Edited",title)}
       else{D.announcements.push({id:uid(),title,body:body2,author:currentUser.displayName,date:new Date().toISOString().slice(0,10),pinned:false,guildId:currentGuildId});addLog("Announcement Posted",title)}
       persist();closeModal();render();toast(e.id?"Updated!":"Posted!");
+      if(isNew) maybeFireDiscord('notifyAnnouncementPublished',{title:`📢 ${title}`,description:body2.slice(0,2000)});
     }),0);
   });
 }
@@ -1368,6 +1742,7 @@ function buildMapSidebarHTML(){
   h += `<div class="map-sb-title">Locations</div>`;
   h += `<div class="map-sb-search"><span class="map-sb-search-icon">🔍</span><input type="text" id="map-sb-search" placeholder="Search locations..." autocomplete="off" value="${(mapState.searchTerm||"").replace(/"/g,'&quot;')}"><button class="map-sb-search-clear" id="map-sb-search-clear" style="display:${mapState.searchTerm?"inline":"none"}">✕</button></div>`;
   h += `<div class="map-sb-btns"><button class="map-sb-btn" id="map-sb-show-all">Show All</button><button class="map-sb-btn" id="map-sb-hide-all">Hide All</button><button class="map-sb-btn" id="map-sb-reset">Reset</button></div>`;
+  h += `<label class="map-sb-cluster-toggle" style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tm);padding:4px 0"><input type="checkbox" id="map-sb-cluster-cb"${window._mapClusterDisabled?'':' checked'} style="accent-color:var(--ac)"> Cluster at low zoom</label>`;
   h += `</div>`;
 
   h += `<div class="map-sb-body">`;
@@ -1456,6 +1831,9 @@ function buildMapSidebarHTML(){
 
             h += `<div class="map-loc-card${isSelected?" selected":""}" data-marker-id="${m.id}">`;
             h += `<button class="map-loc-fly" data-fly-id="${m.id}" title="Fly to">◎</button>`;
+            if(isContributor()){
+              h += `<button class="map-loc-edit" data-edit-id="${m.id}" title="Edit marker">✎</button>`;
+            }
             h += `<div class="map-loc-card-name">${esc(m.name || typeName)}</div>`;
             if(m.region || m.notes){
               h += `<div class="map-loc-card-sub">${esc([m.region, m.notes ? m.notes.slice(0,40)+(m.notes.length>40?"…":"") : ""].filter(Boolean).join(" · "))}</div>`;
@@ -1528,6 +1906,10 @@ function bindMapSidebarEvents(onVisChange){
     mapState.hiddenCats = {}; mapState.hiddenTypes = {}; mapState.collapsedCats = {}; mapState.collapsedTypes = {}; mapState.searchTerm = "";
     rerender();
   });
+  document.getElementById("map-sb-cluster-cb")?.addEventListener("change",e=>{
+    window._mapClusterDisabled = !e.target.checked;
+    if(typeof updateClusters==='function') updateClusters();
+  });
 
   // Category collapse toggle
   document.querySelectorAll("[data-cat-toggle]").forEach(el => {
@@ -1593,27 +1975,32 @@ function bindMapSidebarEvents(onVisChange){
     });
   }
 
-  // Location card click — select + pan
+  // Location card click — select + pan + open the marker info panel so
+  // contributors get the same Edit/Delete surface they get from clicking the
+  // on-map icon.
   document.querySelectorAll(".map-loc-card").forEach(el => {
     el.addEventListener("click", e => {
       if(e.target.closest(".map-loc-fly")) return;
+      if(e.target.closest(".map-loc-edit")) return;
       const mid = el.dataset.markerId;
-      const m = D.mapData.find(x => String(x.id) === String(mid));
+      const idx = (D.mapData||[]).findIndex(x => String(x.id) === String(mid));
+      const m = idx >= 0 ? D.mapData[idx] : null;
       if(!m) return;
       mapState.selectedMarker = m.id;
       document.querySelectorAll(".map-loc-card").forEach(c => c.classList.toggle("selected", c.dataset.markerId === String(mid)));
       const footerEl = document.querySelector(".map-sb-footer");
       if(footerEl){
         footerEl.innerHTML = `<div class="map-sb-footer-label">Selected Location</div>
-          <div class="map-sel-name">${m.name||m.markerType}</div>
-          <div class="map-sel-type">${m.markerType||""}${m.region?` · ${m.region}`:""}</div>
-          ${m.notes?`<div class="map-sel-notes">${m.notes}</div>`:""}
+          <div class="map-sel-name">${esc(m.name||m.markerType||"")}</div>
+          <div class="map-sel-type">${esc(m.markerType||"")}${m.region?` · ${esc(m.region)}`:""}</div>
+          ${m.notes?`<div class="map-sel-notes">${esc(m.notes)}</div>`:""}
           <div class="map-sel-coords">x:${m.x?.toFixed(4)} y:${m.y?.toFixed(4)}</div>`;
       }
       if(typeof leafletMap !== "undefined" && leafletMap && typeof percentToLeaflet === "function"){
         const latLng = percentToLeaflet(m.x, m.y);
         leafletMap.setView(latLng, Math.max(4, leafletMap.getZoom()), {animate: true});
       }
+      if(_showMarkerInfo && leafletMarkers[idx]) _showMarkerInfo(idx, leafletMarkers[idx]);
     });
   });
 
@@ -1629,6 +2016,18 @@ function bindMapSidebarEvents(onVisChange){
         const latLng = percentToLeaflet(m.x, m.y);
         leafletMap.setView(latLng, MAP_MAX_ZOOM - 1, {animate: true});
       }
+    });
+  });
+
+  // Inline edit button (contributors only) — jump straight into modalEditMarker
+  document.querySelectorAll(".map-loc-edit").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      if(!isContributor()) return;
+      const mid = el.dataset.editId;
+      const idx = (D.mapData||[]).findIndex(x => String(x.id) === String(mid));
+      if(idx < 0) return;
+      modalEditMarker(idx);
     });
   });
 }
@@ -1841,6 +2240,10 @@ img.leaflet-tile{outline:none;border:none;image-rendering:auto;display:block}
 .custom-marker-inner.selected{transform:scale(1.3);box-shadow:0 0 0 3px currentColor,0 2px 8px rgba(0,0,0,.5)}
 .custom-marker-inner.dimmed{opacity:.25}
 .custom-marker-inner.hidden{display:none}
+.custom-marker-inner.cluster-hidden{display:none}
+.map-cluster-icon{background:none!important;border:none!important}
+.map-cluster-marker{width:var(--cs);height:var(--cs);border-radius:50%;background:var(--ck);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:3px solid rgba(255,255,255,.85);box-shadow:0 3px 10px rgba(0,0,0,.45);cursor:pointer;transition:transform .15s}
+.map-cluster-marker:hover{transform:scale(1.1)}
 .temp-marker-inner{display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--ac);border:3px dashed #fff;border-radius:50%;font-size:16px;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.1)}}
 </style>`;
@@ -1903,7 +2306,7 @@ function createCustomIcon(cat, isTemp = false, markerType = '') {
       <path d="M8,12 L36,12 L35,15 L9,15 Z" fill="#e03020" opacity="0.4"/>
     </svg>`;
     return L.divIcon({
-      html: `<div style="background:none;border:none;width:28px;height:24px">${svg}</div>`,
+      html: `<div class="custom-marker-inner" style="background:none;border:none;width:28px;height:24px">${svg}</div>`,
       className: 'custom-marker',
       iconSize: [28, 24],
       iconAnchor: [14, 24]
@@ -1944,7 +2347,7 @@ function createCustomIcon(cat, isTemp = false, markerType = '') {
       <path d="M18,22 Q25,23 27,27" fill="none" stroke="#9b1a0a" stroke-width="0.8" opacity="0.7"/>
     </svg>`;
     return L.divIcon({
-      html: `<div style="background:none;border:none;width:22px;height:26px">${svg}</div>`,
+      html: `<div class="custom-marker-inner" style="background:none;border:none;width:22px;height:26px">${svg}</div>`,
       className: 'custom-marker',
       iconSize: [22, 26],
       iconAnchor: [11, 26]
@@ -1978,7 +2381,7 @@ function createCustomIcon(cat, isTemp = false, markerType = '') {
       <circle  cx="23" cy="13" r="0.8" fill="#9b1a0a"/>
     </svg>`;
     return L.divIcon({
-      html: `<div style="background:none;border:none;width:28px;height:22px">${svg}</div>`,
+      html: `<div class="custom-marker-inner" style="background:none;border:none;width:28px;height:22px">${svg}</div>`,
       className: 'custom-marker',
       iconSize: [28, 22],
       iconAnchor: [14, 22]
@@ -2147,6 +2550,7 @@ function initMapBindings(){
   
   leafletMap.on('zoom', updateZoomDisplay);  // Real-time during zoom
   leafletMap.on('zoomend', updateZoomDisplay);
+  leafletMap.on('zoomend', ()=>updateClusters());
   setTimeout(updateZoomDisplay, 100);
   
   // Update coordinates display on mouse move
@@ -2199,7 +2603,8 @@ function initMapBindings(){
     }
   };
   // Expose to module level so sidebar buttons can call it without re-rendering Leaflet
-  _updateMarkerVisibility = updateMarkerVisibility;
+  _updateMarkerVisibility = ()=>{ updateMarkerVisibility(); updateClusters(); };
+  _showMarkerInfo = showMarkerInfo;
   
   // Show marker info panel
   function showMarkerInfo(idx, marker) {
@@ -2278,6 +2683,7 @@ function initMapBindings(){
     document.getElementById("map-edit-marker")?.addEventListener("click", () => modalEditMarker(idx));
     document.getElementById("map-delete-marker")?.addEventListener("click", () => {
       if(confirm(`Delete marker "${m.name}"?`)) {
+        softDelete('mapData', m);
         D.mapData.splice(idx, 1);
         addLog("Map Marker Deleted", m.name);
         persist();
@@ -2614,9 +3020,88 @@ function initMapBindings(){
 
 // Module-level marker visibility updater — called by sidebar buttons without re-rendering Leaflet
 let _updateMarkerVisibility = null;
+// Module-level info-panel opener — sidebar cards use this so clicking a card
+// opens the same marker-info panel (with Edit/Delete for contributors) that
+// clicking the on-map icon does.
+let _showMarkerInfo = null;
+
+// ── Map marker clustering (inline, no plugin) ────────────
+// Strategy: at zoom <= MAP_CLUSTER_ZOOM, group visible-eligible markers by a
+// fixed-size SCREEN-pixel grid. Cells with 2+ markers become a single cluster
+// marker showing the count; their member markers are hidden. Click a cluster
+// to zoom in two levels at the cluster center (or splay if already at max).
+const MAP_CLUSTER_ZOOM = 4;        // Cluster only at zoom <= this
+const MAP_CLUSTER_GRID_PX = 64;    // Grid cell size in screen pixels
+let _clusterMarkers = [];
+function _disposeClusters(){
+  _clusterMarkers.forEach(cm=>{ try{ leafletMap.removeLayer(cm); }catch(e){} });
+  _clusterMarkers = [];
+}
+function _isMarkerEligibleForCluster(i){
+  const m = D.mapData[i]; if(!m) return false;
+  const el = leafletMarkers[i]?.getElement?.()?.querySelector('.custom-marker-inner');
+  if(!el) return true; // Marker not yet rendered; still eligible
+  if(el.classList.contains('hidden')) return false;
+  return true; // dimmed markers still cluster — they'll just fade like others
+}
+function updateClusters(){
+  if(!leafletMap) return;
+  _disposeClusters();
+  // Reset: show all eligible markers (cluster pass below will hide ones it groups).
+  leafletMarkers.forEach((mk,i)=>{
+    const el = mk.getElement?.()?.querySelector('.custom-marker-inner');
+    if(!el) return;
+    el.classList.remove('cluster-hidden');
+  });
+  if(window._mapClusterDisabled) return;
+  const z = leafletMap.getZoom();
+  if(z>MAP_CLUSTER_ZOOM) return;
+  // Bucket markers by screen-cell.
+  const buckets = new Map();
+  leafletMarkers.forEach((mk,i)=>{
+    if(!_isMarkerEligibleForCluster(i)) return;
+    const ll = mk.getLatLng();
+    const pt = leafletMap.latLngToContainerPoint(ll);
+    const cx = Math.floor(pt.x / MAP_CLUSTER_GRID_PX);
+    const cy = Math.floor(pt.y / MAP_CLUSTER_GRID_PX);
+    const key = cx+','+cy;
+    if(!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(i);
+  });
+  buckets.forEach((arr)=>{
+    if(arr.length<2) return;
+    // Hide member markers
+    let avgLat=0, avgLng=0;
+    arr.forEach(i=>{
+      const el = leafletMarkers[i].getElement?.()?.querySelector('.custom-marker-inner');
+      if(el) el.classList.add('cluster-hidden');
+      const ll = leafletMarkers[i].getLatLng();
+      avgLat+=ll.lat; avgLng+=ll.lng;
+    });
+    avgLat/=arr.length; avgLng/=arr.length;
+    // Pick dominant category for color; size by count
+    const catCounts={};
+    arr.forEach(i=>{ const c=D.mapData[i]?.category||'other'; catCounts[c]=(catCounts[c]||0)+1; });
+    const dominantCat = Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0][0];
+    const catRow = MAP_CATEGORIES.find(c=>c.id===dominantCat);
+    const color = catRow?.color || '#7f6df2';
+    const count = arr.length;
+    const size = count<=10?28:count<=50?34:42;
+    const html = `<div class="map-cluster-marker" style="--cs:${size}px;--ck:${esc(color)}">${count}</div>`;
+    const icon = L.divIcon({ html, className:'map-cluster-icon', iconSize:[size,size], iconAnchor:[size/2,size/2] });
+    const cluster = L.marker([avgLat,avgLng], {icon, interactive:true});
+    cluster.on('click',()=>{
+      const newZ = Math.min(MAP_MAX_ZOOM, leafletMap.getZoom()+2);
+      leafletMap.setView([avgLat,avgLng], newZ, {animate:true});
+    });
+    cluster.addTo(leafletMap);
+    _clusterMarkers.push(cluster);
+  });
+}
 
 function rebuildMapMarkers(){
   if(!leafletMap) return;
+  _disposeClusters();
   // Tear down existing markers (keeps the Leaflet map instance alive)
   leafletMarkers.forEach(mk => { try { leafletMap.removeLayer(mk); } catch(e) {} });
   leafletMarkers = [];
@@ -2629,10 +3114,12 @@ function rebuildMapMarkers(){
       cat: m.category,
       name: [m.name, m.markerType, m.region].filter(Boolean).join(" ").toLowerCase()
     }).addTo(leafletMap);
-    marker.on('click', () => showMarkerInfo(i, marker));
+    // showMarkerInfo lives inside initMapBindings, so use the module-level alias
+    marker.on('click', () => { if(_showMarkerInfo) _showMarkerInfo(i, marker); });
     leafletMarkers.push(marker);
   });
   if (_updateMarkerVisibility) _updateMarkerVisibility();
+  updateClusters();
 }
 
 function refreshMapSidebar(){
@@ -2868,6 +3355,7 @@ function modalNationLocation(m, idx){
   document.getElementById("nation-edit-btn")?.addEventListener("click",()=>{overlay.remove();modalEditMarker(idx);});
   document.getElementById("nation-delete-btn")?.addEventListener("click",()=>{
     confirmAction(`Delete marker "${esc(m.name||"")}"?`,()=>{
+      softDelete('mapData',m);
       D.mapData.splice(idx,1);addLog("Map Marker Deleted",m.name);persist();overlay.remove();rebuildMapMarkers();refreshMapSidebar();toast("Marker deleted!");
     });
   });
@@ -3043,12 +3531,28 @@ function buildWikiSidebarNav(h){
 .wiki-section{margin-bottom:28px}
 .wiki-h1{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
 .wiki-h2{font-size:14px;font-weight:600;color:var(--ac);margin-bottom:8px;margin-top:16px}
-.wiki-body{font-size:13px;color:var(--t2);line-height:1.75;white-space:pre-wrap}
+.wiki-body{font-size:13px;color:var(--t2);line-height:1.75}
 .wiki-body strong{color:var(--t1);font-weight:600}
 .wiki-body em{color:var(--t2);font-style:italic}
 .wiki-body code{background:var(--bgi);border:1px solid var(--bd);border-radius:3px;padding:1px 5px;font-family:monospace;font-size:12px;color:var(--ac)}
+.wiki-body a{color:var(--ac);text-decoration:underline}
+.wiki-body a:hover{color:var(--ac);text-decoration:none}
+.wiki-body img{max-width:100%;border-radius:5px;border:1px solid var(--bd);margin:8px 0}
+.wiki-body ul,.wiki-body ol{margin:8px 0 8px 22px;padding:0}
+.wiki-body li{margin:3px 0}
+.wiki-body pre{background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:10px 14px;margin:10px 0;overflow-x:auto;font-size:12px}
+.wiki-body pre code{background:none;border:none;padding:0;color:var(--t1);white-space:pre}
+.wiki-body hr{border:none;border-top:1px solid var(--bd);margin:14px 0}
+.wiki-md-h1{font-size:17px;font-weight:700;color:var(--t1);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bd)}
+.wiki-md-h2{font-size:14px;font-weight:600;color:var(--ac);margin:12px 0 6px}
+.wiki-md-h3{font-size:13px;font-weight:600;color:var(--t1);margin:10px 0 4px}
 .wiki-tip{background:var(--blud);border:1px solid var(--blu);border-radius:5px;padding:10px 14px;margin:10px 0;font-size:12px;color:var(--blu)}
 .wiki-warn{background:var(--orgd);border:1px solid var(--org);border-radius:5px;padding:10px 14px;margin:10px 0;font-size:12px;color:var(--org)}
+/* Wiki editor markdown toolbar + preview */
+.wiki-md-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:6px 8px;background:var(--bgi);border:1px solid var(--bd);border-bottom:none;border-radius:5px 5px 0 0}
+.wiki-md-toolbar button{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:2px 7px;font-size:11px;color:var(--t2);cursor:pointer;font-family:inherit}
+.wiki-md-toolbar button:hover{border-color:var(--ac);color:var(--ac)}
+.wiki-md-preview{padding:10px 14px;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;font-size:12px;min-height:60px}
 .wiki-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px}
 .wiki-card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:14px;cursor:pointer;transition:all .13s}
 .wiki-card:hover{border-color:var(--ac);background:var(--bgh)}
@@ -3070,15 +3574,112 @@ function buildWikiSidebarNav(h){
 // ═══════════════════════════════════════════════════════════
 const WIKI_CATEGORIES=["Getting Started","Combat","Crafting","Economy","Guilds","Map & Exploration","Classes & Builds","Events","Guides","Other"];
 
+// Hand-rolled Markdown for wiki bodies.
+// Safety: every chunk that could contain author input goes through esc() FIRST,
+// then we synthesize tags ourselves. The parser never copies user characters
+// directly into a tag attribute or tag name — only into already-escaped text
+// nodes. Link/image URLs are also scheme-validated.
+const MD_SAFE_URL=/^(https?:\/\/|#)/i;
+function _mdSanitizeUrl(u){
+  // u is the RAW (unescaped) url string captured from the body.
+  const s=String(u||'').trim();
+  if(!MD_SAFE_URL.test(s)) return '#';
+  // After scheme check, escape for safe attribute insertion.
+  return esc(s).replace(/"/g,'&quot;');
+}
+function _mdInline(escapedLine, rawLine){
+  // escapedLine: already passed through esc(). rawLine: original text (used to
+  // recover untouched URLs for scheme validation, since esc() mangles them).
+  // Strategy: extract code spans first to protect them, then run other inlines,
+  // then restore.
+  const codeStash=[];
+  let s=escapedLine.replace(/`([^`]+?)`/g,(_,c)=>{
+    codeStash.push(c); return ` CODE${codeStash.length-1} `;
+  });
+  // Images ![alt](url) — match against escaped string; URL was escaped too,
+  // un-escape just for scheme check.
+  s=s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,(_,alt,url)=>{
+    const decoded=url.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+    const safe=_mdSanitizeUrl(decoded);
+    return `<img src="${safe}" alt="${alt}" referrerpolicy="no-referrer" loading="lazy">`;
+  });
+  // Links [text](url)
+  s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,(_,txt,url)=>{
+    const decoded=url.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+    const safe=_mdSanitizeUrl(decoded);
+    if(safe==='#') return txt; // unsafe scheme falls back to plain text
+    const ext=/^https?:/i.test(decoded);
+    return `<a href="${safe}"${ext?' target="_blank" rel="noopener noreferrer"':''}>${txt}</a>`;
+  });
+  // Bold then italic (order: ** before *)
+  s=s.replace(/\*\*([^*]+?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=$|[\s).,;:!?])/g,'$1<em>$2</em>');
+  // Restore code spans
+  s=s.replace(/ CODE(\d+) /g,(_,i)=>`<code>${codeStash[+i]}</code>`);
+  return s;
+}
 function wikiRenderBody(text){
   if(!text)return"";
-  // Escape FIRST so author HTML cannot render; then apply markdown-lite substitutions on the escaped string.
-  return esc(text)
-    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g,"<em>$1</em>")
-    .replace(/`(.+?)`/g,"<code>$1</code>")
-    .replace(/^TIP: (.+)$/gm,'<div class="wiki-tip">💡 $1</div>')
-    .replace(/^WARN: (.+)$/gm,'<div class="wiki-warn">⚠ $1</div>');
+  // Cap: parser is O(n) but huge inputs still cost layout. The FR set 50k.
+  const src=String(text).slice(0,50000);
+  const lines=src.split(/\r?\n/);
+  const out=[];
+  let i=0,inCode=false,codeBuf=[];
+  let listType=null,listBuf=[]; // 'ul' | 'ol'
+  const flushList=()=>{
+    if(!listType)return;
+    out.push(`<${listType}>${listBuf.map(li=>`<li>${li}</li>`).join('')}</${listType}>`);
+    listType=null; listBuf=[];
+  };
+  for(i=0;i<lines.length;i++){
+    const raw=lines[i];
+    // Fenced code block toggle
+    if(/^```/.test(raw)){
+      if(inCode){
+        out.push(`<pre><code>${codeBuf.map(esc).join('\n')}</code></pre>`);
+        inCode=false; codeBuf=[];
+      } else {
+        flushList(); inCode=true; codeBuf=[];
+      }
+      continue;
+    }
+    if(inCode){ codeBuf.push(raw); continue; }
+    // Horizontal rule
+    if(/^\s*---\s*$/.test(raw)){ flushList(); out.push('<hr>'); continue; }
+    // Headings
+    let hm=/^(#{1,3})\s+(.+?)\s*$/.exec(raw);
+    if(hm){ flushList(); const lvl=hm[1].length; out.push(`<h${lvl} class="wiki-md-h${lvl}">${_mdInline(esc(hm[2]),hm[2])}</h${lvl}>`); continue; }
+    // Tip / Warn callouts (legacy)
+    let tm=/^TIP:\s+(.+)$/.exec(raw); if(tm){ flushList(); out.push(`<div class="wiki-tip">💡 ${_mdInline(esc(tm[1]),tm[1])}</div>`); continue; }
+    let wm=/^WARN:\s+(.+)$/.exec(raw); if(wm){ flushList(); out.push(`<div class="wiki-warn">⚠ ${_mdInline(esc(wm[1]),wm[1])}</div>`); continue; }
+    // Unordered list
+    let um=/^[-*]\s+(.+)$/.exec(raw);
+    if(um){ if(listType!=='ul'){ flushList(); listType='ul'; } listBuf.push(_mdInline(esc(um[1]),um[1])); continue; }
+    // Ordered list
+    let om=/^\d+\.\s+(.+)$/.exec(raw);
+    if(om){ if(listType!=='ol'){ flushList(); listType='ol'; } listBuf.push(_mdInline(esc(om[1]),om[1])); continue; }
+    // Blank line
+    if(/^\s*$/.test(raw)){ flushList(); out.push(''); continue; }
+    // Paragraph line
+    flushList();
+    out.push(_mdInline(esc(raw),raw));
+  }
+  if(inCode){ // Unclosed fence — render what we have
+    out.push(`<pre><code>${codeBuf.map(esc).join('\n')}</code></pre>`);
+  }
+  flushList();
+  // Join with <br> for adjacent paragraph lines but keep block elements clean.
+  let html=''; let prevBlock=false;
+  const blockRx=/^<(h[123]|ul|ol|hr|pre|div)/;
+  for(let j=0;j<out.length;j++){
+    const cur=out[j];
+    if(cur===''){ html+='<br>'; prevBlock=false; continue; }
+    if(blockRx.test(cur)){ html+=cur; prevBlock=true; continue; }
+    if(prevBlock) html+=cur;
+    else html+=(j>0&&!/<br>$/.test(html)?'<br>':'')+cur;
+    prevBlock=false;
+  }
+  return html;
 }
 
 function pgWiki(){
@@ -3188,12 +3789,26 @@ function pgWiki(){
           </div>
         </div>
         <input class="inp" id="wiki-sec-heading-${i}" placeholder="Section heading (optional)" value="${(s.heading||"").replace(/"/g,'&quot;')}" style="margin-bottom:6px">
-        <textarea class="inp" id="wiki-sec-body-${i}" rows="5" placeholder="Content... Use **bold**, *italic*, \`code\`, TIP: text, WARN: text">${s.body||""}</textarea>
+        <div class="wiki-md-toolbar" data-md-target="wiki-sec-body-${i}">
+          <button data-md="bold" title="Bold">B</button>
+          <button data-md="italic" title="Italic">I</button>
+          <button data-md="h" title="Heading">H</button>
+          <button data-md="ul" title="Bullet list">• List</button>
+          <button data-md="ol" title="Numbered list">1. List</button>
+          <button data-md="link" title="Link">🔗 Link</button>
+          <button data-md="image" title="Image">🖼 Image</button>
+          <button data-md="code" title="Code">&lt;/&gt; Code</button>
+          <button data-md="hr" title="Horizontal rule">―</button>
+          <span style="flex:1"></span>
+          <button data-md="preview" title="Toggle preview">👁 Preview</button>
+        </div>
+        <textarea class="inp" id="wiki-sec-body-${i}" rows="5" style="border-top-left-radius:0;border-top-right-radius:0" placeholder="Content... Markdown supported: # Heading · **bold** · *italic* · \`code\` · - list · [text](url) · ![alt](url) · TIP: / WARN:">${s.body||""}</textarea>
+        <div class="wiki-md-preview" id="wiki-sec-preview-${i}" style="display:none;margin-top:6px"></div>
       </div>`;
     });
     h+=`</div>`;
     h+=`<button class="btn bg bs" id="wiki-add-section-btn" style="margin-top:4px">+ Add Section</button>`;
-    h+=`<div style="font-size:11px;color:var(--tm);margin-top:10px">💡 Formatting: **bold** · *italic* · \`code\` · TIP: text (tip box) · WARN: text (warning box)</div>`;
+    h+=`<div style="font-size:11px;color:var(--tm);margin-top:10px">💡 Markdown: <code># Heading</code> · <code>**bold**</code> · <code>*italic*</code> · <code>\`code\`</code> · <code>- list</code> · <code>[text](url)</code> · <code>![alt](url)</code> · <code>\`\`\`fenced\`\`\`</code> · <code>---</code> hr · <code>TIP:</code>/<code>WARN:</code> callouts.</div>`;
     return h;
   }
 
@@ -3381,6 +3996,8 @@ function initWikiBindings(rerender){
     if(!isSiteAdmin())return;
     confirmAction("Delete this article?",()=>{
       if(!isSiteAdmin())return;
+      const r=D.wikiPages.find(p=>p.id===e.target.dataset.id);
+      if(r) softDelete('wikiPages',r);
       D.wikiPages=D.wikiPages.filter(p=>p.id!==e.target.dataset.id);
       F.wikiPage=null;pg="wiki-home";persist();re();toast("Article deleted!");
     });
@@ -3403,6 +4020,75 @@ function initWikiBindings(rerender){
       if(!d.sections.length)d.sections.push({heading:"",level:1,body:""});
       F.wikiEditDraft={...(F.wikiEditDraft||{}), ...d};
       re();
+    });
+  });
+
+  // Markdown toolbar bindings (per-section)
+  document.querySelectorAll(".wiki-md-toolbar").forEach(bar=>{
+    const target=bar.dataset.mdTarget;
+    bar.querySelectorAll("button[data-md]").forEach(btn=>{
+      btn.addEventListener("click",e=>{
+        e.preventDefault();
+        const ta=document.getElementById(target);
+        if(!ta) return;
+        const action=btn.dataset.md;
+        if(action==='preview'){
+          const pv=document.getElementById(target.replace('wiki-sec-body-','wiki-sec-preview-'));
+          if(!pv) return;
+          if(pv.style.display==='none'){
+            pv.innerHTML=wikiRenderBody(ta.value||'');
+            pv.style.display='block'; pv.classList.add('wiki-body');
+          } else { pv.style.display='none'; }
+          return;
+        }
+        const sel0=ta.selectionStart, sel1=ta.selectionEnd;
+        const before=ta.value.slice(0,sel0), sel=ta.value.slice(sel0,sel1), after=ta.value.slice(sel1);
+        const wrap=(pre,post,placeholder)=>{
+          const text=sel||placeholder;
+          ta.value=before+pre+text+post+after;
+          ta.focus();
+          const start=before.length+pre.length, end=start+text.length;
+          ta.setSelectionRange(start,end);
+        };
+        const linePrefix=(prefix,placeholder)=>{
+          const text=sel||placeholder;
+          const out=text.split(/\r?\n/).map(l=>prefix+l).join('\n');
+          ta.value=before+out+after;
+          ta.focus();
+          ta.setSelectionRange(before.length, before.length+out.length);
+        };
+        switch(action){
+          case 'bold': wrap('**','**','bold text'); break;
+          case 'italic': wrap('*','*','italic text'); break;
+          case 'code':
+            if(sel.includes('\n')) wrap('```\n','\n```',sel||'code'); else wrap('`','`',sel||'code');
+            break;
+          case 'h':{
+            // Toggle through # ## ### on the line containing the caret
+            const lineStart=before.lastIndexOf('\n')+1;
+            const lineEnd=ta.value.indexOf('\n',sel1); const realEnd=lineEnd===-1?ta.value.length:lineEnd;
+            const line=ta.value.slice(lineStart,realEnd);
+            let next=line;
+            if(/^# /.test(line)) next=line.replace(/^# /,'## ');
+            else if(/^## /.test(line)) next=line.replace(/^## /,'### ');
+            else if(/^### /.test(line)) next=line.replace(/^### /,'');
+            else next='# '+line;
+            ta.value=ta.value.slice(0,lineStart)+next+ta.value.slice(realEnd);
+            ta.focus();
+            const newCaret=lineStart+next.length;
+            ta.setSelectionRange(newCaret,newCaret);
+            break;
+          }
+          case 'ul': linePrefix('- ','list item'); break;
+          case 'ol': linePrefix('1. ','list item'); break;
+          case 'link': wrap('[','](https://)',sel||'link text'); break;
+          case 'image': wrap('![','](https://)',sel||'alt text'); break;
+          case 'hr':
+            ta.value=before+(before.endsWith('\n')||before===''?'':'\n')+'\n---\n'+after;
+            ta.focus();
+            break;
+        }
+      });
     });
   });
 
@@ -3455,6 +4141,8 @@ function initWikiBindings(rerender){
   document.querySelectorAll(".wiki-delete-draft-btn").forEach(btn=>{
     btn.addEventListener("click",()=>{
       confirmAction("Delete this draft?",()=>{
+        const r=D.wikiDrafts.find(x=>x.id===btn.dataset.id);
+        if(r) softDelete('wikiDrafts',r);
         D.wikiDrafts=D.wikiDrafts.filter(x=>x.id!==btn.dataset.id);
         persist();re();toast("Draft deleted!");
       });
@@ -3558,8 +4246,139 @@ function tDash(){
   return h;
 }
 
-function tPlayers(){const fil=G.p.filter(p=>{if(F.s&&!p.name.toLowerCase().includes(F.s.toLowerCase())&&!(p.discord||"").toLowerCase().includes(F.s.toLowerCase())&&!(p.tags||[]).some(t=>t.toLowerCase().includes(F.s.toLowerCase())))return false;if(F.rank!=="All"&&p.rank!==F.rank)return false;if(F.status!=="All"&&p.status!==F.status)return false;return true});let h=`<div class="ph"><div class="pt">Members (${G.p.length})</div><div style="display:flex;gap:6px">${isAdmin()?`<button class="btn bg bs" id="csv-players">CSV</button><button class="btn bp" id="add-player-btn">+ Add</button>`:""}</div></div><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><div class="sb" style="flex:1;min-width:160px"><input id="psearch" placeholder="Search name, discord, tag..." value="${esc(F.s||"")}"></div><select class="inp" id="frank" style="width:120px">${["All",...currentGuildCfg().ranks].map(o=>`<option${F.rank===o?" selected":""}>${esc(o)}</option>`).join("")}</select><select class="inp" id="fstat" style="width:100px">${["All","Active","Inactive"].map(o=>`<option${F.status===o?" selected":""}>${o}</option>`).join("")}</select></div>`;if(!fil.length)return h+`<div class="card">${empty("👥","No members","",isAdmin()?"+ Add Member":"","add-player-btn2")}</div>`;h+=`<div class="card tw"><table><thead><tr><th>Name</th><th>Tags</th><th>Rank</th><th>Debt</th><th>Status</th>${isAdmin()?`<th style="width:70px"></th>`:""}</tr></thead><tbody>`;fil.forEach(p=>{const gs=pGold(p.id);h+=`<tr><td class="plink" data-pid="${p.id}" style="font-weight:500;color:var(--ac);cursor:pointer">${esc(p.name||"")}</td><td>${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")||"—"}</td><td>${rankB(p.rank)}</td><td style="font-weight:500;color:${gs.debt>0?"var(--red)":"var(--tm)"};font-size:12px">${gs.debt>0?fmt(gs.debt)+"g":"—"}</td><td>${statusB(p.status)}</td>${isAdmin()?`<td><div class="row-actions"><button class="btn bg bs edit-p" data-id="${p.id}">✎</button><button class="btn bd bs del-p" data-id="${p.id}">✕</button></div></td>`:""}</tr>`});h+=`</tbody></table></div>`;return h}
+function tPlayers(){
+  const fil=G.p.filter(p=>{if(F.s&&!p.name.toLowerCase().includes(F.s.toLowerCase())&&!(p.discord||"").toLowerCase().includes(F.s.toLowerCase())&&!(p.tags||[]).some(t=>t.toLowerCase().includes(F.s.toLowerCase())))return false;if(F.rank!=="All"&&p.rank!==F.rank)return false;if(F.status!=="All"&&p.status!==F.status)return false;return true});
+  // Bulk selection: prune to ids still in the filtered set so selection doesn't leak across pagination/filter changes.
+  if(!window._bmSel) window._bmSel=new Set();
+  const filIds=new Set(fil.map(p=>p.id));
+  [...window._bmSel].forEach(id=>{ if(!filIds.has(id)) window._bmSel.delete(id); });
+  let h=`<div class="ph"><div class="pt">Members (${G.p.length})</div><div style="display:flex;gap:6px">${isAdmin()?`<button class="btn bg bs" id="csv-players">CSV</button><button class="btn bp" id="add-player-btn">+ Add</button>`:""}</div></div><div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap"><div class="sb" style="flex:1;min-width:160px"><input id="psearch" placeholder="Search name, discord, tag..." value="${esc(F.s||"")}"></div><select class="inp" id="frank" style="width:120px">${["All",...currentGuildCfg().ranks].map(o=>`<option${F.rank===o?" selected":""}>${esc(o)}</option>`).join("")}</select><select class="inp" id="fstat" style="width:100px">${["All","Active","Inactive"].map(o=>`<option${F.status===o?" selected":""}>${o}</option>`).join("")}</select></div>`;
+  if(!fil.length)return h+`<div class="card">${empty("👥","No members","",isAdmin()?"+ Add Member":"","add-player-btn2")}</div>`;
+  const allChecked = fil.every(p=>window._bmSel.has(p.id));
+  h+=`<div class="card tw"><table><thead><tr>${isAdmin()?`<th style="width:30px"><input type="checkbox" id="bm-select-all"${allChecked?' checked':''} title="Select all visible"></th>`:''}<th>Name</th><th>Tags</th><th>Rank</th><th>Debt</th><th>Status</th>${isAdmin()?`<th style="width:70px"></th>`:""}</tr></thead><tbody>`;
+  fil.forEach(p=>{
+    const gs=pGold(p.id);
+    const sel=window._bmSel.has(p.id);
+    h+=`<tr${sel?' style="background:var(--acg)"':''}>${isAdmin()?`<td><input type="checkbox" class="bm-row-cb" data-id="${p.id}"${sel?' checked':''}></td>`:''}<td class="plink" data-pid="${p.id}" style="font-weight:500;color:var(--ac);cursor:pointer">${esc(p.name||"")}</td><td>${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")||"—"}</td><td>${rankB(p.rank)}</td><td style="font-weight:500;color:${gs.debt>0?"var(--red)":"var(--tm)"};font-size:12px">${gs.debt>0?fmt(gs.debt)+"g":"—"}</td><td>${statusB(p.status)}</td>${isAdmin()?`<td><div class="row-actions"><button class="btn bg bs edit-p" data-id="${p.id}">✎</button><button class="btn bd bs del-p" data-id="${p.id}">✕</button></div></td>`:""}</tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  // Bulk action bar
+  if(isAdmin()&&window._bmSel.size>0){
+    const ranks=currentGuildCfg().ranks||[];
+    const roleOpts=ranks.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
+    h+=`<div id="bm-action-bar"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:600">${window._bmSel.size} selected</span><button class="btn bp bs" id="bm-activate">Activate</button><button class="btn bw bs" id="bm-deactivate">Deactivate</button><select class="inp" id="bm-rank-set" style="width:140px"><option value="">— Change Rank —</option>${roleOpts}</select><button class="btn bd bs" id="bm-delete">Delete</button><button class="btn bg bs" id="bm-clear">Cancel</button></div></div>`;
+  }
+  return h;
+}
 
+// Bulk member actions: checkboxes + floating action bar.
+let _bmLastIdx=null;
+function initBulkMemberBindings(){
+  if(!window._bmSel) window._bmSel=new Set();
+  const cbs=Array.from(document.querySelectorAll('.bm-row-cb'));
+  cbs.forEach((cb,i)=>{
+    cb.addEventListener('click',e=>{
+      // Shift-click range select
+      if(e.shiftKey&&_bmLastIdx!=null){
+        const lo=Math.min(_bmLastIdx,i), hi=Math.max(_bmLastIdx,i);
+        for(let j=lo;j<=hi;j++){
+          const id=cbs[j].dataset.id;
+          if(cb.checked) window._bmSel.add(id); else window._bmSel.delete(id);
+        }
+      } else {
+        const id=cb.dataset.id;
+        if(cb.checked) window._bmSel.add(id); else window._bmSel.delete(id);
+      }
+      _bmLastIdx=i;
+      render();
+    });
+  });
+  // Select all
+  document.getElementById('bm-select-all')?.addEventListener('change',e=>{
+    if(e.target.checked) cbs.forEach(c=>window._bmSel.add(c.dataset.id));
+    else cbs.forEach(c=>window._bmSel.delete(c.dataset.id));
+    render();
+  });
+  // Action bar buttons
+  const sel=()=>[...window._bmSel];
+  const filterSelf=ids=>{
+    // Refuse to act on self via bulk; show toast if dropped.
+    if(!currentUser) return ids;
+    const myId=currentUser?.id;
+    const beforeN=ids.length;
+    const out=ids.filter(id=>{
+      const p=D.p.find(x=>x.id===id);
+      // Prevent operating on own player record (best-effort match by displayName/username)
+      const ownsThis = p && (p.name?.toLowerCase()===currentUser.displayName?.toLowerCase()||p.name?.toLowerCase()===currentUser.username?.toLowerCase());
+      return !ownsThis;
+    });
+    if(out.length<beforeN) toast(`Skipped ${beforeN-out.length} (cannot bulk-act on yourself).`,'warn');
+    return out;
+  };
+  document.getElementById('bm-activate')?.addEventListener('click',()=>{
+    if(!isAdmin()) return;
+    const ids=filterSelf(sel());
+    if(!ids.length) return;
+    confirmAction(`Activate ${ids.length} member${ids.length===1?'':'s'}?`,()=>{
+      if(!isAdmin()) return;
+      ids.forEach(id=>{ const p=D.p.find(x=>x.id===id); if(p) p.status='Active'; });
+      addLog('Bulk Activate',`${ids.length} members: ${ids.slice(0,50).join(',')}`);
+      window._bmSel.clear();
+      persist(); render(); toast(`Activated ${ids.length}.`);
+    });
+  });
+  document.getElementById('bm-deactivate')?.addEventListener('click',()=>{
+    if(!isAdmin()) return;
+    const ids=filterSelf(sel());
+    if(!ids.length) return;
+    confirmAction(`Deactivate ${ids.length} member${ids.length===1?'':'s'}?`,()=>{
+      if(!isAdmin()) return;
+      ids.forEach(id=>{ const p=D.p.find(x=>x.id===id); if(p) p.status='Inactive'; });
+      addLog('Bulk Deactivate',`${ids.length} members: ${ids.slice(0,50).join(',')}`);
+      window._bmSel.clear();
+      persist(); render(); toast(`Deactivated ${ids.length}.`);
+    });
+  });
+  document.getElementById('bm-rank-set')?.addEventListener('change',e=>{
+    if(!isAdmin()) return;
+    const newRank=e.target.value;
+    if(!newRank) return;
+    const ids=filterSelf(sel());
+    if(!ids.length){ e.target.value=''; return; }
+    const target=newRank;
+    confirmAction(`Set rank "${esc(target)}" on ${ids.length} member${ids.length===1?'':'s'}?`,()=>{
+      if(!isAdmin()) return;
+      ids.forEach(id=>{ const p=D.p.find(x=>x.id===id); if(p) p.rank=target; });
+      addLog('Bulk Set Rank',`${target} → ${ids.length} members`);
+      window._bmSel.clear();
+      persist(); render(); toast(`Updated rank on ${ids.length}.`);
+    });
+    e.target.value='';
+  });
+  document.getElementById('bm-delete')?.addEventListener('click',()=>{
+    if(!isAdmin()) return;
+    const ids=filterSelf(sel());
+    if(!ids.length) return;
+    confirmAction(`Delete ${ids.length} member${ids.length===1?'':'s'}? (Restorable from Recently Deleted for 30 days.)`,()=>{
+      if(!isAdmin()) return;
+      ids.forEach(id=>{
+        const p=D.p.find(x=>x.id===id);
+        if(p){
+          softDelete('p',p);
+          D.gt=D.gt.filter(t=>t.playerId!==id);
+          D.it=D.it.filter(t=>t.playerId!==id);
+          D.gear=D.gear.filter(g=>g.playerId!==id);
+          delete D.playerRecipes[id];
+          D.p=D.p.filter(x=>x.id!==id);
+        }
+      });
+      addLog('Bulk Delete',`${ids.length} members`);
+      window._bmSel.clear();
+      persist(); render(); toast(`Deleted ${ids.length}.`);
+    });
+  });
+  document.getElementById('bm-clear')?.addEventListener('click',()=>{ window._bmSel.clear(); render(); });
+}
 function tPlayerDetail(){let p=G.p.find(x=>x.id===selP);if(!p){selP=G.p[0]?.id||null;p=G.p[0];if(!p)return`<p style="color:var(--tm)">No members found.</p>`;}const gs=pGold(p.id),is=pItems(p.id),pgt=G.gt.filter(t=>t.playerId===p.id).sort((a,b)=>b.date.localeCompare(a.date)),pit=G.it.filter(t=>t.playerId===p.id).sort((a,b)=>b.date.localeCompare(a.date));
 const pGear=G.gear.filter(g=>g.playerId===p.id).sort((a,b)=>b.date.localeCompare(a.date));
 let h=`<button class="btn bg bs" id="back-btn" style="margin-bottom:12px">← Back</button><div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="av">${esc((p.name||"?").charAt(0))}</div><div style="flex:1"><div class="pt">${esc(p.name||"")}</div><div style="display:flex;gap:5px;align-items:center;margin-top:2px;flex-wrap:wrap">${rankB(p.rank)} ${statusB(p.status)} ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")} <span style="font-size:11px;color:var(--tm)">${esc(p.discord||"")}</span></div>${p.notes?`<div style="font-size:11px;color:var(--tm);margin-top:4px">${esc(p.notes)}</div>`:""}</div>${isAdmin()?`<div style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn bg bs edit-p" data-id="${p.id}">Edit</button><button class="btn bg bs" id="toggle-status">${p.status==="Active"?"Deactivate":"Activate"}</button>${gs.debt>0?`<button class="btn bw bs" id="forgive-debt">Forgive Debt</button>`:""}</div>`:""}</div>`;
@@ -3950,6 +4769,164 @@ function tAudit(){
   h+=`</tbody></table></div>`;return h
 }
 
+// ── Site Activity Feed (cross-guild merged log; site admin only) ──────────
+const SAFEED_PAGE_SIZE = 50;
+function _saFeedSeverity(action){
+  const a=String(action||'').toLowerCase();
+  if(/delet|reject|purge/.test(a)) return 'red';
+  if(/role|admin|approv|password|invite|kick|denied/.test(a)) return 'org';
+  return '';
+}
+function tSiteActivityFeed(){
+  if(!isSiteAdmin()) return `<div class="card">${empty("🔒","Access Restricted","Only site admins can view the activity feed.")}</div>`;
+  const log=Array.isArray(D.log)?D.log:[];
+  const search=(window._saFeed_search||'').toLowerCase().trim();
+  const guildF=window._saFeed_guild||'';
+  const actF=(window._saFeed_action||'').toLowerCase().trim();
+  const days=parseInt(window._saFeed_days||'0')||0;
+  const cutoff=days>0?Date.now()-days*24*60*60*1000:0;
+  const guildName=id=>{
+    if(!id) return 'Site-wide';
+    const g=D.guilds.find(x=>x.id===id);
+    return g?g.name||'(unnamed)':id.slice(0,8);
+  };
+  const filtered=log.filter(l=>{
+    if(guildF==='__sitewide__'){ if(l.guildId) return false; }
+    else if(guildF){ if(l.guildId!==guildF) return false; }
+    if(actF){ if(!String(l.action||'').toLowerCase().includes(actF)) return false; }
+    if(cutoff){ const t=Date.parse(l.date||''); if(!(t>=cutoff)) return false; }
+    if(search){
+      const hay=[(l.action||''),(l.detail||''),(l.user||'')].join(' ').toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  }).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const page=Math.max(0,parseInt(window._saFeed_page||'0')||0);
+  const start=page*SAFEED_PAGE_SIZE, end=start+SAFEED_PAGE_SIZE;
+  const pageRows=filtered.slice(start,end);
+  const totalPages=Math.max(1,Math.ceil(filtered.length/SAFEED_PAGE_SIZE));
+  const guildOpts=['<option value="">All Guilds</option>','<option value="__sitewide__">— Site-wide —</option>'].concat(
+    D.guilds.filter(g=>g.id!=='__legacy__').map(g=>`<option value="${esc(g.id)}"${guildF===g.id?' selected':''}>${esc(g.name||g.id.slice(0,8))}</option>`)
+  ).join('');
+  const uniqueActions=[...new Set(log.map(l=>l.action||''))].sort();
+  let h=`<div class="ph"><div class="pt">Site Activity Feed</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg bs" id="safeed-csv">⬇ CSV</button></div></div>`;
+  h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-bottom:14px">${stat('Total Entries',log.length)}${stat('Filtered',filtered.length,'var(--ac)')}${stat('Guilds',D.guilds.filter(g=>g.id!=='__legacy__').length,'var(--blu)')}${stat('Last 24h',log.filter(l=>{const t=Date.parse(l.date||'');return isFinite(t)&&t>=Date.now()-86400000;}).length,'var(--org)')}</div>`;
+  h+=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+  h+=`<div class="sb" style="flex:1;min-width:200px"><span style="color:var(--tm)">🔍</span><input id="safeed-search" placeholder="Search action / detail / user…" value="${esc(window._saFeed_search||'')}"></div>`;
+  h+=`<select class="inp" id="safeed-guild" style="width:170px">${guildOpts}</select>`;
+  h+=`<select class="inp" id="safeed-action" style="width:170px"><option value="">All Actions</option>${uniqueActions.map(a=>`<option value="${esc(a)}"${actF===String(a).toLowerCase()?' selected':''}>${esc(a)}</option>`).join('')}</select>`;
+  h+=`<select class="inp" id="safeed-days" style="width:130px">`+
+    [['0','All time'],['1','Last 24h'],['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days']].map(([v,l])=>`<option value="${v}"${days===+v?' selected':''}>${l}</option>`).join('')+
+    `</select></div>`;
+  if(!filtered.length) return h+`<div class="card">${empty("📋","No matching entries","Try widening your filters.")}</div>`;
+  h+=`<div class="card tw"><table><thead><tr><th>Time</th><th>Guild</th><th>User</th><th>Action</th><th>Details</th><th></th></tr></thead><tbody>`;
+  pageRows.forEach(l=>{
+    const sev=_saFeedSeverity(l.action);
+    const border=sev==='red'?'border-left:3px solid var(--red);':sev==='org'?'border-left:3px solid var(--org);':'';
+    const gn=guildName(l.guildId);
+    const isSiteWide=!l.guildId;
+    h+=`<tr style="${border}">`+
+      `<td style="font-size:11px;color:var(--tm);white-space:nowrap">${fmtDT(l.date)}</td>`+
+      `<td style="font-size:11px"><span class="badge ${isSiteWide?'byl':''}" style="${isSiteWide?'background:var(--orgd);color:var(--org)':''}">${esc(gn)}</span></td>`+
+      `<td style="font-size:11px;color:var(--ac)">${esc(l.user||'?')}</td>`+
+      `<td style="font-weight:500">${esc(l.action||'')}</td>`+
+      `<td style="color:var(--tm);font-size:12px">${esc(l.detail||'')}</td>`+
+      `<td>${l.guildId?`<button class="btn bg bs safeed-jump" data-guild-id="${esc(l.guildId)}">→ Jump</button>`:''}</td>`+
+      `</tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  if(totalPages>1){
+    h+=`<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px">`+
+      `<button class="btn bg bs" id="safeed-prev"${page<=0?' disabled':''}>← Prev</button>`+
+      `<span style="font-size:11px;color:var(--tm)">Page ${page+1} of ${totalPages}</span>`+
+      `<button class="btn bg bs" id="safeed-next"${page+1>=totalPages?' disabled':''}>Next →</button></div>`;
+  }
+  return h;
+}
+function initSiteActivityFeedBindings(){
+  document.getElementById('safeed-search')?.addEventListener('input',e=>{
+    window._saFeed_search=e.target.value;
+    window._saFeed_page=0;
+    clearTimeout(window._saFeed_timer);
+    window._saFeed_timer=setTimeout(()=>render(),120);
+  });
+  document.getElementById('safeed-guild')?.addEventListener('change',e=>{ window._saFeed_guild=e.target.value; window._saFeed_page=0; render(); });
+  document.getElementById('safeed-action')?.addEventListener('change',e=>{ window._saFeed_action=e.target.value; window._saFeed_page=0; render(); });
+  document.getElementById('safeed-days')?.addEventListener('change',e=>{ window._saFeed_days=e.target.value; window._saFeed_page=0; render(); });
+  document.getElementById('safeed-prev')?.addEventListener('click',()=>{ window._saFeed_page=Math.max(0,(window._saFeed_page||0)-1); render(); });
+  document.getElementById('safeed-next')?.addEventListener('click',()=>{ window._saFeed_page=(window._saFeed_page||0)+1; render(); });
+  document.querySelectorAll('.safeed-jump').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      currentGuildId=btn.dataset.guildId;
+      activeTool='treasury'; pg='audit';
+      saveSession(currentUser,currentGuildId);
+      render();
+      toast('Jumped to guild');
+    });
+  });
+  document.getElementById('safeed-csv')?.addEventListener('click',()=>{
+    const log=Array.isArray(D.log)?D.log:[];
+    const search=(window._saFeed_search||'').toLowerCase().trim();
+    const guildF=window._saFeed_guild||'';
+    const actF=(window._saFeed_action||'').toLowerCase().trim();
+    const days=parseInt(window._saFeed_days||'0')||0;
+    const cutoff=days>0?Date.now()-days*24*60*60*1000:0;
+    const filtered=log.filter(l=>{
+      if(guildF==='__sitewide__'){ if(l.guildId) return false; }
+      else if(guildF){ if(l.guildId!==guildF) return false; }
+      if(actF){ if(!String(l.action||'').toLowerCase().includes(actF)) return false; }
+      if(cutoff){ const t=Date.parse(l.date||''); if(!(t>=cutoff)) return false; }
+      if(search){
+        const hay=[(l.action||''),(l.detail||''),(l.user||'')].join(' ').toLowerCase();
+        if(!hay.includes(search)) return false;
+      }
+      return true;
+    });
+    exportCSV([['Date','Guild','User','Action','Detail'],...filtered.map(l=>[new Date(l.date).toLocaleString(),(D.guilds.find(g=>g.id===l.guildId)?.name||(l.guildId?l.guildId.slice(0,8):'Site-wide')),l.user||'?',l.action,l.detail||''])],'site-activity-feed.csv');
+  });
+}
+
+// ── Recently Deleted Bin page ─────────────────────────────
+function tRecentlyDeleted(){
+  if(!isAdmin()&&!isSiteAdmin()){
+    return `<div class="card">${empty("🔒","Access Restricted","Only admins can view the recently-deleted bin.")}</div>`;
+  }
+  const bin=(D.deletedBin||[]).filter(e=>!currentGuildId||!e.guildId||e.guildId===currentGuildId);
+  let h=`<div class="ph"><div class="pt">Recently Deleted</div><div style="font-size:11px;color:var(--tm)">Items auto-purge after 30 days</div></div>`;
+  if(!bin.length){
+    return h+`<div class="card">${empty("🗑️","Bin is empty","Deleted records will appear here for 30 days. Click Restore to bring them back.")}</div>`;
+  }
+  // Group by source for readability
+  const groups={};
+  bin.forEach(e=>{ (groups[e.source]=groups[e.source]||[]).push(e); });
+  Object.keys(groups).forEach(k=>{
+    const arr=groups[k];
+    h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:8px">${esc(BIN_LABELS[k]||k)} <span style="color:var(--tm);font-weight:400">${arr.length}</span></div>`;
+    h+=`<div class="tw"><table><thead><tr><th>Name</th><th>Deleted by</th><th>When</th><th style="width:160px"></th></tr></thead><tbody>`;
+    arr.forEach(e=>{
+      const r=e.record||{};
+      const name=r.name||r.title||r.itemName||r.markerType||r.type||r.id||'(unnamed)';
+      h+=`<tr><td style="font-size:12px">${esc(String(name))}</td><td style="font-size:11px;color:var(--tm)">${esc(e.deletedBy||'?')}</td><td style="font-size:11px;color:var(--tm);white-space:nowrap">${fmtDT(e.deletedAt)}</td><td><div class="row-actions" style="opacity:1"><button class="btn bg bs bin-restore" data-id="${esc(e.binId)}">Restore</button><button class="btn bd bs bin-purge" data-id="${esc(e.binId)}">Purge</button></div></td></tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  });
+  return h;
+}
+function initBinBindings(){
+  document.querySelectorAll('.bin-restore').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(restoreFromBin(btn.dataset.id)){ persist(); render(); toast('Restored.'); }
+    });
+  });
+  document.querySelectorAll('.bin-purge').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      confirmAction('Purge this entry permanently?',()=>{
+        if(purgeBin(btn.dataset.id)){ persist(); render(); toast('Purged.'); }
+      });
+    });
+  });
+}
+
 // ── Invite code storage (lives in D.inviteCodes, scoped by guildId) ────────────
 // Each code: {id, code, guildId, createdBy, createdAt, expiresAt, uses, maxUses, disabled}
 if(!D.inviteCodes) D.inviteCodes=[];
@@ -4070,6 +5047,33 @@ if(isSiteAdmin()){
   h+=`</div>`;
 }
 h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Tags</div><div style="margin-bottom:8px">${currentGuildCfg().tags.map(t=>`<span class="tag">${esc(t)}</span>`).join(" ")}</div><div style="display:flex;gap:8px"><input class="inp" id="cfg-tag" placeholder="New tag..." style="max-width:200px"><button class="btn bp bs" id="add-tag">Add</button></div></div>`;
+
+// ── Discord Integration ─────────────────────────────────
+{
+  const cfg = currentGuildCfg();
+  const url = cfg.discordWebhookUrl || '';
+  const lastError = cfg._discordLastError || '';
+  const lastSent = cfg._discordLastSent || '';
+  h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">💬 Discord Integration</div>`;
+  h+=`<div style="font-size:11px;color:var(--tm);margin-bottom:10px">Paste a Discord channel webhook URL. The Hub will post embeds for the events you check below.</div>`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:10px"><input class="inp" id="cfg-discord-url" value="${esc(url).replace(/"/g,'&quot;')}" placeholder="https://discord.com/api/webhooks/..." style="flex:1"><button class="btn bp bs" id="cfg-discord-save">Save</button><button class="btn bg bs" id="cfg-discord-test"${url?'':' disabled'}>Test</button></div>`;
+  if(lastError) h+=`<div style="font-size:11px;color:var(--red);margin-bottom:8px">Last error: ${esc(lastError)}</div>`;
+  if(lastSent) h+=`<div style="font-size:11px;color:var(--tm);margin-bottom:8px">Last sent: ${esc(lastSent)}</div>`;
+  const optDefs=[
+    ['notifyAnnouncementPublished','When an announcement is published'],
+    ['notifyEventCreated','When a new event is created'],
+    ['notifyGoldRequestApproved','When a gold request is approved'],
+    ['notifyMemberJoined','When a new member is approved'],
+  ];
+  h+=`<div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:6px"><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px">Notify on</div>`;
+  optDefs.forEach(([key,label])=>{
+    const checked = cfg[key]!==false;
+    h+=`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px"><input type="checkbox" class="cfg-discord-flag" data-key="${esc(key)}"${checked?' checked':''} style="accent-color:var(--ac)">${esc(label)}</label>`;
+  });
+  h+=`</div>`;
+  h+=`<div style="font-size:10px;color:var(--tm);margin-top:8px">Note: webhook delivery currently runs in the browser. For production, route via the Worker so the URL never reaches clients (deferred).</div>`;
+  h+=`</div>`;
+}
 
 // Tool Availability (site_admin only)
 if(isSiteAdmin()){
@@ -5529,6 +6533,333 @@ function pgCraftCalc(){
   return h;
 }
 
+// ── War Room (FR-16 minimal v1) ──────────────────────────
+// Schema: D.sieges = [{id, guildId, name, targetMarkerId, scheduledFor,
+//   status:'scheduled'|'active'|'past', objectives:[{label, taken, takenAt}],
+//   logEntries:[{at, by, text}], rsvps:[{userId, role}], outcome,
+//   createdBy, createdAt}]
+function _siegesForCurrentGuild(){ return Array.isArray(D.sieges)?D.sieges.filter(s=>s.guildId===currentGuildId):[]; }
+function pgWarRoom(){
+  if(!currentUser) return `<div class="card">${empty("🔐","Sign in required","")}</div>`;
+  const view = pg==='warroom-scheduled' ? 'scheduled' : pg==='warroom-past' ? 'past' : 'active';
+  const all=_siegesForCurrentGuild();
+  // Status filter for the page
+  const list = all.filter(s=>{
+    const st=s.status||'scheduled';
+    if(view==='active') return st==='active';
+    if(view==='past') return st==='past';
+    return st==='scheduled';
+  }).sort((a,b)=>String(b.scheduledFor||b.createdAt||'').localeCompare(String(a.scheduledFor||a.createdAt||'')));
+  let h=`<div class="ph"><div class="pt">War Room — ${view.charAt(0).toUpperCase()+view.slice(1)}</div><div style="display:flex;gap:6px"><button class="btn bp" id="wr-new">+ New Siege</button></div></div>`;
+  h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:14px">${stat('Active',all.filter(s=>s.status==='active').length,'var(--red)')}${stat('Scheduled',all.filter(s=>s.status==='scheduled'||!s.status).length,'var(--yl)')}${stat('Past',all.filter(s=>s.status==='past').length,'var(--tm)')}</div>`;
+  if(!list.length) return h+`<div class="card">${empty("🏰","No sieges","Plan a new siege to start coordinating with your guild.")}</div>`;
+  list.forEach(s=>{
+    const objsTaken=(s.objectives||[]).filter(o=>o.taken).length;
+    const objsTotal=(s.objectives||[]).length;
+    const rsvpCount=(s.rsvps||[]).length;
+    h+=`<div class="card" style="margin-bottom:10px">`;
+    h+=`<div style="display:flex;align-items:flex-start;gap:10px">`;
+    h+=`<div style="flex:1"><div style="font-size:14px;font-weight:600">${esc(s.name||'Unnamed siege')}</div><div style="font-size:11px;color:var(--tm);margin-top:2px">${s.scheduledFor?fmtDT(s.scheduledFor):'No date'} · ${esc(s.targetName||'No target')} · ${rsvpCount} RSVP${rsvpCount===1?'':'s'} · ${objsTaken}/${objsTotal} objectives</div></div>`;
+    h+=`<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap">`;
+    h+=`<button class="btn bg bs wr-rsvp" data-id="${s.id}">RSVP</button>`;
+    if(isAdmin()){
+      if(s.status!=='active') h+=`<button class="btn bp bs wr-set-active" data-id="${s.id}">▶ Run</button>`;
+      if(s.status==='active') h+=`<button class="btn bg bs wr-set-past" data-id="${s.id}">⏹ End</button>`;
+      h+=`<button class="btn bg bs wr-edit" data-id="${s.id}">✎</button>`;
+      h+=`<button class="btn bd bs wr-del" data-id="${s.id}">✕</button>`;
+    }
+    h+=`</div></div>`;
+    if(s.objectives&&s.objectives.length){
+      h+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">`;
+      s.objectives.forEach((o,i)=>{
+        h+=`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;${o.taken?'color:var(--grn);text-decoration:line-through;':''}"><input type="checkbox" class="wr-obj" data-sid="${s.id}" data-idx="${i}"${o.taken?' checked':''}${isAdmin()?'':' disabled'} style="accent-color:var(--grn)">${esc(o.label||'')}${o.takenAt?` <span style="color:var(--tm);font-size:10px">— ${fmtDT(o.takenAt)}</span>`:''}</label>`;
+      });
+      h+=`</div>`;
+    }
+    if(s.notes) h+=`<div style="margin-top:8px;padding:8px 10px;background:var(--bgi);border-radius:4px;font-size:12px;color:var(--t2);white-space:pre-wrap">${esc(s.notes)}</div>`;
+    h+=`</div>`;
+  });
+  return h;
+}
+function modalWarRoomSiege(existing){
+  if(!currentGuildId){ toast('Join a guild first','warn'); return; }
+  if(!isAdmin()){ toast('Officers only','warn'); return; }
+  openModal(existing?'Edit Siege':'New Siege', body=>{
+    const s=existing||{};
+    const markerOpts=(D.mapData||[]).slice(0,200).map(m=>`<option value="${esc(m.id)}"${s.targetMarkerId===m.id?' selected':''}>${esc(m.name||m.markerType||'')}</option>`).join('');
+    body.innerHTML=`
+      <div class="fg"><label class="fl">Siege Name *</label><input class="inp" id="wr-name" value="${esc(s.name||'')}" placeholder="e.g. Dunfen Push"></div>
+      <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="fl">Target Marker</label><select class="inp" id="wr-target"><option value="">— None —</option>${markerOpts}</select></div><div class="fg" style="width:170px"><label class="fl">Scheduled For</label><input class="inp" id="wr-when" type="datetime-local" value="${s.scheduledFor?String(s.scheduledFor).slice(0,16):''}"></div></div>
+      <div class="fg"><label class="fl">Objectives (one per line)</label><textarea class="inp" id="wr-objs" rows="4" placeholder="Push gate&#10;Hold courtyard&#10;Cap keep">${(s.objectives||[]).map(o=>esc(o.label||'')).join('\n')}</textarea></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="inp" id="wr-notes" rows="3" placeholder="Composition, gear expectations, etc.">${esc(s.notes||'')}</textarea></div>
+      <div class="actions" style="margin-top:12px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="wr-save">${existing?'Save':'Create'}</button></div>`;
+    setTimeout(()=>{
+      document.getElementById('wr-save').addEventListener('click',()=>{
+        const name=document.getElementById('wr-name').value.trim();
+        if(!name){ toast('Name required','error'); return; }
+        const targetId=document.getElementById('wr-target').value;
+        const target=targetId?(D.mapData||[]).find(m=>m.id==targetId):null;
+        const objsRaw=document.getElementById('wr-objs').value.trim();
+        const objs=objsRaw?objsRaw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(label=>{
+          const prev=(s.objectives||[]).find(o=>o.label===label);
+          return prev?{...prev}:{label,taken:false};
+        }):[];
+        const data={
+          name,
+          targetMarkerId: targetId||null,
+          targetName: target?(target.name||target.markerType||''):'',
+          scheduledFor: document.getElementById('wr-when').value||'',
+          objectives: objs,
+          notes: document.getElementById('wr-notes').value.trim(),
+        };
+        if(!Array.isArray(D.sieges)) D.sieges=[];
+        if(existing){
+          Object.assign(existing,data);
+          existing.editedAt=new Date().toISOString();
+          addLog('Siege Edited',name);
+        } else {
+          D.sieges.push({
+            id:uid(), guildId:currentGuildId,
+            ...data,
+            status:'scheduled',
+            rsvps:[], logEntries:[], outcome:'',
+            createdBy:currentUser.displayName||currentUser.username,
+            createdAt:new Date().toISOString(),
+          });
+          addLog('Siege Planned',name);
+        }
+        persist(); closeModal(); render(); toast(existing?'Siege updated.':'Siege created.');
+      });
+    },0);
+  });
+}
+function modalWarRoomRSVP(siegeId){
+  if(!currentUser){ toast('Sign in first','warn'); return; }
+  const s=(D.sieges||[]).find(x=>x.id===siegeId); if(!s) return;
+  openModal(`RSVP — ${s.name}`, body=>{
+    const existing=(s.rsvps||[]).find(r=>r.userId===currentUser.id);
+    body.innerHTML=`
+      <div class="fg"><label class="fl">Role</label><select class="inp" id="wr-rsvp-role"><option value="">— Pick a role —</option>${['Lineholder','Breacher','Healer','Archer','Scout','Crafter (siege weapons)','Other'].map(r=>`<option value="${esc(r)}"${existing&&existing.role===r?' selected':''}>${esc(r)}</option>`).join('')}</select></div>
+      <div class="actions" style="margin-top:12px">
+        ${existing?'<button class="btn bd" id="wr-rsvp-clear">Remove RSVP</button>':''}
+        <button class="btn bg" onclick="closeModal()">Cancel</button>
+        <button class="btn bp" id="wr-rsvp-save">Save</button>
+      </div>`;
+    setTimeout(()=>{
+      document.getElementById('wr-rsvp-save').addEventListener('click',()=>{
+        const role=document.getElementById('wr-rsvp-role').value;
+        if(!role){ toast('Pick a role','error'); return; }
+        s.rsvps=s.rsvps||[];
+        const i=s.rsvps.findIndex(r=>r.userId===currentUser.id);
+        const entry={userId:currentUser.id,name:currentUser.displayName||currentUser.username,role,at:new Date().toISOString()};
+        if(i>=0) s.rsvps[i]=entry; else s.rsvps.push(entry);
+        addLog('Siege RSVP', `${s.name}: ${role}`);
+        persist(); closeModal(); render(); toast('RSVP recorded.');
+      });
+      document.getElementById('wr-rsvp-clear')?.addEventListener('click',()=>{
+        s.rsvps=(s.rsvps||[]).filter(r=>r.userId!==currentUser.id);
+        persist(); closeModal(); render(); toast('RSVP removed.');
+      });
+    },0);
+  });
+}
+function _wrById(id){ return (D.sieges||[]).find(s=>s.id===id); }
+function initWarRoomBindings(){
+  document.getElementById('wr-new')?.addEventListener('click',()=>modalWarRoomSiege());
+  document.querySelectorAll('.wr-edit').forEach(b=>b.addEventListener('click',()=>{ const s=_wrById(b.dataset.id); if(s) modalWarRoomSiege(s); }));
+  document.querySelectorAll('.wr-del').forEach(b=>b.addEventListener('click',()=>{
+    const s=_wrById(b.dataset.id); if(!s) return;
+    confirmAction(`Delete siege "${esc(s.name)}"?`,()=>{
+      softDelete('sieges',s);
+      D.sieges=D.sieges.filter(x=>x.id!==s.id);
+      persist(); render(); toast('Deleted.');
+    });
+  }));
+  document.querySelectorAll('.wr-set-active').forEach(b=>b.addEventListener('click',()=>{
+    const s=_wrById(b.dataset.id); if(!s) return;
+    s.status='active'; s.startedAt=new Date().toISOString();
+    addLog('Siege Started', s.name);
+    persist(); render(); toast('Siege is now active.');
+  }));
+  document.querySelectorAll('.wr-set-past').forEach(b=>b.addEventListener('click',()=>{
+    const s=_wrById(b.dataset.id); if(!s) return;
+    s.status='past'; s.endedAt=new Date().toISOString();
+    addLog('Siege Ended', s.name);
+    persist(); render(); toast('Siege archived.');
+  }));
+  document.querySelectorAll('.wr-rsvp').forEach(b=>b.addEventListener('click',()=>modalWarRoomRSVP(b.dataset.id)));
+  document.querySelectorAll('.wr-obj').forEach(cb=>cb.addEventListener('change',()=>{
+    if(!isAdmin()){ cb.checked=!cb.checked; return; }
+    const s=_wrById(cb.dataset.sid); if(!s) return;
+    const i=parseInt(cb.dataset.idx);
+    const obj=s.objectives?.[i]; if(!obj) return;
+    obj.taken=cb.checked;
+    obj.takenAt=cb.checked?new Date().toISOString():null;
+    addLog(cb.checked?'Objective Taken':'Objective Re-opened', `${s.name}: ${obj.label}`);
+    persist(); render();
+  }));
+}
+
+// ── Crafting Order Queue ─────────────────────────────────
+const CRAFT_ORDER_STATUSES=['open','claimed','in_progress','completed','cancelled','expired'];
+function _craftOrderStatusBadge(s){
+  const map={open:'byl',claimed:'bbl',in_progress:'bor',completed:'bgr',cancelled:'bre',expired:'bre'};
+  const labels={open:'Open',claimed:'Claimed',in_progress:'In Progress',completed:'Completed',cancelled:'Cancelled',expired:'Expired'};
+  return `<span class="badge ${map[s]||'bgr'}">${labels[s]||s}</span>`;
+}
+function _craftOrderMatLabel(mat){
+  return mat==='self'?'Requestor supplies':mat==='crafter'?'Crafter supplies':'Bank-funded';
+}
+function _expireStaleCraftOrders(){
+  if(!Array.isArray(D.craftOrders)) return;
+  const now=Date.now();
+  D.craftOrders.forEach(o=>{
+    if((o.status==='open'||o.status==='claimed'||o.status==='in_progress')&&o.deadline){
+      const dl=Date.parse(o.deadline);
+      if(isFinite(dl)&&now>dl+7*24*60*60*1000){ o.status='expired'; }
+    }
+  });
+}
+function pgCraftOrders(){
+  if(!currentUser) return `<div class="card">${empty("🔐","Sign in required","")}</div>`;
+  if(!currentGuildId) return `<div class="card">${empty("🛡️","Join a guild first","Crafting orders are scoped to a guild.")}</div>`;
+  _expireStaleCraftOrders();
+  const orders=(D.craftOrders||[]).filter(o=>o.guildId===currentGuildId);
+  const f=window._coF||{status:'all',scope:'all',q:''};
+  let view=orders.slice();
+  if(f.status!=='all') view=view.filter(o=>o.status===f.status);
+  if(f.scope==='mine') view=view.filter(o=>o.requestorId===currentUser.id||o.claimedBy===currentUser.id);
+  if(f.q){ const lq=f.q.toLowerCase(); view=view.filter(o=>(o.itemName||'').toLowerCase().includes(lq)||(o.notes||'').toLowerCase().includes(lq)); }
+  view.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const itemOpts=craftItems.filter(i=>!i.isResource).slice(0,200).map(i=>`<option value="${esc(i.name)}">${esc(i.name)}</option>`).join('');
+  let h=`<div class="ph"><div class="pt">Crafting Orders</div><div style="display:flex;gap:6px"><button class="btn bp" id="craft-order-new">+ New Order</button></div></div>`;
+  h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:14px">${stat('Open',orders.filter(o=>o.status==='open').length,'var(--yl)')}${stat('Claimed',orders.filter(o=>o.status==='claimed'||o.status==='in_progress').length,'var(--blu)')}${stat('Completed',orders.filter(o=>o.status==='completed').length,'var(--grn)')}${stat('Total',orders.length)}</div>`;
+  h+=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+  h+=`<div class="sb" style="flex:1;min-width:160px"><span style="color:var(--tm)">🔍</span><input id="co-q" placeholder="Search item or notes…" value="${esc(f.q||'')}"></div>`;
+  h+=`<select class="inp" id="co-status" style="width:140px"><option value="all">All Statuses</option>${CRAFT_ORDER_STATUSES.map(s=>`<option value="${s}"${f.status===s?' selected':''}>${s}</option>`).join('')}</select>`;
+  h+=`<select class="inp" id="co-scope" style="width:120px"><option value="all"${f.scope==='all'?' selected':''}>All</option><option value="mine"${f.scope==='mine'?' selected':''}>Mine</option></select>`;
+  h+=`<datalist id="co-item-list">${itemOpts}</datalist>`;
+  h+=`</div>`;
+  if(!view.length) return h+`<div class="card">${empty("📋","No orders match","Try a different filter or click + New Order.")}</div>`;
+  h+=`<div class="card tw"><table><thead><tr><th>Item</th><th>Qty</th><th>Quality</th><th>Mats</th><th>Pay</th><th>Deadline</th><th>Requestor</th><th>Crafter</th><th>Status</th><th></th></tr></thead><tbody>`;
+  view.forEach(o=>{
+    const reqUser=D.users.find(u=>u.id===o.requestorId);
+    const claimUser=o.claimedBy?D.users.find(u=>u.id===o.claimedBy):null;
+    const mineMatch=o.requestorId===currentUser.id;
+    const isClaimer=o.claimedBy===currentUser.id;
+    let actions='';
+    if(o.status==='open'&&!mineMatch) actions+=`<button class="btn bp bs co-claim" data-id="${o.id}">Claim</button>`;
+    if((o.status==='claimed'||o.status==='in_progress')&&isClaimer) actions+=`<button class="btn bg bs co-progress" data-id="${o.id}">${o.status==='claimed'?'Mark In Progress':'(In Progress)'}</button> <button class="btn bp bs co-complete" data-id="${o.id}">Complete</button>`;
+    if((o.status==='open'||o.status==='claimed'||o.status==='in_progress')&&(mineMatch||isAdmin())) actions+=` <button class="btn bd bs co-cancel" data-id="${o.id}">Cancel</button>`;
+    if(isAdmin()||mineMatch) actions+=` <button class="btn bg bs co-edit" data-id="${o.id}" title="Edit">✎</button>`;
+    h+=`<tr><td style="font-weight:500">${esc(o.itemName||'')}</td><td>${o.qty||1}</td><td>${esc(o.quality||'')}</td><td style="font-size:11px;color:var(--tm)">${esc(_craftOrderMatLabel(o.matSource))}</td><td style="font-weight:500">${o.payment?fmt(+o.payment)+'g':'—'}</td><td style="font-size:11px;color:var(--tm)">${o.deadline?fmtD(o.deadline):''}</td><td style="font-size:11px">${esc(reqUser?.displayName||reqUser?.username||'?')}</td><td style="font-size:11px">${esc(claimUser?.displayName||claimUser?.username||'—')}</td><td>${_craftOrderStatusBadge(o.status)}</td><td style="white-space:nowrap">${actions}</td></tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  return h;
+}
+function modalCraftOrder(existing){
+  if(!currentUser){ toast('Sign in to create orders','warn'); return; }
+  if(!currentGuildId){ toast('Join a guild first','warn'); return; }
+  openModal(existing?'Edit Crafting Order':'New Crafting Order', body=>{
+    const o=existing||{};
+    body.innerHTML=`
+      <div class="fg"><label class="fl">Item *</label><input class="inp" id="co-itemName" list="co-item-list" placeholder="e.g. Mail Hauberk" value="${esc(o.itemName||'')}"></div>
+      <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="fl">Quantity</label><input class="inp" id="co-qty" type="number" min="1" value="${o.qty||1}"></div><div class="fg" style="flex:1"><label class="fl">Quality</label><input class="inp" id="co-quality" placeholder="e.g. Q3" value="${esc(o.quality||'')}"></div></div>
+      <div class="fg"><label class="fl">Materials Source</label><select class="inp" id="co-mat"><option value="self"${o.matSource==='self'?' selected':''}>Self — I provide materials</option><option value="crafter"${o.matSource==='crafter'?' selected':''}>Crafter — they provide</option><option value="bank"${o.matSource==='bank'?' selected':''}>Bank-funded</option></select></div>
+      <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="fl">Payment (gold)</label><input class="inp" id="co-pay" type="number" min="0" value="${o.payment||0}"></div><div class="fg" style="flex:1"><label class="fl">Deadline</label><input class="inp" id="co-deadline" type="date" value="${o.deadline||''}"></div></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="inp" id="co-notes" rows="2" placeholder="Optional context...">${esc(o.notes||'')}</textarea></div>
+      <div class="actions" style="margin-top:12px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="co-save">${existing?'Save':'Create'}</button></div>`;
+    setTimeout(()=>{
+      document.getElementById('co-save').addEventListener('click',()=>{
+        const itemName=document.getElementById('co-itemName').value.trim();
+        if(!itemName){ toast('Item is required','error'); return; }
+        const data={
+          itemName,
+          qty:parseInt(document.getElementById('co-qty').value)||1,
+          quality:document.getElementById('co-quality').value.trim(),
+          matSource:document.getElementById('co-mat').value,
+          payment:parseFloat(document.getElementById('co-pay').value)||0,
+          deadline:document.getElementById('co-deadline').value||'',
+          notes:document.getElementById('co-notes').value.trim(),
+        };
+        if(!Array.isArray(D.craftOrders)) D.craftOrders=[];
+        if(existing){
+          Object.assign(existing,data);
+          existing.editedAt=new Date().toISOString();
+          addLog('Order Edited',existing.itemName);
+        } else {
+          const ord={
+            id:uid(),
+            guildId:currentGuildId,
+            requestorId:currentUser.id,
+            requestorName:currentUser.displayName||currentUser.username,
+            ...data,
+            status:'open',
+            createdAt:new Date().toISOString(),
+          };
+          D.craftOrders.push(ord);
+          addLog('Order Posted',`${data.itemName} ×${data.qty}`);
+        }
+        persist(); closeModal(); render(); toast(existing?'Order updated.':'Order posted.');
+      });
+    },0);
+  });
+}
+function _coById(id){ return (D.craftOrders||[]).find(o=>o.id===id); }
+function initCraftOrdersBindings(){
+  document.getElementById('craft-order-new')?.addEventListener('click',()=>modalCraftOrder());
+  document.getElementById('co-q')?.addEventListener('input',e=>{ window._coF=window._coF||{};window._coF.q=e.target.value; clearTimeout(window._coTimer); window._coTimer=setTimeout(render,140); });
+  document.getElementById('co-status')?.addEventListener('change',e=>{ window._coF=window._coF||{};window._coF.status=e.target.value; render(); });
+  document.getElementById('co-scope')?.addEventListener('change',e=>{ window._coF=window._coF||{};window._coF.scope=e.target.value; render(); });
+  document.querySelectorAll('.co-claim').forEach(b=>b.addEventListener('click',()=>{
+    const o=_coById(b.dataset.id); if(!o||o.status!=='open') return;
+    o.status='claimed'; o.claimedBy=currentUser.id; o.claimedByName=currentUser.displayName||currentUser.username; o.claimedAt=new Date().toISOString();
+    addLog('Order Claimed', o.itemName);
+    persist(); render(); toast('Claimed.');
+  }));
+  document.querySelectorAll('.co-progress').forEach(b=>b.addEventListener('click',()=>{
+    const o=_coById(b.dataset.id); if(!o||o.status!=='claimed') return;
+    o.status='in_progress'; addLog('Order In Progress', o.itemName);
+    persist(); render();
+  }));
+  document.querySelectorAll('.co-complete').forEach(b=>b.addEventListener('click',()=>{
+    const o=_coById(b.dataset.id); if(!o||(o.status!=='claimed'&&o.status!=='in_progress')) return;
+    confirmAction(`Mark "${esc(o.itemName)}" complete? This will record the gold transfer (if any) and a permanent ledger entry.`,()=>{
+      o.status='completed'; o.completedAt=new Date().toISOString();
+      // Settle payment via gold ledger when applicable. We log it as borrow→repay
+      // pair using existing types so per-player gold math stays consistent.
+      if(o.payment>0){
+        const reqPlayer = G.p.find(p=>{
+          const u=D.users.find(u=>u.id===o.requestorId);
+          if(!u) return false;
+          return p.name?.toLowerCase()===(u.displayName||u.username||'').toLowerCase();
+        });
+        const crafterPlayer = G.p.find(p=>{
+          const u=D.users.find(u=>u.id===o.claimedBy);
+          if(!u) return false;
+          return p.name?.toLowerCase()===(u.displayName||u.username||'').toLowerCase();
+        });
+        const note=`Order #${o.id.slice(-4)} — ${o.itemName}`;
+        if(reqPlayer){ D.gt.push({id:uid(),playerId:reqPlayer.id,date:new Date().toISOString().slice(0,10),amount:+o.payment,type:'Borrow Gold',notes:note,guildId:currentGuildId}); }
+        if(crafterPlayer){ D.gt.push({id:uid(),playerId:crafterPlayer.id,date:new Date().toISOString().slice(0,10),amount:+o.payment,type:'Repay Gold',notes:note,guildId:currentGuildId}); }
+      }
+      addLog('Order Completed', `${o.itemName}${o.payment?' ('+fmt(+o.payment)+'g)':''}`);
+      persist(); render(); toast('Completed.');
+    });
+  }));
+  document.querySelectorAll('.co-cancel').forEach(b=>b.addEventListener('click',()=>{
+    const o=_coById(b.dataset.id); if(!o) return;
+    confirmAction(`Cancel order "${esc(o.itemName)}"?`,()=>{
+      o.status='cancelled'; o.cancelledAt=new Date().toISOString();
+      addLog('Order Cancelled', o.itemName);
+      persist(); render(); toast('Cancelled.');
+    });
+  }));
+  document.querySelectorAll('.co-edit').forEach(b=>b.addEventListener('click',()=>{
+    const o=_coById(b.dataset.id); if(o) modalCraftOrder(o);
+  }));
+}
+
 function pgCraftResCalc(){
   // Build item options grouped by skill
   // Include crafted items AND recipes that have a matching crafted item with materials
@@ -6475,7 +7806,7 @@ function pgCharBuilder(){
   const ptsLeft = 535; // will be checked live at save time
   h+=`<div style="margin-top:20px">`;
   h+=`<div class="ph" style="margin-bottom:12px"><div class="pt">Saved Builds</div>`;
-  h+=`<button class="btn bp" id="cb-save-build-btn">💾 Save Current Build</button>`;
+  h+=`<div style="display:flex;gap:6px"><button class="btn bg" id="cb-share-current-btn" title="Share current builder state as a link">🔗 Share</button><button class="btn bp" id="cb-save-build-btn">💾 Save Current Build</button></div>`;
   h+=`</div>`;
 
   // Build list
@@ -6495,6 +7826,7 @@ function pgCharBuilder(){
       h+=`<div style="font-size:11px;color:var(--tm);margin-top:2px">by ${b.author||'Unknown'} · ${date}</div></div>`;
       h+=`<div style="display:flex;gap:4px;flex-shrink:0">`;
       h+=`<button class="btn bg bs cb-load-build" data-id="${b.id}" style="font-size:11px">Load</button>`;
+      h+=`<button class="btn bg bs cb-share-build" data-id="${b.id}" style="font-size:11px" title="Copy share link">🔗</button>`;
       if(currentUser&&(currentUser.displayName===b.author||currentUser.username===b.author||isAdmin())){
         h+=`<button class="btn bg bs cb-edit-build" data-id="${b.id}" style="font-size:11px">✎ Edit</button>`;
         h+=`<button class="btn bd bs cb-del-build" data-id="${b.id}" style="font-size:11px">✕</button>`;
@@ -6769,6 +8101,8 @@ function modalSaveBuild(){
           name,
           description:document.getElementById('cb-build-desc')?.value.trim()||"",
           author:currentUser.displayName||currentUser.username,
+          ownerId:currentUser.id,
+          characterId:getActiveCharacterId(),
           date:new Date().toISOString(),
           attrs:{strength:str,constitution:con,dexterity:dex},
           ptsUsed,
@@ -6849,6 +8183,195 @@ function cbLoadBuild(id){
   });
 }
 
+// ── Build share links ─────────────────────────────────────
+// Encodes a build into base64url(JSON) packed into the URL hash. Schema
+// versioned so old links keep working as the shape evolves.
+const CB_SHARE_SCHEMA = 1;
+function _b64uEncode(s){
+  // s is a UTF-8 string; convert to base64url without padding.
+  const b=btoa(unescape(encodeURIComponent(s)));
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function _b64uDecode(s){
+  const t=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+  const pad=t.length%4?'='.repeat(4-(t.length%4)):'';
+  try{ return decodeURIComponent(escape(atob(t+pad))); }catch(e){ return null; }
+}
+function cbCurrentBuildSnapshot(){
+  // Read current builder state. Mirrors the modalSaveBuild assembly.
+  const str=parseInt(document.getElementById('cb-strength')?.value)||80;
+  const con=parseInt(document.getElementById('cb-constitution')?.value)||80;
+  const dex=parseInt(document.getElementById('cb-dexterity')?.value)||80;
+  const ptsUsed=parseInt(document.getElementById('cb-pts-used')?.textContent)||0;
+  const ppUsed=(typeof cbCountPoints==='function')?cbCountPoints():0;
+  const skills={};
+  Object.entries(cbSkillValues||{}).forEach(([k,v])=>{ if(v>0) skills[k]=v; });
+  const foodQ=parseFloat(document.getElementById('cb-foodq')?.value)||3;
+  const wepDmg=parseFloat(document.getElementById('cb-wepdmg')?.value)||0;
+  return {attrs:{strength:str,constitution:con,dexterity:dex},ptsUsed,ppUsed,skills,foodQ,wepDmg};
+}
+function cbSerializeBuild(b,nameOverride){
+  // Produces the URL hash content (without the leading "#build=").
+  const payload={
+    v:CB_SHARE_SCHEMA,
+    n:String(nameOverride||b.name||'').slice(0,80),
+    by:String(b.author||'').slice(0,40),
+    a:[b.attrs?.strength||80,b.attrs?.constitution||80,b.attrs?.dexterity||80],
+    p:b.ptsUsed||0,
+    pp:b.ppUsed||0,
+    s:Object.fromEntries(Object.entries(b.skills||{}).filter(([,v])=>v>0)),
+    fq:Math.round((b.foodQ||3)*100)/100,
+    wd:Math.round((b.wepDmg||0)*100)/100,
+  };
+  return _b64uEncode(JSON.stringify(payload));
+}
+function cbDeserializeBuild(hash){
+  const json=_b64uDecode(hash);
+  if(!json) return {error:'Damaged link — could not decode.'};
+  let p; try{ p=JSON.parse(json); }catch(e){ return {error:'Damaged link — invalid payload.'}; }
+  if(!p||typeof p!=='object') return {error:'Damaged link — empty payload.'};
+  if(p.v!==CB_SHARE_SCHEMA) return {error:`Unknown build version (${p.v}). Update the Hub to load this link.`};
+  if(!Array.isArray(p.a)||p.a.length!==3) return {error:'Damaged link — missing attributes.'};
+  return {build:{
+    name:String(p.n||'Shared Build').slice(0,80),
+    author:String(p.by||'Anonymous').slice(0,40),
+    attrs:{strength:+p.a[0]||80,constitution:+p.a[1]||80,dexterity:+p.a[2]||80},
+    ptsUsed:+p.p||0,
+    ppUsed:+p.pp||0,
+    skills:p.s&&typeof p.s==='object'?p.s:{},
+    foodQ:+p.fq||3,
+    wepDmg:+p.wd||0,
+  }};
+}
+function _cbCopyToClipboard(text){
+  if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(text).catch(()=>{}); return; }
+  const i=document.createElement('input');i.value=text;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove();
+}
+function cbShareCurrent(){
+  // Prompt for name then copy a link encoding the live builder state.
+  openModal('Share Current Build', body=>{
+    body.innerHTML=`
+      <div class="fg"><label class="fl">Build Name</label><input class="inp" id="cb-share-name" placeholder="e.g. Heavy Tank v2" value="My Build" autofocus></div>
+      <div class="fg"><label class="fl">Author</label><input class="inp" id="cb-share-by" value="${esc(currentUser?.displayName||currentUser?.username||'Anonymous')}"></div>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:10px">A link encoding your current attributes, passives, food, and weapon damage will be copied to your clipboard. The recipient can preview it and import.</div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn bg" onclick="closeModal()">Cancel</button>
+        <button class="btn bp" id="cb-share-do">📋 Copy Link</button>
+      </div>`;
+    setTimeout(()=>{
+      document.getElementById('cb-share-do').addEventListener('click',()=>{
+        const snap=cbCurrentBuildSnapshot();
+        snap.author=document.getElementById('cb-share-by').value.trim()||'Anonymous';
+        const name=document.getElementById('cb-share-name').value.trim()||'Shared Build';
+        const hash=cbSerializeBuild(snap,name);
+        const url=location.origin+location.pathname+'#build='+hash;
+        if(url.length>2000){ toast('Build too large to share by URL — try Save first.','warn'); return; }
+        _cbCopyToClipboard(url);
+        closeModal();
+        toast('Link copied — paste anywhere.');
+      });
+    },0);
+  });
+}
+function cbShareBuild(id){
+  const b=D.savedBuilds?.find(x=>x.id===id);
+  if(!b) return;
+  const hash=cbSerializeBuild(b);
+  const url=location.origin+location.pathname+'#build='+hash;
+  if(url.length>2000){ toast('Build too large to share by URL.','warn'); return; }
+  _cbCopyToClipboard(url);
+  toast('Link copied — paste anywhere.');
+}
+function cbApplySharedBuild(b){
+  // Apply a shared build payload to the live builder, in read-only context.
+  // Mirrors cbLoadBuild without the confirmation step.
+  activeTool='charbuilder'; pg='cb-builder';
+  if(currentUser) render(); else renderGuest();
+  // Wait one tick so the builder DOM is rendered.
+  setTimeout(()=>{
+    ['strength','constitution','dexterity'].forEach(a=>{
+      const el=document.getElementById('cb-'+a); if(el) el.value=b.attrs?.[a]||80;
+    });
+    const left=document.getElementById('cb-pts-left'); if(left) left.textContent=535-(b.ptsUsed||0);
+    const used=document.getElementById('cb-pts-used'); if(used) used.textContent=b.ptsUsed||0;
+    if(b.foodQ!=null){const f=document.getElementById('cb-foodq');if(f)f.value=(+b.foodQ).toFixed(2);}
+    if(b.wepDmg!=null){const w=document.getElementById('cb-wepdmg');if(w)w.value=(+b.wepDmg).toFixed(2);}
+    cbResetSkills();
+    if(b.skills) Object.entries(b.skills).forEach(([id,val])=>{
+      if(val>0){
+        cbUnlockSkill(id);
+        cbSkillValues[id]=val;
+        const cnt=document.getElementById('cb_cnt__'+id.replace('cb_skill__',''));
+        const s=document.getElementById(id);
+        if(cnt&&s) cnt.textContent=val+'/'+s.dataset.max;
+      }
+    });
+    if(typeof cbCheckAll==='function') cbCheckAll();
+    cbCountPoints(); cbSetColors(); cbUpdateStats();
+    toast(`Loaded "${b.name}"`);
+  },50);
+}
+function cbPromptImportShared(buildPayload){
+  openModal(`Load Shared Build?`, body=>{
+    const b=buildPayload;
+    body.innerHTML=`
+      <div style="margin-bottom:14px;font-size:13px;color:var(--t2)"><strong style="color:var(--t1)">${esc(b.name)}</strong> by ${esc(b.author||'Anonymous')}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <span style="font-size:11px;background:var(--redd);color:var(--red);padding:2px 8px;border-radius:3px">STR ${b.attrs.strength}</span>
+        <span style="font-size:11px;background:var(--grnd);color:var(--grn);padding:2px 8px;border-radius:3px">CON ${b.attrs.constitution}</span>
+        <span style="font-size:11px;background:var(--blud);color:var(--blu);padding:2px 8px;border-radius:3px">DEX ${b.attrs.dexterity}</span>
+        <span style="font-size:11px;background:var(--acg);color:var(--ac);padding:2px 8px;border-radius:3px">${b.ptsUsed}/535 pts</span>
+        <span style="font-size:11px;background:var(--orgd);color:var(--org);padding:2px 8px;border-radius:3px">${b.ppUsed}/100 PP</span>
+      </div>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:14px">This will replace your current builder state. To keep this build, click "Save as mine" after loading.</div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn bg" onclick="closeModal()">Cancel</button>
+        ${currentUser?'<button class="btn bp bs" id="cb-import-save">💾 Save as mine</button>':''}
+        <button class="btn bp" id="cb-import-load">Load Build</button>
+      </div>`;
+    setTimeout(()=>{
+      document.getElementById('cb-import-load')?.addEventListener('click',()=>{
+        closeModal();
+        cbApplySharedBuild(b);
+        // Clear hash so re-renders don't re-trigger.
+        try{ history.replaceState({},'',location.pathname); }catch(_){}
+      });
+      document.getElementById('cb-import-save')?.addEventListener('click',()=>{
+        if(!currentUser){ toast('Sign in first.','warn'); return; }
+        if(!D.savedBuilds) D.savedBuilds=[];
+        D.savedBuilds.push({
+          id:uid(), name:b.name, description:`Imported from shared link${b.author?' — by '+b.author:''}`,
+          author:currentUser.displayName||currentUser.username,
+          date:new Date().toISOString(),
+          attrs:{...b.attrs}, ptsUsed:b.ptsUsed, ppUsed:b.ppUsed,
+          skills:{...b.skills}, foodQ:b.foodQ, wepDmg:b.wepDmg,
+        });
+        persist();
+        closeModal();
+        cbApplySharedBuild(b);
+        try{ history.replaceState({},'',location.pathname); }catch(_){}
+        toast('Saved + loaded.');
+      });
+    },0);
+  });
+}
+// Boot-time: detect #build=… and prompt
+(function checkSharedBuildUrl(){
+  try{
+    const m=/#build=([A-Za-z0-9_-]+)/.exec(location.hash||'');
+    if(!m) return;
+    window._pendingSharedBuild=m[1];
+    // Defer until first render finishes.
+    const tryPrompt=()=>{
+      if(!window._pendingSharedBuild) return;
+      const r=cbDeserializeBuild(window._pendingSharedBuild);
+      window._pendingSharedBuild=null;
+      if(r.error){ toast(r.error,'error'); return; }
+      cbPromptImportShared(r.build);
+    };
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(tryPrompt,800));
+  }catch(_){}
+})();
 function cbResetAll(){cbResetAttr();cbResetSkills()}
 function cbResetAttr(){['cb-strength','cb-constitution','cb-dexterity'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=80});document.getElementById('cb-pts-left').textContent='535';document.getElementById('cb-pts-used').textContent='0';const fq=document.getElementById('cb-foodq');if(fq)fq.value='3.00';const wd=document.getElementById('cb-wepdmg');if(wd)wd.value='0.00';cbUpdateStats()}
 function cbResetSkills(){Object.keys(cbSkillValues).forEach(cbLockSkill);['cb_skill__first_aid','cb_skill__reaper','cb_skill__bleeding','cb_skill__shield_bash','cb_skill__bound'].forEach(cbUnlockSkill);cbCountPoints();cbSetColors()}
@@ -6870,11 +8393,16 @@ function initCharBuilderBindings(){
   document.querySelectorAll('.cb-load-build').forEach(btn=>{
     btn.addEventListener('click',()=>cbLoadBuild(btn.dataset.id));
   });
+  document.querySelectorAll('.cb-share-build').forEach(btn=>{
+    btn.addEventListener('click',()=>cbShareBuild(btn.dataset.id));
+  });
+  document.getElementById('cb-share-current-btn')?.addEventListener('click',cbShareCurrent);
   document.querySelectorAll('.cb-del-build').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const b=D.savedBuilds?.find(x=>x.id===btn.dataset.id);
       if(!b)return;
       confirmAction(`Delete build "${b.name}"?`,()=>{
+        softDelete('savedBuilds',b);
         D.savedBuilds=D.savedBuilds.filter(x=>x.id!==btn.dataset.id);
         persist();render();toast("Build deleted.");
       });
@@ -6885,7 +8413,7 @@ function initCharBuilderBindings(){
 // ═══════════════════════════════════════════════════════════
 // SIDEBAR + RENDER
 // ═══════════════════════════════════════════════════════════
-const TOOLS=[{k:"treasury",l:"Guild Manager",i:"💰"},{k:"crafting",l:"Crafting",i:"⚒️"},{k:"charbuilder",l:"Builder",i:"⚔️"},{k:"announcements",l:"Announce",i:"📢"},{k:"map",l:"Map",i:"🗺️"},{k:"itemsearch",l:"Item Search",i:"🔍"},{k:"wiki",l:"Wiki",i:"📖"}];
+const TOOLS=[{k:"treasury",l:"Guild Manager",i:"💰"},{k:"crafting",l:"Crafting",i:"⚒️"},{k:"charbuilder",l:"Builder",i:"⚔️"},{k:"announcements",l:"Announce",i:"📢"},{k:"map",l:"Map",i:"🗺️"},{k:"itemsearch",l:"Item Search",i:"🔍"},{k:"wiki",l:"Wiki",i:"📖"},{k:"warroom",l:"War Room",i:"🏰"}];
 
 function pgDatabaseHome(){
   if(!canManageDatabase())return`<div class="card">${empty("🔒","Access Restricted","Only admins can access the database manager.")}</div>`;
@@ -6963,6 +8491,8 @@ function renderSidebar(){
         <div style="font-size:9px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${roleLabel}${currentGuildCfg().guildName&&currentGuildId?" · "+esc(currentGuildCfg().guildName):""}</div>
       </div>
     </button>
+    <button id="char-switcher-btn" class="cp-btn" title="Switch character" style="width:auto;padding:0 8px;font-size:10px;gap:4px">${(()=>{const acid=getActiveCharacterId();const ac=acid?(D.characters||[]).find(c=>c.id===acid):null;return ac?`⚔ ${esc((ac.name||'').slice(0,12))}`:'⚔ +';})()}</button>
+    <button id="cp-open-btn" class="cp-btn" title="Search everything (Ctrl/Cmd+K)">🔍</button>
     <button id="logout-btn" title="Sign out" style="background:none;border:1px solid var(--bd);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--tm);font-size:13px;flex-shrink:0;transition:all .12s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--tm)'">⏻</button>
     <button id="theme-toggle-btn" class="theme-btn" title="Toggle light/dark theme">☀</button>
   </div>`;
@@ -7001,11 +8531,12 @@ function renderSidebar(){
       // Site admin viewing a specific guild — prepend "← All Guilds" so they can step back out.
       if(isSiteAdmin()){
         const gName=D.guilds.find(g=>g.id===currentGuildId)?.name||"";
-        h+=`<div class="ns"><div class="nst">Site Admin</div><div class="ni" data-page="admin-guilds-list" title="Back to guild list"><span style="font-size:13px;width:16px;text-align:center">←</span>All Guilds${gName?`<span style="font-size:9px;color:var(--tm);margin-left:4px">${esc(gName)}</span>`:""}</div></div>`;
+        h+=`<div class="ns"><div class="nst">Site Admin</div><div class="ni" data-page="admin-guilds-list" title="Back to guild list"><span style="font-size:13px;width:16px;text-align:center">←</span>All Guilds${gName?`<span style="font-size:9px;color:var(--tm);margin-left:4px">${esc(gName)}</span>`:""}</div><div class="ni${pg==="site-activity-feed"?" a":""}" data-page="site-activity-feed"><span style="font-size:13px;width:16px;text-align:center">📊</span>Activity Feed</div></div>`;
       }
       let sec;
       if(isAdmin()){
-        sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
+        const binCount=Array.isArray(D.deletedBin)?D.deletedBin.length:0;
+        sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null},{k:"recently-deleted",l:"Recently Deleted",i:"🗑️",c:binCount||null}]}];
       } else {
         sec=[{t:"Gold",items:[{k:"gold-request",l:"Request Gold",i:"💰"}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null}]}];
       }
@@ -7019,6 +8550,12 @@ function renderSidebar(){
     h+=`<div class="ni${pg==="craft-calc"||pg==="dashboard"?" a":""}" data-page="craft-calc"><span style="font-size:13px;width:16px;text-align:center">📊</span>Level Calculator</div>`;
     h+=`<div class="ni${pg==="craft-res-calc"?" a":""}" data-page="craft-res-calc"><span style="font-size:13px;width:16px;text-align:center">📦</span>Resource Calculator</div>`;
     h+=`</div>`;
+    if(currentUser&&currentGuildId){
+      const openOrders=Array.isArray(D.craftOrders)?D.craftOrders.filter(o=>o.guildId===currentGuildId&&(o.status==='open'||o.status==='claimed'||o.status==='in_progress')).length:0;
+      h+=`<div class="ns"><div class="nst">Orders</div>`;
+      h+=`<div class="ni${pg==="craft-orders"?" a":""}" data-page="craft-orders"><span style="font-size:13px;width:16px;text-align:center">📋</span>Crafting Orders${openOrders?`<span class="cnt">${openOrders}</span>`:""}</div>`;
+      h+=`</div>`;
+    }
     if(canManageDatabase()){
       h+=`<div class="ns"><div class="nst">System</div>`;
       h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">📈</span>Skill XP Tables</div>`;
@@ -7054,6 +8591,15 @@ function renderSidebar(){
     h+=`</div>`;
   } else if(activeTool==="wiki"){
     h=buildWikiSidebarNav(h);
+  } else if(activeTool==="warroom"){
+    const sieges=Array.isArray(D.sieges)?D.sieges.filter(s=>s.guildId===currentGuildId):[];
+    const counts={scheduled:0,active:0,past:0};
+    sieges.forEach(s=>{ counts[s.status||'scheduled']=(counts[s.status||'scheduled']||0)+1; });
+    h+=`<div class="ns"><div class="nst">War Room</div>`;
+    h+=`<div class="ni${(pg==="warroom-active"||pg==="dashboard")?" a":""}" data-page="warroom-active"><span style="font-size:13px;width:16px;text-align:center">⚔️</span>Active${counts.active?`<span class="cnt">${counts.active}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="warroom-scheduled"?" a":""}" data-page="warroom-scheduled"><span style="font-size:13px;width:16px;text-align:center">📅</span>Scheduled${counts.scheduled?`<span class="cnt">${counts.scheduled}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="warroom-past"?" a":""}" data-page="warroom-past"><span style="font-size:13px;width:16px;text-align:center">📜</span>Past${counts.past?`<span class="cnt">${counts.past}</span>`:""}</div>`;
+    h+=`</div>`;
   }
   h+=`</div>`;
   // Settings footer - visible on all tools for admins
@@ -7090,7 +8636,9 @@ function render(){
   if(!isSiteAdmin()&&currentUser.guildId)currentGuildId=currentUser.guildId;
   // Site admin with no guild selected: route to the cross-guild list instead
   // of silently auto-picking D.guilds[0]. They're not "in" any guild.
-  if(isSiteAdmin()&&!currentGuildId&&activeTool==="treasury"&&pg!=="admin-guilds-list"&&pg!=="site-profile"){
+  // Allowlist: admin-guilds-list (the landing itself), site-profile (own profile),
+  // and settings (global site-admin controls + All Users table work without a guild).
+  if(isSiteAdmin()&&!currentGuildId&&activeTool==="treasury"&&pg!=="admin-guilds-list"&&pg!=="site-profile"&&pg!=="settings"&&pg!=="site-activity-feed"){
     pg="admin-guilds-list";
   }
   rebuildG();
@@ -7124,7 +8672,7 @@ function render(){
       m.innerHTML=pgWiki();
       initWikiBindings(()=>render());
     } else {
-      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage,"admin-guilds-list":tAdminGuildList};
+      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage,"admin-guilds-list":tAdminGuildList,"recently-deleted":tRecentlyDeleted,"site-activity-feed":tSiteActivityFeed};
       // For non-admins, restrict to allowed pages
       if(!isAdmin()&&!memberPages.includes(pg)){
         m.innerHTML=tGoldRequest();
@@ -7140,9 +8688,10 @@ function render(){
       if(!canManageDatabase()&&(pg==="craft-items"||pg==="craft-xp-editor"||pg==="player-xp-editor")){
         pg="craft-calc";
       }
-      const cpg={"craft-calc":pgCraftCalc,"craft-res-calc":pgCraftResCalc,"craft-xp-editor":pgCraftXpEditor,"player-xp-editor":pgPlayerXpEditor,"craft-items":pgCraftItemDB};
+      const cpg={"craft-calc":pgCraftCalc,"craft-res-calc":pgCraftResCalc,"craft-xp-editor":pgCraftXpEditor,"player-xp-editor":pgPlayerXpEditor,"craft-items":pgCraftItemDB,"craft-orders":pgCraftOrders};
       m.innerHTML=(cpg[pg]||pgCraftCalc)();
       initCraftBindings();
+      if(pg==="craft-orders") initCraftOrdersBindings();
       if(pg==="craft-xp-editor")initCraftXpEditorBindings();
       if(pg==="player-xp-editor")initPlayerXpEditorBindings();
     }
@@ -7181,6 +8730,13 @@ function render(){
   } else if(activeTool==="wiki"){
     m.innerHTML=pgWiki();
     initWikiBindings(()=>render());
+  } else if(activeTool==="warroom"){
+    if(!currentGuildId){
+      m.innerHTML=`<div class="card">${empty("🛡️","Join a guild first","War Room is per-guild.")}</div>`;
+    } else {
+      m.innerHTML=pgWarRoom();
+      initWarRoomBindings();
+    }
   }
   bindAll();
 }
@@ -7217,6 +8773,7 @@ function bindAll(){
   bindOnce(document.getElementById("mob-toggle"),"click","mobile-toggle",()=>{sOpen=!sOpen;document.getElementById("sidebar")?.classList.toggle("hide",!sOpen)});
   // Profile and logout — always re-bind directly (not with bindOnce) so they survive re-renders
   document.getElementById("my-profile-btn")?.addEventListener("click",()=>modalMyProfile());
+  document.getElementById("char-switcher-btn")?.addEventListener("click",()=>modalCharacterSwitcher());
   document.getElementById("logout-btn")?.addEventListener("click",()=>{currentUser=null;currentGuildId=null;clearSession();render();});
   bindOnce(document.getElementById("global-settings-btn"),"click","global-settings",()=>{activeTool="treasury";pg="settings";render();});
   bindOnce(document.getElementById("shopdb-dupe-page-btn"),"click","shopdb-dupe-page",()=>modalShopEntryDuplicates());
@@ -7251,23 +8808,23 @@ function bindAll(){
 
   // Edit/Delete (admin gated inside modals)
   document.querySelectorAll(".edit-p").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalPlayer(G.p.find(x=>x.id===el.dataset.id))}));
-  document.querySelectorAll(".del-p").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;const p=G.p.find(x=>x.id===el.dataset.id);if(p)confirmAction(`Delete ${p.name}?`,()=>{if(!isAdmin())return;D.gt=D.gt.filter(t=>t.playerId!==p.id);D.it=D.it.filter(t=>t.playerId!==p.id);D.gear=D.gear.filter(g=>g.playerId!==p.id);delete D.playerRecipes[p.id];D.p=D.p.filter(x=>x.id!==p.id);addLog("Deleted",p.name);persist();if(pg==="player-detail")pg="players";render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-p").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;const p=G.p.find(x=>x.id===el.dataset.id);if(p)confirmAction(`Delete ${p.name}?`,()=>{if(!isAdmin())return;softDelete('p',p);D.gt=D.gt.filter(t=>t.playerId!==p.id);D.it=D.it.filter(t=>t.playerId!==p.id);D.gear=D.gear.filter(g=>g.playerId!==p.id);delete D.playerRecipes[p.id];D.p=D.p.filter(x=>x.id!==p.id);addLog("Deleted",p.name);persist();if(pg==="player-detail")pg="players";render();toast("Deleted!")})}));
   document.querySelectorAll(".edit-gt").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalGoldTx(G.gt.find(x=>x.id===el.dataset.id))}));
-  document.querySelectorAll(".del-gt").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;D.gt=D.gt.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-gt").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;const r=D.gt.find(x=>x.id===el.dataset.id);if(r)softDelete('gt',r);D.gt=D.gt.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   document.querySelectorAll(".edit-it").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalItemTx(G.it.find(x=>x.id===el.dataset.id))}));
-  document.querySelectorAll(".del-it").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;D.it=D.it.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-it").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;const r=D.it.find(x=>x.id===el.dataset.id);if(r)softDelete('it',r);D.it=D.it.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   document.querySelectorAll(".edit-ev").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalEvent(G.events.find(x=>x.id===el.dataset.id))}));
-  document.querySelectorAll(".del-ev").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete event?",()=>{if(!isAdmin())return;D.events=D.events.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-ev").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete event?",()=>{if(!isAdmin())return;const r=D.events.find(x=>x.id===el.dataset.id);if(r)softDelete('events',r);D.events=D.events.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   document.querySelectorAll(".rsvp-ev").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalRSVP(el.dataset.id)}));
   document.querySelectorAll(".edit-ord").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalOrder(G.orders.find(x=>x.id===el.dataset.id))}));
   document.querySelectorAll(".complete-ord").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;const o=D.orders.find(x=>x.id===el.dataset.id);if(o){o.status="Complete";addLog("Order Done",o.itemName);persist();render();toast("Complete!")}}));
-  document.querySelectorAll(".del-ord").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;D.orders=D.orders.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-ord").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;const r=D.orders.find(x=>x.id===el.dataset.id);if(r)softDelete('orders',r);D.orders=D.orders.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   document.querySelectorAll(".edit-req").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalRequest(G.requests.find(x=>x.id===el.dataset.id))}));
   document.querySelectorAll(".fulfill-req").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;const r=D.requests.find(x=>x.id===el.dataset.id);if(r){r.status="Fulfilled";addLog("Fulfilled",r.itemName);persist();render();toast("Fulfilled!")}}));
-  document.querySelectorAll(".del-req").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;D.requests=D.requests.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-req").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete?",()=>{if(!isAdmin())return;const r=D.requests.find(x=>x.id===el.dataset.id);if(r)softDelete('requests',r);D.requests=D.requests.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   // Announcements
   document.querySelectorAll(".edit-ann").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();modalAnnouncement(G.announcements.find(x=>x.id===el.dataset.id))}));
-  document.querySelectorAll(".del-ann").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete announcement?",()=>{if(!isAdmin())return;D.announcements=D.announcements.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
+  document.querySelectorAll(".del-ann").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Delete announcement?",()=>{if(!isAdmin())return;const r=D.announcements.find(x=>x.id===el.dataset.id);if(r)softDelete('announcements',r);D.announcements=D.announcements.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")})}));
   document.querySelectorAll(".pin-ann").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;const a=D.announcements.find(x=>x.id===el.dataset.id);if(a){a.pinned=!a.pinned;persist();render()}}));
   // Player detail
   document.getElementById("toggle-status")?.addEventListener("click",()=>{if(!isAdmin())return;const p=D.p.find(x=>x.id===selP);if(p){p.status=p.status==="Active"?"Inactive":"Active";addLog("Status",p.name+" → "+p.status);persist();render()}});
@@ -7275,7 +8832,7 @@ function bindAll(){
   // Gear assignments
   ab("assign-gear-btn",()=>{if(selP)modalGear(null,selP)});
   document.querySelectorAll(".edit-gear").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();const g=G.gear.find(x=>x.id===el.dataset.id);if(g)modalGear(g,g.playerId)}));
-  document.querySelectorAll(".del-gear").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Remove this gear assignment?",()=>{if(!isAdmin())return;const g=G.gear.find(x=>x.id===el.dataset.id);D.gear=D.gear.filter(x=>x.id!==el.dataset.id);if(g)addLog("Gear Removed",g.itemName);persist();render();toast("Removed!")})}));
+  document.querySelectorAll(".del-gear").forEach(el=>el.addEventListener("click",e=>{e.stopPropagation();if(!isAdmin())return;confirmAction("Remove this gear assignment?",()=>{if(!isAdmin())return;const g=D.gear.find(x=>x.id===el.dataset.id);if(g)softDelete('gear',g);D.gear=D.gear.filter(x=>x.id!==el.dataset.id);if(g)addLog("Gear Removed",g.itemName);persist();render();toast("Removed!")})}));
   // Recipe checklist toggles
   document.querySelectorAll(".recipe-editable").forEach(lbl=>{
     lbl.addEventListener("click",e=>{
@@ -7475,6 +9032,8 @@ function bindAll(){
     if(!isAdmin())return;
     confirmAction("Deny and remove this application?",()=>{
       if(!isAdmin())return;
+      const r=D.users.find(x=>x.id===el.dataset.id);
+      if(r) softDelete('users',r);
       D.users=D.users.filter(x=>x.id!==el.dataset.id);
       persist();render();toast("Application denied.");
     });
@@ -7637,7 +9196,7 @@ function bindAll(){
   document.querySelectorAll(".del-gr").forEach(el=>el.addEventListener("click",e=>{
     e.stopPropagation();
     if(!isAdmin())return;
-    confirmAction("Delete this request?",()=>{if(!isAdmin())return;D.goldRequests=D.goldRequests.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")});
+    confirmAction("Delete this request?",()=>{if(!isAdmin())return;const r=D.goldRequests.find(x=>x.id===el.dataset.id);if(r)softDelete('goldRequests',r);D.goldRequests=D.goldRequests.filter(x=>x.id!==el.dataset.id);persist();render();toast("Deleted!")});
   }));
   // CSV
   ab("csv-players",()=>{exportCSV([["Name","Discord","Rank","Tags","Debt","Status"],...G.p.map(p=>{const gs=pGold(p.id);return[p.name,p.discord,p.rank,(p.tags||[]).join("; "),gs.debt,p.status]})],"members.csv")});
@@ -7650,6 +9209,34 @@ function bindAll(){
   // Settings
   ab("save-name",()=>{const g=D.guilds.find(x=>x.id===currentGuildId);if(g){g.cfg=g.cfg||{...DEFAULT_CFG};g.cfg.guildName=document.getElementById("cfg-name").value.trim()||"My Guild";}persist();render();toast("Saved!")});
   ab("add-tag",()=>{const v=document.getElementById("cfg-tag").value.trim();const g=D.guilds.find(x=>x.id===currentGuildId);if(g&&v&&!currentGuildCfg().tags.includes(v)){g.cfg=g.cfg||{...DEFAULT_CFG};g.cfg.tags.push(v);persist();render();toast("Added!")}});
+  // Discord Integration bindings
+  ab("cfg-discord-save",()=>{
+    const url=document.getElementById('cfg-discord-url').value.trim();
+    const g=D.guilds.find(x=>x.id===currentGuildId); if(!g) return;
+    g.cfg=g.cfg||{...DEFAULT_CFG};
+    if(url && !/^https:\/\/discord\.com\/api\/webhooks\//.test(url)){
+      toast('Webhook URL must start with https://discord.com/api/webhooks/','error'); return;
+    }
+    g.cfg.discordWebhookUrl=url;
+    persist(); render(); toast(url?'Saved.':'Cleared.');
+  });
+  ab("cfg-discord-test",()=>{
+    const g=D.guilds.find(x=>x.id===currentGuildId); if(!g) return;
+    const url=g.cfg?.discordWebhookUrl;
+    if(!url){ toast('Save a URL first','warn'); return; }
+    fireDiscordWebhook(g, {
+      title: `Hub connection test for ${g.name||'guild'}`,
+      description: `If you see this in Discord, the webhook is wired correctly.`,
+    });
+  });
+  document.querySelectorAll('.cfg-discord-flag').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const g=D.guilds.find(x=>x.id===currentGuildId); if(!g) return;
+      g.cfg=g.cfg||{...DEFAULT_CFG};
+      g.cfg[cb.dataset.key]=cb.checked;
+      persist();
+    });
+  });
   ab("change-pw-btn",()=>modalChangePassword());
   // Invite code bindings
   ab("gen-invite-btn",()=>modalGenerateInvite());
@@ -7705,6 +9292,10 @@ function bindAll(){
     });
   }
   document.addEventListener('click', ()=>document.getElementById('quick-add-menu')?.classList.remove('open'), {once:true});
+  // Page-specific bindings
+  if(activeTool==='treasury'&&pg==='recently-deleted') initBinBindings();
+  if(activeTool==='treasury'&&pg==='site-activity-feed' && typeof initSiteActivityFeedBindings==='function') initSiteActivityFeedBindings();
+  if(activeTool==='treasury'&&pg==='players' && typeof initBulkMemberBindings==='function') initBulkMemberBindings();
   restoreScroll();
   applyTheme();
 }
@@ -7734,99 +9325,391 @@ const _scrollMemory = {};
 function saveScroll(){ const m=document.getElementById('main'); if(m) _scrollMemory[activeTool+':'+pg]=m.scrollTop; }
 function restoreScroll(){ const m=document.getElementById('main'); if(m){ const saved=_scrollMemory[activeTool+':'+pg]; if(saved) requestAnimationFrame(()=>{ m.scrollTop=saved; }); } }
 
-// ── Global search ─────────────────────────────────────────
+// ── Command Palette ───────────────────────────────────────
+// Global, keyboard-first search over every data entity + navigation target.
+// Opens with Ctrl/Cmd+K, "/" (when not typing), or the 🔍 sidebar button.
 let _gsIdx = 0;
-function buildGlobalSearchResults(q){
-  if(!q||q.length<2||!currentUser) return [];
+let _gsExpanded = Object.create(null); // group key → true means "show all"
+
+function _cpNavTargets(){
+  const out=[];
+  const pub=()=>true;
+  const logged=()=>!!currentUser;
+  const inGuild=()=>!!currentUser&&!!currentGuildId&&isGuildMember();
+  const admin=()=>isAdmin()&&!!currentGuildId;
+  const site=()=>isSiteAdmin();
+  const db=()=>canManageDatabase();
+
+  // Top-level tool switches
+  TOOLS.forEach(t=>{
+    if(t.k!=='treasury'&&!toolEnabled(t.k)) return; // hide locked tools
+    if(t.k==='treasury') out.push({label:'Guild Manager',icon:t.i,tool:'treasury',pg:'dashboard',when:logged});
+    else out.push({label:t.l,icon:t.i,tool:t.k,pg:'dashboard',when:pub});
+  });
+  if(canManageDatabase()) out.push({label:'Database',icon:'DB',tool:'database',pg:'db-home',when:db});
+
+  // Guild Manager pages
+  out.push({label:'Dashboard',icon:'⊞',tool:'treasury',pg:'dashboard',when:inGuild});
+  out.push({label:'Members',icon:'⊕',tool:'treasury',pg:'players',when:admin});
+  out.push({label:'Gold Ledger',icon:'◉',tool:'treasury',pg:'gold',when:admin});
+  out.push({label:'Item Ledger',icon:'⚔',tool:'treasury',pg:'itemtx',when:admin});
+  out.push({label:'Bank',icon:'▣',tool:'treasury',pg:'bank',when:admin});
+  out.push({label:'Events',icon:'📅',tool:'treasury',pg:'events',when:inGuild});
+  out.push({label:'Orders',icon:'🔨',tool:'treasury',pg:'orders',when:inGuild});
+  out.push({label:'Material Requests',icon:'📋',tool:'treasury',pg:'requests',when:inGuild});
+  out.push({label:'Request Gold',icon:'💰',tool:'treasury',pg:'gold-request',when:inGuild});
+  out.push({label:'Manage Gold Requests',icon:'📥',tool:'treasury',pg:'gold-request-manage',when:admin});
+  out.push({label:'Leaderboards',icon:'◆',tool:'treasury',pg:'leaderboards',when:inGuild});
+  out.push({label:'Activity',icon:'◈',tool:'treasury',pg:'activity',when:admin});
+  out.push({label:'Audit Log',icon:'📝',tool:'treasury',pg:'audit',when:admin});
+  out.push({label:'Settings',icon:'⚙',tool:'treasury',pg:'settings',when:admin});
+  out.push({label:'All Guilds (Site Admin)',icon:'🏰',tool:'treasury',pg:'admin-guilds-list',when:site});
+
+  // Crafting + database pages
+  out.push({label:'Level Calculator',icon:'📊',tool:'crafting',pg:'craft-calc',when:pub});
+  out.push({label:'Resource Calculator',icon:'📦',tool:'crafting',pg:'craft-res-calc',when:pub});
+  out.push({label:'Skill XP Tables',icon:'📈',tool:'database',pg:'craft-xp-editor',when:db});
+  out.push({label:'Character XP Table',icon:'🧬',tool:'database',pg:'player-xp-editor',when:db});
+  out.push({label:'Item Database',icon:'📝',tool:'database',pg:'craft-items',when:db});
+  out.push({label:'Shop Entry DB',icon:'🏘️',tool:'database',pg:'shop-cities',when:db});
+  out.push({label:'Database Duplicates',icon:'⚠️',tool:'database',pg:'database-duplicates',when:db});
+
+  // Character Builder
+  out.push({label:'Character Builder',icon:'⚔️',tool:'charbuilder',pg:'cb-builder',when:pub});
+  out.push({label:'Character Development Tree',icon:'🌳',tool:'charbuilder',pg:'cb-devtree',when:pub});
+  out.push({label:'Food & Buffs',icon:'🍖',tool:'charbuilder',pg:'cb-food',when:pub});
+  out.push({label:'Armor Info',icon:'🛡️',tool:'charbuilder',pg:'cb-armor',when:pub});
+
+  // Item Search + Wiki + Announcements
+  out.push({label:'Shop Item Search',icon:'🔍',tool:'itemsearch',pg:'shop-search',when:pub});
+  out.push({label:'All Wiki Articles',icon:'📖',tool:'wiki',pg:'wiki-home',when:pub});
+  out.push({label:'Write Article',icon:'✏️',tool:'wiki',pg:'wiki-new',when:logged});
+  out.push({label:'Join a Guild',icon:'🛡️',tool:'wiki',pg:'wiki-join-guild',when:()=>!!currentUser&&(!currentUser.guildId||currentUser.status==='pending')});
+  out.push({label:'Announcements',icon:'📢',tool:'announcements',pg:'ann-home',when:pub});
+
+  // Profile
+  out.push({label:'My Profile',icon:'👤',tool:'__profile__',pg:'',when:logged});
+
+  return out.filter(t=>{ try{return t.when();}catch(_){return false;} });
+}
+
+function _cpScore(text, lq){
+  if(text==null) return 0;
+  const h = String(text).toLowerCase();
+  if(!h) return 0;
+  if(h === lq) return 1000;
+  if(h.startsWith(lq)) return 500;
+  if(h.includes(lq)) return 100;
+  return 0;
+}
+function _cpBestScore(fields, lq){
+  let best = 0;
+  for(let i=0;i<fields.length;i++){
+    const pair = fields[i];
+    const s = _cpScore(pair[0], lq) * pair[1];
+    if(s > best) best = s;
+  }
+  return best;
+}
+
+function _cpNavigateTo(t){
+  if(t.tool==='__profile__'){ modalMyProfile(); return; }
+  activeTool = t.tool;
+  pg = t.pg;
+  if(currentUser) render(); else renderGuest();
+}
+
+function buildCommandPaletteResults(q){
+  if(!q) return {groups:[], total:0};
   const lq = q.toLowerCase();
-  const results = [];
+  const groups = [];
+  const addGroup = (key, title, arr)=>{
+    if(!arr.length) return;
+    arr.sort((a,b)=>(b.score-a.score) || String(b.recency||'').localeCompare(String(a.recency||'')));
+    groups.push({key, title, results: arr, total: arr.length});
+  };
 
-  // Members
-  if(currentGuildId) G.p.filter(p=>(p.name||'').toLowerCase().includes(lq)).slice(0,4).forEach(p=>{
-    const gs=pGold(p.id);
-    results.push({icon:'👤',name:p.name,sub:`${p.rank||'Member'} · ${gs.debt>0?fmt(gs.debt)+'g debt':'No debt'}`,badge:'Member',action:()=>{activeTool='treasury';pg='player-detail';selP=p.id;F.dTab='gold';render();}});
-  });
+  // Navigation targets (permission-gated)
+  {
+    const out = [];
+    _cpNavTargets().forEach(t=>{
+      const s = _cpScore(t.label, lq);
+      if(s>0) out.push({
+        score:s, icon:t.icon, name:t.label,
+        sub:`Go to ${(TOOLS.find(x=>x.k===t.tool)||{}).l || (t.tool==='__profile__'?'Profile':t.tool==='database'?'Database':t.tool)}`,
+        hint:'Page',
+        action:()=>_cpNavigateTo(t),
+      });
+    });
+    addGroup('nav','Navigation', out);
+  }
 
-  // Gold transactions
-  if(currentGuildId) G.gt.filter(t=>pN(t.playerId).toLowerCase().includes(lq)||((t.notes||'').toLowerCase().includes(lq))).slice(0,3).forEach(t=>{
-    results.push({icon:'💰',name:`${pN(t.playerId)} — ${t.type}`,sub:`${fmt(t.amount)}g · ${fmtD(t.date)}${t.notes?' · '+t.notes:''}`,badge:'Gold',action:()=>{activeTool='treasury';pg='gold';F.s=pN(t.playerId);render();}});
-  });
+  // Members (current guild scope — guild members or site admin)
+  if(currentUser && currentGuildId && isGuildMember() && Array.isArray(G&&G.p)){
+    const out = [];
+    G.p.forEach(p=>{
+      const s = _cpBestScore([[p.name,1],[p.notes,0.5],[p.rank,0.4]], lq);
+      if(s>0){
+        const gs=pGold(p.id);
+        out.push({
+          score:s, icon:'👤', name:p.name||'(unnamed)',
+          sub:`${p.rank||'Member'} · ${gs.debt>0?fmt(gs.debt)+'g debt':'No debt'}${p.notes?' · '+String(p.notes).slice(0,40):''}`,
+          hint:'Member', recency:p.createdDate||'',
+          action:()=>{ activeTool='treasury'; pg='player-detail'; selP=p.id; F.dTab='gold'; render(); },
+        });
+      }
+    });
+    addGroup('members','Members', out);
+  }
 
-  // Item DB
-  craftItems.filter(i=>i.name.toLowerCase().includes(lq)).slice(0,4).forEach(i=>{
-    const kind=i.isRecipe?'Recipe':i.isResource?'Resource':i.isFood?'Food':i.isPotion?'Potion':'Crafted';
-    results.push({icon:'⚒️',name:i.name,sub:`${kind}${i.skill?' · '+(SKILL_NAMES[i.skill]||i.skill):''}${i.requiredLevel?' · Lv '+i.requiredLevel:''}`,badge:'Item DB',action:()=>{activeTool='database';pg='craft-items';window._cdbSearchQ=q;render();}});
-  });
+  // Users — site admin only (cross-guild)
+  if(isSiteAdmin() && Array.isArray(D.users)){
+    const out = [];
+    D.users.forEach(u=>{
+      const s = _cpBestScore([[u.displayName,1],[u.username,0.9],[u.discord,0.5]], lq);
+      if(s>0){
+        const g = u.guildId ? D.guilds.find(x=>x.id===u.guildId) : null;
+        out.push({
+          score:s, icon:'🪪',
+          name: u.displayName || u.username || '(unnamed user)',
+          sub: `${u.username||''}${u.role?' · '+u.role:''}${g?' · '+g.name:''}${u.discord?' · '+u.discord:''}`,
+          hint:'User',
+          action:()=>{
+            if(u.guildId){ currentGuildId=u.guildId; activeTool='treasury'; pg='players'; selP=null; render(); toast('Loaded guild context'); }
+            else { toast('User has no guild','warn'); }
+          },
+        });
+      }
+    });
+    addGroup('users','Users', out);
+  }
+
+  // Guilds
+  if(Array.isArray(D.guilds)){
+    const out = [];
+    D.guilds.filter(g=>g.id!=='__legacy__').forEach(g=>{
+      const s = _cpBestScore([[g.name,1],[(g.cfg&&g.cfg.guildName)||'',0.5]], lq);
+      if(s>0){
+        const mc = D.p.filter(p=>p.guildId===g.id).length;
+        out.push({
+          score:s, icon:'🏰', name:g.name||'(unnamed guild)',
+          sub:`${mc} member${mc===1?'':'s'}${g.createdBy?' · led by '+g.createdBy:''}`,
+          hint:'Guild', recency:g.createdDate||'',
+          action:()=>{
+            if(isSiteAdmin()){ currentGuildId=g.id; activeTool='treasury'; pg='dashboard'; render(); toast('Switched to '+(g.name||'guild')); }
+            else { activeTool='wiki'; pg='wiki-join-guild'; (currentUser?render:renderGuest)(); }
+          },
+        });
+      }
+    });
+    addGroup('guilds','Guilds', out);
+  }
+
+  // Item Database
+  if(Array.isArray(craftItems)){
+    const out = [];
+    craftItems.forEach(i=>{
+      const s = _cpBestScore([[i.name,1],[i.type,0.4]], lq);
+      if(s>0){
+        const kind=i.isRecipe?'Recipe':i.isResource?'Resource':i.isFood?'Food':i.isPotion?'Potion':'Crafted';
+        out.push({
+          score:s, icon:'⚒️', name:i.name||'(unnamed)',
+          sub:`${kind}${i.skill?' · '+(SKILL_NAMES[i.skill]||i.skill):''}${i.requiredLevel?' · Lv '+i.requiredLevel:''}`,
+          hint:'Item DB',
+          action:()=>{ activeTool=canManageDatabase()?'database':'crafting'; pg='craft-items'; window._cdbSearchQ=q; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('items','Items (DB)', out);
+  }
 
   // Shop items
-  D.vendorItems.filter(vi=>vi.itemName.toLowerCase().includes(lq)).slice(0,3).forEach(vi=>{
-    const vendor=D.vendors.find(v=>v.id===vi.vendorId);
-    const city=vendor?D.cities.find(c=>c.id===vendor.cityId):null;
-    results.push({icon:'🏘️',name:vi.itemName,sub:`${vendor?.name||'Unknown vendor'}${city?' · '+city.name:''}`,badge:'Shop',action:()=>{activeTool='itemsearch';pg='shop-search';window._shopSearchQ=q;render();}});
-  });
+  if(Array.isArray(D.vendorItems)){
+    const out = [];
+    D.vendorItems.forEach(vi=>{
+      const s = _cpBestScore([[vi.itemName,1],[vi.itemType,0.4]], lq);
+      if(s>0){
+        const vendor=D.vendors.find(v=>v.id===vi.vendorId);
+        const city=vendor?D.cities.find(c=>c.id===vendor.cityId):null;
+        out.push({
+          score:s, icon:'🛒', name:vi.itemName||'(unnamed)',
+          sub:`${vendor?vendor.name:'Unknown vendor'}${city?' · '+city.name:''}${vi.price?' · '+fmt(vi.price)+'g':''}`,
+          hint:'Shop',
+          action:()=>{ activeTool='itemsearch'; pg='shop-search'; window._shopSearchQ=q; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('shop','Shop Items', out);
+  }
 
-  // Wiki pages
-  (D.wikiPages||[]).filter(p=>p.title.toLowerCase().includes(lq)||(p.summary||'').toLowerCase().includes(lq)).slice(0,3).forEach(p=>{
-    results.push({icon:'📖',name:p.title,sub:p.category||'Wiki',badge:'Wiki',action:()=>{activeTool='wiki';F.wikiPage=p.id;pg='wiki-article';render();}});
-  });
+  // Cities
+  if(Array.isArray(D.cities)){
+    const out = [];
+    D.cities.forEach(c=>{
+      const s = _cpBestScore([[c.name,1],[c.region,0.5],[c.notes,0.4]], lq);
+      if(s>0){
+        const vc = D.vendors.filter(v=>v.cityId===c.id).length;
+        out.push({
+          score:s, icon:'🏘️', name:c.name||'(unnamed city)',
+          sub:`${c.region?c.region+' · ':''}${vc} vendor${vc===1?'':'s'}`,
+          hint:'City',
+          action:()=>{ activeTool=canManageDatabase()?'database':'itemsearch'; pg='shop-cities'; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('cities','Cities', out);
+  }
+
+  // Vendors
+  if(Array.isArray(D.vendors)){
+    const out = [];
+    D.vendors.forEach(v=>{
+      const s = _cpBestScore([[v.name,1],[v.notes,0.4]], lq);
+      if(s>0){
+        const city=D.cities.find(c=>c.id===v.cityId);
+        const ic=D.vendorItems.filter(vi=>vi.vendorId===v.id).length;
+        out.push({
+          score:s, icon:'🧑‍💼', name:v.name||'(unnamed vendor)',
+          sub:`${city?city.name+' · ':''}${ic} item${ic===1?'':'s'}`,
+          hint:'Vendor',
+          action:()=>{ activeTool=canManageDatabase()?'database':'itemsearch'; pg='shop-cities'; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('vendors','Vendors', out);
+  }
+
+  // Wiki (title, summary, tags, section bodies)
+  if(Array.isArray(D.wikiPages)){
+    const out = [];
+    D.wikiPages.forEach(p=>{
+      const secBodies = (p.sections||[]).map(sec=>(sec.heading||'')+' '+(sec.body||'')).join(' ');
+      const fields = [[p.title,1],[p.summary,0.55],[(p.tags||[]).join(' '),0.4],[p.category,0.3],[secBodies,0.25]];
+      const s = _cpBestScore(fields, lq);
+      if(s>0){
+        out.push({
+          score:s, icon:'📖', name:p.title||'(untitled)',
+          sub:`${p.category||'Wiki'}${p.summary?' · '+String(p.summary).slice(0,60):''}`,
+          hint:'Wiki', recency:p.updatedDate||p.date||'',
+          action:()=>{ activeTool='wiki'; F.wikiPage=p.id; pg='wiki-article'; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('wiki','Wiki', out);
+  }
 
   // Map markers
-  D.mapData.filter(m=>(m.name||m.markerType||'').toLowerCase().includes(lq)).slice(0,3).forEach(m=>{
-    results.push({icon:'🗺️',name:m.name||m.markerType,sub:`${m.markerType||''}${m.region?' · '+m.region:''}`,badge:'Map',action:()=>{activeTool='map';mapState.selectedMarker=m.id;render();}});
-  });
+  if(Array.isArray(D.mapData)){
+    const out = [];
+    D.mapData.forEach(m=>{
+      const s = _cpBestScore([[m.name,1],[m.markerType,0.6],[m.region,0.5],[m.notes,0.3]], lq);
+      if(s>0){
+        out.push({
+          score:s, icon:'🗺️', name:m.name||m.markerType||'(unnamed marker)',
+          sub:`${m.markerType||''}${m.region?' · '+m.region:''}${m.notes?' · '+String(m.notes).slice(0,40):''}`,
+          hint:'Map',
+          action:()=>{ activeTool='map'; mapState.selectedMarker=m.id; (currentUser?render:renderGuest)(); },
+        });
+      }
+    });
+    addGroup('markers','Map Markers', out);
+  }
 
-  return results.slice(0, 12);
+  // Gold transactions (admin-only, current guild)
+  if(isAdmin() && currentGuildId && Array.isArray(G&&G.gt)){
+    const out = [];
+    G.gt.forEach(t=>{
+      const s = _cpBestScore([[pN(t.playerId),1],[t.notes,0.5],[t.type,0.4]], lq);
+      if(s>0){
+        out.push({
+          score:s, icon:'💰', name:`${pN(t.playerId)} — ${t.type}`,
+          sub:`${fmt(t.amount)}g · ${fmtD(t.date)}${t.notes?' · '+String(t.notes).slice(0,40):''}`,
+          hint:'Gold', recency:t.date||'',
+          action:()=>{ activeTool='treasury'; pg='gold'; F.s=pN(t.playerId); render(); },
+        });
+      }
+    });
+    addGroup('gold','Gold', out);
+  }
+
+  const total = groups.reduce((n,g)=>n+g.total,0);
+  return {groups, total};
 }
+
+const CP_PER_GROUP = 8;
 
 function renderGlobalSearch(q){
   const overlay = document.getElementById('global-search-overlay');
   const resultsEl = document.getElementById('global-search-results');
   if(!overlay||!resultsEl) return;
-  const results = buildGlobalSearchResults(q);
-  _gsIdx = 0;
-  if(!results.length){
-    resultsEl.innerHTML = q.length>=2
-      ? `<div style="padding:20px;text-align:center;color:var(--tm);font-size:13px">No results for "${esc(q)}"</div>`
-      : '';
+  if(!q){
+    resultsEl.innerHTML = `<div class="gs-empty">Type to search — members, items, markers, wiki, pages, and more.</div>`;
+    overlay._results = [];
     return;
   }
-  resultsEl.innerHTML = results.map((r,i)=>`
-    <div class="gs-result${i===0?' gs-active':''}" data-gs-idx="${i}">
-      <span class="gs-result-icon">${r.icon}</span>
-      <div class="gs-result-main">
-        <div class="gs-result-name">${esc(r.name)}</div>
-        <div class="gs-result-sub">${esc(r.sub)}</div>
-      </div>
-      <span class="gs-result-badge">${esc(r.badge)}</span>
-    </div>`).join('');
-  // Store results for keyboard nav
-  overlay._results = results;
-  // Click handlers
+  const {groups, total} = buildCommandPaletteResults(q);
+  _gsIdx = 0;
+  if(!total){
+    resultsEl.innerHTML = `<div class="gs-empty">No results for "${esc(q)}"</div>`;
+    overlay._results = [];
+    return;
+  }
+  const visible = [];
+  let html = '';
+  groups.forEach(grp=>{
+    const showAll = !!_gsExpanded[grp.key];
+    const limit = showAll ? grp.results.length : Math.min(CP_PER_GROUP, grp.results.length);
+    html += `<div class="gs-group"><div class="gs-group-title">${esc(grp.title)} <span style="color:var(--tm);font-weight:400">${grp.total}</span></div>`;
+    for(let i=0;i<limit;i++){
+      const r = grp.results[i];
+      const idx = visible.length;
+      visible.push(r);
+      html += `<div class="gs-result${idx===0?' gs-active':''}" data-gs-idx="${idx}">
+        <span class="gs-result-icon">${esc(r.icon||'')}</span>
+        <div class="gs-result-main">
+          <div class="gs-result-name">${esc(r.name||'')}</div>
+          <div class="gs-result-sub">${esc(r.sub||'')}</div>
+        </div>
+        <span class="gs-result-hint">${esc(r.hint||'')}</span>
+      </div>`;
+    }
+    if(grp.total > limit){
+      html += `<div class="gs-show-more" data-cp-expand="${esc(grp.key)}">Show ${grp.total-limit} more…</div>`;
+    }
+    html += `</div>`;
+  });
+  resultsEl.innerHTML = html;
+  overlay._results = visible;
   resultsEl.querySelectorAll('.gs-result').forEach((el,i)=>{
-    el.addEventListener('click',()=>{ closeGlobalSearch(); results[i].action(); });
+    el.addEventListener('click',()=>{ const r=visible[i]; closeGlobalSearch(); if(r&&r.action) r.action(); });
     el.addEventListener('mouseenter',()=>{ _gsIdx=i; highlightGsResult(); });
+  });
+  resultsEl.querySelectorAll('[data-cp-expand]').forEach(el=>{
+    el.addEventListener('click',()=>{ _gsExpanded[el.dataset.cpExpand]=true; renderGlobalSearch(q); });
   });
 }
 
 function highlightGsResult(){
-  document.querySelectorAll('.gs-result').forEach((el,i)=>el.classList.toggle('gs-active',i===_gsIdx));
-  document.querySelectorAll('.gs-result')[_gsIdx]?.scrollIntoView({block:'nearest'});
+  const els = document.querySelectorAll('.gs-result');
+  els.forEach((el,i)=>el.classList.toggle('gs-active',i===_gsIdx));
+  els[_gsIdx]?.scrollIntoView({block:'nearest'});
 }
 
 function openGlobalSearch(){
   const overlay=document.getElementById('global-search-overlay');
   const inp=document.getElementById('global-search-input');
   if(!overlay||!inp) return;
+  _gsExpanded = Object.create(null);
   overlay.classList.add('open');
   inp.value='';
-  document.getElementById('global-search-results').innerHTML='';
+  renderGlobalSearch('');
   setTimeout(()=>inp.focus(),50);
 }
 function closeGlobalSearch(){
   document.getElementById('global-search-overlay')?.classList.remove('open');
 }
 
-// Global search input handler
+// Command Palette input + overlay listeners
 (function initGlobalSearch(){
   let _gsTimer=null;
   document.addEventListener('DOMContentLoaded',()=>{
@@ -7834,17 +9717,25 @@ function closeGlobalSearch(){
     const overlay=document.getElementById('global-search-overlay');
     if(!inp||!overlay) return;
     inp.addEventListener('input',()=>{
+      _gsExpanded = Object.create(null);
       clearTimeout(_gsTimer);
-      _gsTimer=setTimeout(()=>renderGlobalSearch(inp.value.trim()),100);
+      _gsTimer=setTimeout(()=>renderGlobalSearch(inp.value.trim()),80);
     });
     inp.addEventListener('keydown',e=>{
       const results=overlay._results||[];
-      if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,results.length-1);highlightGsResult();}
+      if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,Math.max(0,results.length-1));highlightGsResult();}
       else if(e.key==='ArrowUp'){e.preventDefault();_gsIdx=Math.max(_gsIdx-1,0);highlightGsResult();}
+      else if(e.key==='Home'){e.preventDefault();_gsIdx=0;highlightGsResult();}
+      else if(e.key==='End'){e.preventDefault();_gsIdx=Math.max(0,results.length-1);highlightGsResult();}
       else if(e.key==='Enter'){e.preventDefault();if(results[_gsIdx]){closeGlobalSearch();results[_gsIdx].action();}}
-      else if(e.key==='Escape'){closeGlobalSearch();}
+      else if(e.key==='Escape'){e.preventDefault();closeGlobalSearch();}
     });
     overlay.addEventListener('click',e=>{if(e.target===overlay)closeGlobalSearch();});
+    // Sidebar #cp-open-btn is re-rendered on every render; delegate.
+    document.addEventListener('click',e=>{
+      const btn=e.target.closest&&e.target.closest('#cp-open-btn');
+      if(btn){ e.preventDefault(); e.stopPropagation(); openGlobalSearch(); }
+    });
   });
 })();
 
@@ -7876,19 +9767,28 @@ function updateQuickAddBtn(){
 // ── Keyboard shortcuts ────────────────────────────────────
 (function initKeyboardShortcuts(){
   document.addEventListener('keydown',e=>{
-    // Don't fire when typing in inputs
+    // Command palette: Ctrl/Cmd+K works globally (even while typing)
+    if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){ e.preventDefault(); openGlobalSearch(); return; }
+
+    // Don't fire other shortcuts when typing in inputs
     const tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable) return;
 
-    // Global search: Ctrl+K or /
-    if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openGlobalSearch(); return; }
+    // "/" idle shortcut also opens the palette
     if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){ e.preventDefault(); openGlobalSearch(); return; }
+
+    // "?" opens the shortcuts help (works for guests + logged-in; ? requires Shift, so allow it)
+    if(e.key==='?'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ e.preventDefault(); openShortcutsHelp(); return; }
+
+    // Escape closes palette + modal regardless of login state
+    if(e.key==='Escape'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){
+      closeGlobalSearch(); closeModal(); return;
+    }
 
     // Navigation shortcuts (no modifier)
     if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey){
       if(!currentUser) return;
       switch(e.key){
-        case 'Escape': closeGlobalSearch(); closeModal(); break;
         case 'a': case 'A':
           // Quick add toggle
           if(currentUser&&isAdmin()&&activeTool==='treasury'){
@@ -7901,11 +9801,74 @@ function updateQuickAddBtn(){
         case 'd': if(currentUser){ activeTool='treasury'; pg='dashboard'; render(); } break;
         case 'c': activeTool='crafting'; pg='craft-calc'; render(); break;
         case 'n': if(activeTool==='map'||activeTool==='crafting') break; activeTool='announcements'; pg='dashboard'; render(); break;
-        case '?':
-          toast('Shortcuts: / Search · D Dashboard · M Members · G Gold · C Crafting · A Quick-add · Esc Close','');
-          break;
       }
     }
+  });
+})();
+
+// ── Keyboard Shortcuts Help (?) ───────────────────────────
+// Single source of truth for every shortcut in the app.
+// Add a row here when adding a new shortcut; that's it.
+const SHORTCUTS=[
+  {section:'Global',rows:[
+    {keys:['Ctrl','K'],desc:'Open command palette (search everything)',mac:['⌘','K']},
+    {keys:['/'],desc:'Open command palette (when not typing)'},
+    {keys:['?'],desc:'Show this shortcuts help'},
+    {keys:['Esc'],desc:'Close palette / modal'},
+  ]},
+  {section:'Navigation (when not typing)',rows:[
+    {keys:['D'],desc:'Dashboard',gate:'logged'},
+    {keys:['M'],desc:'Members',gate:'admin'},
+    {keys:['G'],desc:'Gold ledger',gate:'admin'},
+    {keys:['C'],desc:'Crafting'},
+    {keys:['N'],desc:'Announcements'},
+    {keys:['A'],desc:'Toggle quick-add menu',gate:'admin'},
+  ]},
+  {section:'Command Palette',rows:[
+    {keys:['↑','↓'],desc:'Move selection'},
+    {keys:['Home','End'],desc:'Jump to first / last result'},
+    {keys:['Enter'],desc:'Activate result'},
+    {keys:['Esc'],desc:'Close palette'},
+  ]},
+];
+const _isMac = (typeof navigator!=='undefined' && /Mac|iP(hone|od|ad)/.test(navigator.platform||''));
+function _kbd(keys){ return keys.map(k=>`<kbd>${esc(k)}</kbd>`).join('<span class="kbd-sep">+</span>'); }
+function openShortcutsHelp(){
+  closeModal();
+  openModal('Keyboard Shortcuts', body=>{
+    let h='';
+    SHORTCUTS.forEach(sec=>{
+      h+=`<div class="kbd-section"><div class="kbd-section-title">${esc(sec.section)}</div>`;
+      sec.rows.forEach(r=>{
+        const keys = (_isMac && r.mac) ? r.mac : r.keys;
+        let locked = false;
+        if(r.gate==='logged' && !currentUser) locked=true;
+        if(r.gate==='admin' && !(currentUser&&isAdmin())) locked=true;
+        h+=`<div class="kbd-row${locked?' kbd-locked':''}"><div class="kbd-keys">${_kbd(keys)}</div><div class="kbd-desc">${esc(r.desc)}${locked?' <span class="kbd-lock" title="Not available with your access">🔒</span>':''}</div></div>`;
+      });
+      h+=`</div>`;
+    });
+    h+=`<div style="margin-top:14px;font-size:11px;color:var(--tm);text-align:center">Press <kbd>?</kbd> any time to reopen this help.</div>`;
+    body.innerHTML=h;
+  }, true);
+  // Mark hint as seen
+  try{ localStorage.setItem('gv_help_hint_dismissed','1'); }catch(e){}
+}
+// First-run hint pill (bottom-right, dismissible — shown once)
+(function showShortcutsHint(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    let dismissed = false;
+    try{ dismissed = localStorage.getItem('gv_help_hint_dismissed')==='1'; }catch(e){}
+    if(dismissed) return;
+    const el=document.createElement('div');
+    el.id='shortcuts-hint';
+    el.innerHTML=`<span>Press <kbd>?</kbd> for shortcuts</span><button aria-label="Dismiss" title="Dismiss">×</button>`;
+    document.body.appendChild(el);
+    el.querySelector('button').addEventListener('click',e=>{
+      e.stopPropagation(); el.remove();
+      try{ localStorage.setItem('gv_help_hint_dismissed','1'); }catch(_){}
+    });
+    el.addEventListener('click',()=>{ openShortcutsHelp(); el.remove(); });
   });
 })();
 
