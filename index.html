@@ -1793,12 +1793,8 @@ function renderLogin(){
       if(localUser){Object.assign(localUser,user);}
       else{D.users.push(user);}
       currentUser=D.users.find(x=>x.id===user.id)||user;
-      if(user.status==="pending"){
-        currentGuildId=user.guildId||null;
-        document.getElementById("root").innerHTML=`<div class="login-wrap"><div class="login-box" style="max-width:420px"><div style="text-align:center;padding:20px 0"><div style="font-size:40px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Application Pending</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Your application to join <strong>${esc(D.guilds.find(g=>g.id===user.guildId)?.name||"the guild")}</strong> is waiting for approval from the Guild Leader.</div><div style="margin-top:20px"><button class="btn bg" id="pending-logout-login">Sign Out</button></div></div></div></div>`;
-        document.getElementById("pending-logout-login").addEventListener("click",()=>{currentUser=null;currentGuildId=null;clearSession();loginMode="login";render();});
-        return;
-      }
+      // Pending or guild-less users are NOT dead-ended. The normal render flow
+      // routes them to the Join-a-Guild list where they can apply or create.
       currentGuildId=user.guildId||null;
       // Site admin is never "in" a guild — land on the cross-guild list.
       if(isSiteAdmin())currentGuildId=null;
@@ -1834,20 +1830,31 @@ function renderLogin(){
       const newUser=resp.user;
       if(!D.users.find(x=>x.id===newUser.id))D.users.push(newUser);
       currentUser=D.users.find(x=>x.id===newUser.id)||newUser;
-      currentGuildId=newUser.guildId||null;
-      saveSession(currentUser,currentGuildId);
-      rebuildG();
       window._regData={};
-      if(pendingCode&&currentGuildId){
+      if(pendingCode&&newUser.guildId){
+        // Joined via a valid invite link — honor that explicit choice.
         window._pendingInviteCode=null;
+        currentGuildId=newUser.guildId||null;
+        saveSession(currentUser,currentGuildId);
+        rebuildG();
         const invGuild=D.guilds.find(g=>g.id===currentGuildId);
         activeTool="treasury";pg="dashboard";
         render();
         toast(`Welcome, ${name}! You've joined ${invGuild?.name||"the guild"}.`);
       }else{
-        activeTool="crafting";pg="dashboard";
+        // No invite: never auto-place a new user into a guild. Clear any guild the
+        // backend may have defaulted them into, persist the correction, then show
+        // the guild list so they pick one to apply to (or create their own).
+        if(currentUser.guildId||currentUser.status==="pending"){
+          currentUser.guildId=null;currentUser.status="active";
+          markDirty("users");persist();
+        }
+        currentGuildId=null;
+        saveSession(currentUser,currentGuildId);
+        rebuildG();
+        activeTool="treasury";pg="wiki-join-guild";
         render();
-        toast("Welcome, "+name+"! You can join or create a guild from the Guild Manager tab.");
+        toast("Welcome, "+name+"! Browse guilds to apply, or create your own.");
       }
     });
     document.getElementById("goto-login").addEventListener("click",()=>{loginMode="login";renderLogin()});
@@ -4057,10 +4064,9 @@ function pgWiki(){
     }
     if(currentUser.status==="pending"){
       const pendingGuild=D.guilds.find(g=>g.id===currentUser.guildId);
-      h+=`<div class="card" style="border-color:var(--org);text-align:center;padding:32px"><div style="font-size:40px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Application Pending</div><div style="font-size:13px;color:var(--t2)">Your application to join <strong>${pendingGuild?.name||"a guild"}</strong> is waiting for approval from the Guild Leader.</div></div>`;
-      return h;
+      h+=`<div class="card" style="border-color:var(--org);margin-bottom:14px;display:flex;align-items:center;gap:12px"><div style="font-size:28px">⏳</div><div style="font-size:12px;color:var(--t2);line-height:1.5">Your application to join <strong>${pendingGuild?.name||"a guild"}</strong> is awaiting approval. You can apply to a different guild or create your own below.</div></div>`;
     }
-    h+=`<div style="font-size:13px;color:var(--tm);margin-bottom:18px">You're not in a guild yet. Apply to join one below — the Guild Leader will approve your request.</div>`;
+    h+=`<div style="font-size:13px;color:var(--tm);margin-bottom:18px">${currentUser.status==="pending"?"Pick a different guild to apply to, or start your own.":"You're not in a guild yet. Apply to join one below — the Guild Leader will approve your request."}</div>`;
     if(!guilds.length){
       h+=`<div class="card">${empty("🏰","No guilds yet","No guilds have been created yet. You can create the first one!")}</div>`;
     } else {
@@ -5449,10 +5455,10 @@ function validateInviteCode(code){
 function tAdminGuildList(){
   if(!isSiteAdmin())return `<div class="card">${empty("🔒","Site admin only","")}</div>`;
   const guilds=D.guilds.filter(g=>g.id!=="__legacy__");
-  let h=`<div class="ph"><div class="pt">All Guilds</div><span style="font-size:11px;color:var(--tm)">Site admin</span></div>`;
+  let h=`<div class="ph"><div class="pt">All Guilds</div><div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;color:var(--tm)">Site admin</span><button class="btn bp bs" id="admin-create-guild-btn">+ Create Guild</button></div></div>`;
   h+=`<div class="card" style="margin-bottom:14px;border-color:var(--ac);background:var(--acg)"><div style="font-size:12px;color:var(--t2);line-height:1.55">You're signed in as a site administrator. You're not a member of any guild — pick one below to manage it, then use <strong>← All Guilds</strong> in the sidebar to return.</div></div>`;
   if(!guilds.length){
-    h+=`<div class="card">${empty("🏰","No guilds yet","No guilds have been created on this site. Use the create-guild flow during registration or ask a member to start one.")}</div>`;
+    h+=`<div class="card">${empty("🏰","No guilds yet","No guilds have been created on this site. Use <strong>+ Create Guild</strong> above to start one.")}</div>`;
     return h;
   }
   guilds.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"")).forEach(g=>{
@@ -10037,6 +10043,33 @@ function bindAll(){
     saveSession(currentUser,currentGuildId);
     pg="dashboard";render();
   }));
+  // Site admin: create a new guild from the All Guilds landing page. Unlike the
+  // registration create-guild flow, this keeps the admin's site_admin role
+  // intact — it just spins up a guild and enters it to manage.
+  document.getElementById("admin-create-guild-btn")?.addEventListener("click",()=>{
+    if(!isSiteAdmin())return;
+    openModal("Create Guild",body=>{
+      body.innerHTML=`<div class="fg"><label class="fl">Guild Name *</label><input class="inp" id="acg-name" placeholder="e.g., Iron Brotherhood" autofocus></div><div class="login-err" id="acg-err"></div><div class="actions"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="acg-save">Create Guild</button></div>`;
+      const doCreate=()=>{
+        const name=document.getElementById("acg-name").value.trim();
+        const errEl=document.getElementById("acg-err");
+        if(!name){if(errEl){errEl.textContent="Guild name is required";errEl.style.display="block";}return;}
+        const guildId=uid();
+        D.guilds.push({id:guildId,name,createdBy:currentUser.displayName||currentUser.username,cfg:{...DEFAULT_CFG,guildName:name},createdDate:new Date().toISOString().slice(0,10)});
+        addLog("Guild Created",name);
+        try{persist();}
+        catch(err){if(errEl){errEl.textContent=err.message||"Failed to save guild";errEl.style.display="block";}return;}
+        currentGuildId=guildId;
+        saveSession(currentUser,currentGuildId);
+        closeModal();
+        pg="dashboard";render();toast('Guild "'+name+'" created.');
+      };
+      setTimeout(()=>{
+        document.getElementById("acg-save").addEventListener("click",doCreate);
+        document.getElementById("acg-name").addEventListener("keydown",e=>{if(e.key==="Enter")doCreate();});
+      },0);
+    });
+  });
   document.querySelectorAll(".database-dupe-open").forEach(el=>el.addEventListener("click",e=>{
     e.stopPropagation();
     const vendor=D.vendors.find(v=>v.id===el.dataset.vendorId);
