@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gloria Victis — Guild Hub</title>
+<!-- Data baked into the file by "Export as HTML". Loaded as the seed when present so
+     the data travels with the HTML when you upload it. Left as null in source. -->
+<script id="gv-embedded-data" type="application/json">null</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 <style>
@@ -398,14 +401,21 @@ const DKEYS=["guilds","p","gt","it","items","log","events","orders","requests","
 
 // ── Session: stored in sessionStorage so it lasts the browser tab but not shared ──
 function saveSession(user, guildId){
-  try{sessionStorage.setItem(SK_SESSION,JSON.stringify({userId:user?.id||null,guildId:guildId||null}));}catch(e){}
+  const payload=JSON.stringify({userId:user?.id||null,guildId:guildId||null});
+  try{sessionStorage.setItem(SK_SESSION,payload);}catch(e){}
+  // When running locally, also persist the session so it survives a browser restart
+  // (sessionStorage doesn't) — keeps you signed in for offline data entry.
+  try{if(isLocalMode())localStorage.setItem(SK_SESSION,payload);}catch(e){}
 }
 function clearSession(){
   try{sessionStorage.removeItem(SK_SESSION);}catch(e){}
+  try{localStorage.removeItem(SK_SESSION);}catch(e){}
   clearAuthToken();
 }
 function loadSession(){
-  try{return JSON.parse(sessionStorage.getItem(SK_SESSION))||null;}catch(e){return null;}
+  try{const s=sessionStorage.getItem(SK_SESSION);if(s)return JSON.parse(s);}catch(e){}
+  try{if(isLocalMode()){const s=localStorage.getItem(SK_SESSION);if(s)return JSON.parse(s);}}catch(e){}
+  return null;
 }
 // ── Auth token (issued by /login, /register, /setup on the Worker) ─────────
 function saveAuthToken(token,expiresAt){
@@ -502,7 +512,54 @@ function _consumeDirty(){
 // persist() writes to KV. Debounced 400ms so rapid changes collapse into one write.
 // Shows a saving indicator so users know their change is going through.
 // Silently skipped when the user isn't signed in — nothing to save TO without auth.
+// ── Local persistence (works offline / from a file:// page) ──────────────
+// The app's cloud Worker can't be written to reliably from a local file, so we
+// also mirror all data to localStorage. This makes local data entry durable across
+// refreshes; use Export/Import (or hosting) to push it to the live site later.
+const SK_LOCAL="gv_local_snapshot_v1";
+function isLocalMode(){
+  try{return location.protocol==="file:"||["localhost","127.0.0.1",""].includes(location.hostname);}catch(e){return false;}
+}
+// Build a snapshot object of the entire app state (data + craft catalog).
+function buildSnapshot(){
+  const snap={_ts:Date.now(),d:{}};
+  DKEYS.forEach(k=>{snap.d[k]=D[k];});
+  snap.craftItems=craftItems;
+  snap.craftResources=craftResources;
+  snap.craftSkillXpTables=craftSkillXpTables;
+  if(typeof playerXpTable!=="undefined")snap.playerXpTable=playerXpTable;
+  return snap;
+}
+// Apply a snapshot object into the live globals. Returns true if applied.
+function applySnapshot(snap){
+  if(!snap||typeof snap!=="object")return false;
+  if(snap.d&&typeof snap.d==="object")DKEYS.forEach(k=>{if(snap.d[k]!==undefined)D[k]=snap.d[k];});
+  if(Array.isArray(snap.craftItems))craftItems=snap.craftItems;
+  if(Array.isArray(snap.craftResources))craftResources=snap.craftResources;
+  if(snap.craftSkillXpTables&&typeof snap.craftSkillXpTables==="object"&&!Array.isArray(snap.craftSkillXpTables))craftSkillXpTables=snap.craftSkillXpTables;
+  if(snap.playerXpTable&&typeof snap.playerXpTable==="object")playerXpTable=snap.playerXpTable;
+  return true;
+}
+function saveLocalSnapshot(){
+  try{ localStorage.setItem(SK_LOCAL,JSON.stringify(buildSnapshot())); }catch(e){console.warn("saveLocalSnapshot failed:",e);}
+}
+function readLocalSnapshot(){
+  try{ const raw=localStorage.getItem(SK_LOCAL); if(!raw)return null; const s=JSON.parse(raw); return (s&&typeof s==="object")?s:null; }catch(e){return null;}
+}
+function loadLocalSnapshot(){ return applySnapshot(readLocalSnapshot()); }
+// Data baked into the HTML file by "Export as HTML" (so data travels with the file).
+function readEmbeddedData(){
+  try{
+    const el=document.getElementById("gv-embedded-data");
+    if(!el)return null;
+    const txt=(el.textContent||"").trim();
+    if(!txt||txt==="null")return null;
+    const s=JSON.parse(txt);
+    return (s&&typeof s==="object")?s:null;
+  }catch(e){return null;}
+}
 function persist(){
+  saveLocalSnapshot();// always keep a durable local copy (no auth/network needed)
   if(!loadAuthToken())return;
   _showSavingIndicator();
   if(_persistTimer)clearTimeout(_persistTimer);
@@ -529,6 +586,7 @@ function persist(){
 // Use when you need the caller to know the write succeeded before proceeding —
 // e.g. after importing a large backup. Throws if the write fails.
 async function persistNow(){
+  saveLocalSnapshot();
   if(_persistTimer){clearTimeout(_persistTimer);_persistTimer=null;}
   _showSavingIndicator();
   try{
@@ -608,10 +666,17 @@ function _hideLoadingScreen(){
 }
 
 // Pull all data from KV on boot, populate D, then render.
+//
+// CLOUD-FIRST: the cloud database is the single source of truth — it's what the hosted
+// site reads and where data entry is saved. localStorage and the data baked into the
+// HTML are ONLY used as a fallback when the cloud is genuinely unreachable, so a stale
+// or empty local copy can never shadow (or overwrite) the real data on the live site.
 async function initKvSync(){
   _showLoadingScreen();
+  const local=isLocalMode();
+  let loadedFrom="none";
   try{
-    // Pull main data blob
+    // Pull main data blob — throws if the cloud is unreachable (caught below).
     _setLoadingMessage("Loading guild data…");
     const main=await _pullFromKV(SK);
     if(main&&typeof main==="object"){
@@ -624,11 +689,25 @@ async function initKvSync(){
     _setLoadingMessage("Loading XP tables…");
     try{const xtRaw=await _pullFromKV("gv_skill_xp_tables");if(xtRaw)craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);}catch(e){}
     try{const ptRaw=await _pullFromKV("gv_player_xp_table");if(ptRaw)playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);}catch(e){}
-    // Re-resolve currentUser from fresh KV data — but only if we still hold a valid auth token.
-    // If the token is missing/expired, drop the session so the user is prompted to sign in again.
+    loadedFrom="cloud";
+  }catch(cloudErr){
+    // Cloud unreachable — fall back to the local snapshot, then baked-in data, so the
+    // app still works offline. These never run when the cloud is reachable.
+    console.warn("Cloud unreachable; using local fallback:",cloudErr);
+    if(applySnapshot(readLocalSnapshot())) loadedFrom="local";
+    else if(applySnapshot(readEmbeddedData())) loadedFrom="embedded";
+    else _showSaveErrorIndicator();
+  }
+  // ── Post-load (runs regardless of source) ────────────────────────────────
+  try{
+    // Fold Item-Shop recipes into the catalog (ADD-ONLY on load — never purge here,
+    // so a boot can't delete anything from the cloud).
+    try{ let _ch=false; D.vendorItems.forEach(vi=>{ if(syncRecipeEntryFromVendorItem(vi)) _ch=true; }); if(_ch) saveCraftItems(); }catch(e){}
+    // Resolve the signed-in user. Hosted requires a valid token; locally we keep the
+    // session alive without one so an expired token doesn't lock you out of viewing.
     const sess=loadSession();
     const tok=loadAuthToken();
-    if(sess?.userId&&tok){
+    if(sess?.userId&&(tok||local)){
       const user=D.users.find(u=>u.id===sess.userId);
       if(user){ currentUser=user; currentGuildId=sess.guildId||user.guildId||null; if(isSiteAdmin()&&!currentGuildId&&D.guilds.length)currentGuildId=D.guilds[0].id; }
       else { currentUser=null; currentGuildId=null; clearSession(); }
@@ -636,11 +715,12 @@ async function initKvSync(){
       clearSession();
     }
     rebuildG();
-    // Auto-expire bin entries past 30 days. Defer the toast/persist until after
-    // first render so toast() is mounted; persist requires an auth token.
+    if(local&&currentUser)saveSession(currentUser,currentGuildId);
+    // Keep a local fallback cache (only ever READ if the cloud is down — never shadows it).
+    try{ saveLocalSnapshot(); }catch(_){}
+    // Auto-expire bin entries past 30 days. Defer the toast/persist until after first
+    // render so toast() is mounted; persist requires an auth token.
     const expired=autoExpireBin();
-    // audit-FR-06: also expire map markers whose expiresAt is past the grace
-    // period (7 days). They're soft-deleted to the bin and recoverable.
     const expiredMarkers=autoExpireMarkers();
     if(expired>0||expiredMarkers>0){
       setTimeout(()=>{
@@ -649,13 +729,12 @@ async function initKvSync(){
         if(expiredMarkers>0) toast(`${expiredMarkers} expired map marker${expiredMarkers===1?'':'s'} archived.`);
       },1200);
     }
-  }catch(e){
-    console.error("KV load failed:",e);
-    // Show error but still render (will show login with empty/default state)
-    _showSaveErrorIndicator();
-  }
+  }catch(e){ console.error("post-load error:",e); }
   _hideLoadingScreen();
   render();
+  if(loadedFrom==="local"||loadedFrom==="embedded"){
+    try{ toast("Cloud unreachable — showing local backup. New changes may not reach the live site.","warn"); }catch(_){ }
+  }
 }
 function toast(m,t){const el=document.getElementById("toast");el.textContent=m;el.style.display="block";el.style.background=t==="error"?"var(--redd)":t==="warn"?"var(--orgd)":"var(--grnd)";el.style.color=t==="error"?"var(--red)":t==="warn"?"var(--org)":"var(--grn)";el.style.border="1px solid "+(t==="error"?"rgba(229,83,75,.25)":t==="warn"?"rgba(210,153,34,.25)":"rgba(86,211,100,.25)");setTimeout(()=>el.style.display="none",2200)}
 
@@ -712,6 +791,29 @@ function maybeFireDiscord(notifyKey, embed){
   fireDiscordWebhook(g, embed);
 }
 function exportJSON(){const o={};DKEYS.forEach(k=>o[k]=D[k]);o._craftItems=craftItems;o._craftResources=craftResources;o._craftSkillXpTables=craftSkillXpTables;const b=new Blob([JSON.stringify(o,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="guild-hub-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();toast("Exported!")}
+// Export a self-contained index.html with the current data baked into the
+// #gv-embedded-data slot, so the data travels with the file when you upload it.
+function exportHTML(){
+  try{
+    const payload=buildSnapshot();// _ts = now (this is the new "version" timestamp)
+    const clone=document.documentElement.cloneNode(true);
+    // Don't bake transient rendered/overlay state into the file.
+    const root=clone.querySelector("#root"); if(root)root.innerHTML="";
+    ["#_loading_screen","#modal-back","#modal","#toast","#modal-root"].forEach(sel=>{const el=clone.querySelector(sel);if(el)el.remove();});
+    // Inject the data. Escape the "less-than slash" sequence so the data can't
+    // accidentally close this script tag; JSON.parse turns the "\/" back to "/" on load.
+    let slot=clone.querySelector("#gv-embedded-data");
+    if(!slot){ slot=document.createElement("script"); slot.id="gv-embedded-data"; slot.type="application/json"; (clone.querySelector("head")||clone).appendChild(slot); }
+    slot.textContent=JSON.stringify(payload).replace(/<\//g,"<\\/");
+    const html="<!DOCTYPE html>\n"+clone.outerHTML;
+    const b=new Blob([html],{type:"text/html"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);
+    a.download="index.html";
+    a.click();
+    toast("Exported index.html with your data baked in — upload this file to the host.");
+  }catch(e){ console.error("exportHTML failed",e); toast("Export as HTML failed: "+(e?.message||"error"),"error"); }
+}
 function exportCSV(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fn;a.click();toast("CSV exported!")}
 // importJSON: validates incoming backup before touching in-memory state.
 // audit-BR-09 hardening:
@@ -774,7 +876,18 @@ function importJSON(file){
       if(d._craftItems!==undefined&&Array.isArray(d._craftItems)) craftItems=d._craftItems;
       if(d._craftResources!==undefined&&Array.isArray(d._craftResources)) craftResources=d._craftResources;
       if(d._craftSkillXpTables!==undefined&&typeof d._craftSkillXpTables==="object"&&!Array.isArray(d._craftSkillXpTables)) craftSkillXpTables=d._craftSkillXpTables;
-      // Flush every KV key in sequence and AWAIT. If any write fails, tell the
+      // Fold imported Item-Shop recipes into the catalog (deduped by name).
+      try{ syncVendorRecipesOnLoad(); }catch(e){}
+      // Always persist the import to the durable local copy first.
+      saveLocalSnapshot();
+      if(isLocalMode()){
+        // Local mode: the local snapshot is the source of truth, no cloud needed.
+        addLog("Data Imported",`${importHas.length} collection${importHas.length===1?'':'s'}`);
+        toast("Imported (saved locally)!");
+        render();
+        return;
+      }
+      // Hosted: flush every KV key in sequence and AWAIT. If any write fails, tell the
       // user so they don't close the tab thinking the import succeeded.
       try{
         if(d._craftItems!==undefined) await _pushToKV("gv_custom_items",craftItems);
@@ -1099,6 +1212,7 @@ const CAPABILITIES = {
   kick_member: 'Kick a member',
   change_member_role: 'Change a member\'s role',
   change_member_status: 'Activate / deactivate members',
+  manage_recruitment: 'Manage the recruitment pipeline (stages, votes, notes)',
   // Treasury
   view_gold: 'View the gold ledger',
   add_gold_tx: 'Record gold transactions',
@@ -1137,7 +1251,7 @@ const CAPABILITIES = {
 // audit-FR-02 Phase A: programmatic grouping of CAPABILITIES for the Roles
 // editor's checkbox matrix. Mirrors the comment-section grouping above.
 const CAPABILITY_GROUPS = [
-  { label:'Members',         caps:['approve_applications','manage_members','kick_member','change_member_role','change_member_status'] },
+  { label:'Members',         caps:['approve_applications','manage_members','kick_member','change_member_role','change_member_status','manage_recruitment'] },
   { label:'Treasury',        caps:['view_gold','add_gold_tx','approve_gold_request','manage_bank','add_item_tx','manage_requests','forgive_debt'] },
   { label:'Audit',           caps:['view_audit'] },
   { label:'Wiki',            caps:['create_article','edit_own_article','edit_any_article','review_drafts','delete_article'] },
@@ -1152,7 +1266,7 @@ const DEFAULT_ROLES_FACTORY = ()=>([
   { id:'role_member', name:'Member', color:'#7d8590', isSystem:true,
     permissions:['view_gold','create_article','edit_own_article','add_marker','create_event'] },
   { id:'role_officer', name:'Officer', color:'#7f6df2', isSystem:true,
-    permissions:['view_gold','add_gold_tx','approve_gold_request','manage_bank','add_item_tx','manage_requests','forgive_debt','view_audit','approve_applications','manage_members','kick_member','change_member_role','change_member_status','create_article','edit_own_article','edit_any_article','review_drafts','create_event','edit_any_event','manage_orders','manage_sieges','post_announcements','add_marker','edit_any_marker','manage_invites'] },
+    permissions:['view_gold','add_gold_tx','approve_gold_request','manage_bank','add_item_tx','manage_requests','forgive_debt','view_audit','approve_applications','manage_members','kick_member','change_member_role','change_member_status','manage_recruitment','create_article','edit_own_article','edit_any_article','review_drafts','create_event','edit_any_event','manage_orders','manage_sieges','post_announcements','add_marker','edit_any_marker','manage_invites'] },
   { id:'role_leader', name:'Guild Leader', color:'#e5a83b', isSystem:true,
     permissions:Object.keys(CAPABILITIES) },
 ]);
@@ -1400,6 +1514,52 @@ function gStats(){
   return{deposited:deposits,borrowed:tb,owed:totalDebt,treasury}
 }
 function pItems(pid){const tx=G.it.filter(t=>t.playerId===pid);return{borrowed:tx.filter(t=>t.type==="Borrowed").reduce((s,t)=>s+t.qty,0),returned:tx.filter(t=>t.type==="Returned").reduce((s,t)=>s+t.qty,0),donated:tx.filter(t=>t.type==="Donated").reduce((s,t)=>s+t.qty,0)}}
+
+// ── Member features: contribution score, alt/main linking, recruitment ──
+// Points are awarded for positive guild contributions. Tunable weights below.
+const CONTRIB_WEIGHTS={goldPer1k:1, itemDonated:2, orderFilled:25, eventAttended:15};
+// Recruitment pipeline stages. Existing members default to 'member' so legacy
+// data is unaffected (recruitStage is read via stageOf()).
+const RECRUIT_STAGES=[
+  {k:'applicant',l:'Applicant',c:'var(--org)',i:'📨'},
+  {k:'trial',    l:'Trial',    c:'var(--ac)', i:'⏳'},
+  {k:'member',   l:'Member',   c:'var(--grn)',i:'✓'},
+];
+function stageOf(p){const s=p&&p.recruitStage;return RECRUIT_STAGES.some(x=>x.k===s)?s:'member';}
+function stageMeta(k){return RECRUIT_STAGES.find(x=>x.k===k)||RECRUIT_STAGES[2];}
+function recruitBadge(p){const s=stageOf(p);if(s==='member')return'';const m=stageMeta(s);return `<span class="tag" style="background:${m.c}22;color:${m.c};border-color:${m.c}55" title="Recruitment stage">${m.i} ${m.l}</span>`;}
+// Vote tally for a recruit: {up,down,net,mine} from p.recruitVotes {userId:1|-1}.
+function recruitVoteTally(p){const v=p&&p.recruitVotes||{};let up=0,down=0;Object.values(v).forEach(n=>{if(n>0)up++;else if(n<0)down++;});return{up,down,net:up-down,mine:currentUser?(v[currentUser.id]||0):0};}
+
+// Alt/main linking. A player with mainId set is an alt of that main player.
+function altsOf(pid){return pid?G.p.filter(p=>p.mainId===pid):[];}
+function mainOf(p){return p&&p.mainId?G.p.find(x=>x.id===p.mainId):null;}
+// Candidate "main" players for the alt-of picker: same guild, not self, not
+// itself an alt (no chaining), and would not create a cycle.
+function mainCandidates(self){return G.p.filter(p=>p.id!==(self&&self.id)&&!p.mainId&&(!self||!altsOf(self.id).some(a=>a.id===p.id)));}
+
+// Contribution score for one player (this guild). Returns score + breakdown.
+function contributionScore(pid){
+  const goldDonated=G.gt.filter(t=>t.playerId===pid&&(t.type==="Donate Gold"||t.type==="Deposit Gold")).reduce((s,t)=>s+t.amount,0);
+  const itemsDonated=G.it.filter(t=>t.playerId===pid&&t.type==="Donated").reduce((s,t)=>s+t.qty,0);
+  const ordersFilled=(G.orders||[]).filter(o=>o.assigneeId===pid&&o.status==="Complete").length
+    +(D.craftOrders||[]).filter(o=>o.guildId===currentGuildId&&o.claimedBy===pid&&(o.status==='complete'||o.status==='completed')).length;
+  const p=G.p.find(x=>x.id===pid);
+  const eventsAttended=(G.events||[]).filter(e=>Array.isArray(e.attendees)&&e.attendees.includes(pid)).length
+    +(p&&p.userId?(D.sieges||[]).filter(s=>s.guildId===currentGuildId&&Array.isArray(s.rsvps)&&s.rsvps.some(r=>r.userId===p.userId)).length:0);
+  const pts={
+    gold:Math.round(goldDonated/1000*CONTRIB_WEIGHTS.goldPer1k),
+    items:itemsDonated*CONTRIB_WEIGHTS.itemDonated,
+    orders:ordersFilled*CONTRIB_WEIGHTS.orderFilled,
+    events:eventsAttended*CONTRIB_WEIGHTS.eventAttended,
+  };
+  return{score:pts.gold+pts.items+pts.orders+pts.events,goldDonated,itemsDonated,ordersFilled,eventsAttended,pts};
+}
+// Combined contribution for a main + all of its alts (rolls alts up to the main).
+function contributionScoreCombined(pid){
+  const ids=[pid,...altsOf(pid).map(a=>a.id)];
+  return ids.reduce((s,id)=>s+contributionScore(id).score,0);
+}
 function getLinkedPlayersForUser(user){
   if(!user)return[];
   const uname=(user.username||"").toLowerCase();
@@ -1581,7 +1741,8 @@ function renderGuest(){
     const dupeCount=getDatabaseDuplicateGroups().length;
     h+=`<div class="ns"><div class="nst">Database</div>`;
     h+=`<div class="ni${pg==="db-home"||pg==="dashboard"?" a":""}" data-page="db-home"><span style="font-size:13px;width:16px;text-align:center">DB</span>Overview</div>`;
-    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📋</span>Item Database${craftItems.length?`<span class="cnt">${craftItems.length}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📋</span>Item Database${craftItems.filter(i=>!i.isRecipe).length?`<span class="cnt">${craftItems.filter(i=>!i.isRecipe).length}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="recipe-db"?" a":""}" data-page="recipe-db"><span style="font-size:13px;width:16px;text-align:center">📜</span>Recipe Database${craftItems.filter(i=>i.isRecipe).length?`<span class="cnt">${craftItems.filter(i=>i.isRecipe).length}</span>`:""}</div>`;
     h+=`<div class="ni${pg==="shop-cities"?" a":""}" data-page="shop-cities"><span style="font-size:13px;width:16px;text-align:center">🏘️</span>Shop Entry DB${D.cities.length?`<span class="cnt">${D.cities.length}</span>`:""}</div>`;
     h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">📈</span>Skill XP Tables</div>`;
     h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">🧬</span>Character XP Table</div>`;
@@ -4631,14 +4792,14 @@ function tPlayers(){
   // ONLY kick_member or change_member_role still get per-row actions.
   const _showBulkBar=_canEditMem;
   const _showRowActions=_canEditMem||_canKickMem;
-  h+=`<div class="card tw"><table><thead><tr>${_showBulkBar?`<th style="width:30px"><input type="checkbox" id="bm-select-all"${allChecked?' checked':''} title="Select all visible"></th>`:''}<th>Name</th><th>Tags</th><th>Rank</th><th>Debt</th><th>Status</th>${_showRowActions?`<th style="width:70px"></th>`:""}</tr></thead><tbody>`;
+  h+=`<div class="card tw"><table><thead><tr>${_showBulkBar?`<th style="width:30px"><input type="checkbox" id="bm-select-all"${allChecked?' checked':''} title="Select all visible"></th>`:''}<th>Name</th><th>Tags</th><th>Rank</th><th>Debt</th><th title="Contribution score">Score</th><th>Status</th>${_showRowActions?`<th style="width:70px"></th>`:""}</tr></thead><tbody>`;
   fil.forEach(p=>{
     const gs=pGold(p.id);
     const sel=window._bmSel.has(p.id);
     let rowActions='';
     if(_canEditMem) rowActions+=`<button class="btn bg bs edit-p" data-id="${p.id}" aria-label="Edit ${esc(p.name||'member')}" title="Edit">✎</button>`;
     if(_canKickMem) rowActions+=`<button class="btn bd bs del-p" data-id="${p.id}" aria-label="Delete ${esc(p.name||'member')}" title="Delete">✕</button>`;
-    h+=`<tr${sel?' style="background:var(--acg)"':''}>${_showBulkBar?`<td><input type="checkbox" class="bm-row-cb" data-id="${p.id}"${sel?' checked':''}></td>`:''}<td class="plink" data-pid="${p.id}" style="font-weight:500;color:var(--ac);cursor:pointer">${esc(p.name||"")}</td><td>${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")||"—"}</td><td>${rankB(p.rank)}</td><td style="font-weight:500;color:${gs.debt>0?"var(--red)":"var(--tm)"};font-size:12px">${gs.debt>0?fmt(gs.debt)+"g":"—"}</td><td>${statusB(p.status)}</td>${_showRowActions?`<td><div class="row-actions">${rowActions}</div></td>`:""}</tr>`;
+    h+=`<tr${sel?' style="background:var(--acg)"':''}>${_showBulkBar?`<td><input type="checkbox" class="bm-row-cb" data-id="${p.id}"${sel?' checked':''}></td>`:''}<td class="plink" data-pid="${p.id}" style="font-weight:500;color:var(--ac);cursor:pointer">${esc(p.name||"")}${p.mainId?`<span class="tag" title="Alt of ${esc(mainOf(p)?.name||"?")}" style="margin-left:5px;color:var(--tm)">↳ alt</span>`:""}</td><td>${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}${recruitBadge(p)||((p.tags||[]).length?"":"—")}</td><td>${rankB(p.rank)}</td><td style="font-weight:500;color:${gs.debt>0?"var(--red)":"var(--tm)"};font-size:12px">${gs.debt>0?fmt(gs.debt)+"g":"—"}</td><td style="font-weight:600;font-size:12px;color:var(--ac)">${contributionScore(p.id).score}</td><td>${statusB(p.status)}</td>${_showRowActions?`<td><div class="row-actions">${rowActions}</div></td>`:""}</tr>`;
   });
   h+=`</tbody></table></div>`;
   // Bulk action bar
@@ -4771,6 +4932,7 @@ function initBulkMemberBindings(){
           if(Array.isArray(D.savedBuilds)){
             D.savedBuilds=D.savedBuilds.filter(b=>b.playerId!==id&&b.characterId!==id);
           }
+          D.p.forEach(x=>{ if(x.mainId===id) x.mainId=null; });
           D.p=D.p.filter(x=>x.id!==id);
         }
       });
@@ -4792,8 +4954,21 @@ let _pdActionsHtml='';
 if(_pdEdit) _pdActionsHtml+=`<button class="btn bg bs edit-p" data-id="${p.id}">Edit</button>`;
 if(_pdStatus) _pdActionsHtml+=`<button class="btn bg bs" id="toggle-status">${p.status==="Active"?"Deactivate":"Activate"}</button>`;
 if(_pdForgive&&gs.debt>0) _pdActionsHtml+=`<button class="btn bw bs" id="forgive-debt">Forgive Debt</button>`;
-let h=`<button class="btn bg bs" id="back-btn" style="margin-bottom:12px">← Back</button><div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="av">${esc((p.name||"?").charAt(0))}</div><div style="flex:1"><div class="pt">${esc(p.name||"")}</div><div style="display:flex;gap:5px;align-items:center;margin-top:2px;flex-wrap:wrap">${rankB(p.rank)} ${statusB(p.status)} ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")} <span style="font-size:11px;color:var(--tm)">${esc(p.discord||"")}</span></div>${p.notes?`<div style="font-size:11px;color:var(--tm);margin-top:4px">${esc(p.notes)}</div>`:""}</div>${_pdAnyAction?`<div style="display:flex;gap:4px;flex-wrap:wrap">${_pdActionsHtml}</div>`:""}</div>`;
-h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));margin-bottom:16px">${stat("Borrowed",fmt(gs.borrowed)+"g","var(--red)")}${stat("Deposited",fmt(gs.deposited)+"g","var(--grn)")}${stat("Debt",gs.debt>0?fmt(gs.debt)+"g":"None",gs.debt>0?"var(--red)":"var(--grn)")}${stat("Items Out",is.borrowed-is.returned,"var(--org)")}${stat("Given",is.donated,"var(--grn)")}${stat("Gear",pGear.length,"var(--pk)")}</div>`;
+let h=`<button class="btn bg bs" id="back-btn" style="margin-bottom:12px">← Back</button><div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="av">${esc((p.name||"?").charAt(0))}</div><div style="flex:1"><div class="pt">${esc(p.name||"")}</div><div style="display:flex;gap:5px;align-items:center;margin-top:2px;flex-wrap:wrap">${rankB(p.rank)} ${statusB(p.status)} ${recruitBadge(p)} ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")} ${p.mainId?`<span class="tag" style="color:var(--tm)">↳ alt of ${esc(mainOf(p)?.name||"?")}</span>`:""} <span style="font-size:11px;color:var(--tm)">${esc(p.discord||"")}</span></div>${p.notes?`<div style="font-size:11px;color:var(--tm);margin-top:4px">${esc(p.notes)}</div>`:""}</div>${_pdAnyAction?`<div style="display:flex;gap:4px;flex-wrap:wrap">${_pdActionsHtml}</div>`:""}</div>`;
+const _cs=contributionScore(p.id),_alts=altsOf(p.id),_main=mainOf(p);
+h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));margin-bottom:16px">${stat("Contribution",_cs.score+" pts","var(--ac)")}${stat("Borrowed",fmt(gs.borrowed)+"g","var(--red)")}${stat("Deposited",fmt(gs.deposited)+"g","var(--grn)")}${stat("Debt",gs.debt>0?fmt(gs.debt)+"g":"None",gs.debt>0?"var(--red)":"var(--grn)")}${stat("Items Out",is.borrowed-is.returned,"var(--org)")}${stat("Given",is.donated,"var(--grn)")}${stat("Gear",pGear.length,"var(--pk)")}</div>`;
+// Contribution breakdown
+h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">📈 Contribution Breakdown</span><span style="font-weight:700;color:var(--ac)">${_cs.score} pts</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;font-size:12px"><div>Gold donated <strong>${fmt(_cs.goldDonated)}g</strong> <span style="color:var(--tm)">(+${_cs.pts.gold})</span></div><div>Items donated <strong>${_cs.itemsDonated}</strong> <span style="color:var(--tm)">(+${_cs.pts.items})</span></div><div>Orders filled <strong>${_cs.ordersFilled}</strong> <span style="color:var(--tm)">(+${_cs.pts.orders})</span></div><div>Events attended <strong>${_cs.eventsAttended}</strong> <span style="color:var(--tm)">(+${_cs.pts.events})</span></div></div></div>`;
+// Linked accounts (alt/main)
+if(_main||_alts.length){
+  h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🔗 Linked Accounts</div>`;
+  if(_main) h+=`<div style="font-size:12px;margin-bottom:6px">Alt of <span class="plink" data-pid="${_main.id}" style="color:var(--ac);cursor:pointer;font-weight:600">${esc(_main.name||"")}</span></div>`;
+  if(_alts.length){
+    h+=`<div style="font-size:12px;margin-bottom:6px">Alts: ${_alts.map(a=>`<span class="plink" data-pid="${a.id}" style="color:var(--ac);cursor:pointer;font-weight:600;margin-right:8px">${esc(a.name||"")}</span>`).join("")}</div>`;
+    h+=`<div style="font-size:11px;color:var(--tm)">Combined contribution (main + alts): <strong style="color:var(--ac)">${contributionScoreCombined(p.id)} pts</strong></div>`;
+  }
+  h+=`</div>`;
+}
 const pRecipes=D.playerRecipes[p.id]||[];
 const allRecipes=craftItems.filter(i=>i.isRecipe);
 h+=`<div class="tb"><div class="ti${F.dTab==="gold"?" a":""}" data-tab="gold">Gold (${pgt.length})</div><div class="ti${F.dTab==="items"?" a":""}" data-tab="items">Items (${pit.length})</div><div class="ti${F.dTab==="gear"?" a":""}" data-tab="gear">Assigned Gear (${pGear.length})</div><div class="ti${F.dTab==="recipes"?" a":""}" data-tab="recipes">Recipes (${pRecipes.length}/${allRecipes.length})</div></div>`;
@@ -4862,6 +5037,89 @@ if(F.dTab==="recipes"){
   }
 }
 return h}
+// ── Recruitment pipeline page (officer-facing, manage_recruitment) ──
+function tRecruitment(){
+  if(!hasPerm(currentUser,'manage_recruitment')) return `<div class="card">${empty("🔒","Permission required","You don't have access to the recruitment pipeline.")}</div>`;
+  const applicants=G.p.filter(p=>stageOf(p)==='applicant');
+  const trials=G.p.filter(p=>stageOf(p)==='trial');
+  const pendingApps=D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending");
+  const _canKick=hasPerm(currentUser,'kick_member');
+  const _canAdd=hasPerm(currentUser,'manage_members');
+  const _canApprove=hasPerm(currentUser,'approve_applications');
+  let h=`<div class="ph"><div class="pt">Recruitment</div>${_canAdd?`<button class="btn bp" id="rec-add-applicant">+ Add Applicant</button>`:""}</div>`;
+  h+=`<div style="font-size:12px;color:var(--tm);margin-bottom:14px">Accept or deny new account applications, then track prospects through <strong>Applicant → Trial → Member</strong>. Approving an application adds the person to the Members roster automatically.</div>`;
+  // New account applications (D.users awaiting approval) — accept/deny in one place.
+  if(pendingApps.length){
+    h+=`<div class="card" style="margin-bottom:14px;border-color:var(--org)"><div style="margin-bottom:10px"><span style="font-size:11px;font-weight:600;color:var(--org);text-transform:uppercase;letter-spacing:.05em">📨 New Applications (${pendingApps.length})</span></div>`;
+    pendingApps.forEach(u=>{
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="flex:1"><div style="font-weight:600">${esc(u.displayName||u.username||"")}</div><div style="font-size:11px;color:var(--tm)">${esc(u.discord||"")}</div></div>${_canApprove?`<button class="btn bgrn bs approve-user" data-id="${esc(u.id)}">✓ Approve</button><button class="btn bd bs deny-user" data-id="${esc(u.id)}">✕ Deny</button>`:`<span style="font-size:11px;color:var(--tm)">Awaiting an officer</span>`}</div>`;
+    });
+    h+=`</div>`;
+  }
+  if(!pendingApps.length&&!applicants.length&&!trials.length) return h+`<div class="card">${empty("🎯","Pipeline is empty","No pending applications. Add an applicant, or set a member's Recruitment Stage to Applicant or Trial when editing them.")}</div>`;
+  const col=(title,list,stageKey)=>{
+    const m=stageMeta(stageKey);
+    let c=`<div class="card" style="margin-bottom:14px"><div style="margin-bottom:10px"><span style="font-size:11px;font-weight:600;color:${m.c};text-transform:uppercase;letter-spacing:.05em">${m.i} ${title} (${list.length})</span></div>`;
+    if(!list.length){ c+=`<div style="font-size:12px;color:var(--tm);padding:4px 0">No ${title.toLowerCase()} right now.</div></div>`; return c; }
+    list.forEach(p=>{
+      const v=recruitVoteTally(p);
+      const notes=(p.recruitNotes||[]);
+      c+=`<div style="border:1px solid var(--bd);border-radius:6px;padding:10px;margin-bottom:8px">`;
+      c+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="plink" data-pid="${p.id}" style="font-weight:600;color:var(--ac);cursor:pointer">${esc(p.name||"")}</span>${rankB(p.rank)}<span style="font-size:11px;color:var(--tm)">${esc(p.discord||"")}</span><span style="margin-left:auto;font-size:12px;color:var(--tm)">Score <strong style="color:var(--ac)">${contributionScore(p.id).score}</strong></span></div>`;
+      c+=`<div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">`;
+      c+=`<button class="btn bs rec-vote ${v.mine>0?'bgrn':'bg'}" data-id="${p.id}" data-v="1" title="Vote yes">👍 ${v.up}</button>`;
+      c+=`<button class="btn bs rec-vote ${v.mine<0?'bd':'bg'}" data-id="${p.id}" data-v="-1" title="Vote no">👎 ${v.down}</button>`;
+      c+=`<span style="font-size:12px;font-weight:600;color:${v.net>0?'var(--grn)':v.net<0?'var(--red)':'var(--tm)'}">net ${v.net>0?'+':''}${v.net}</span>`;
+      c+=`<button class="btn bg bs rec-note" data-id="${p.id}">📝 Notes (${notes.length})</button>`;
+      if(stageKey==='applicant') c+=`<button class="btn bp bs rec-stage" data-id="${p.id}" data-stage="trial">→ Trial</button>`;
+      if(stageKey==='trial'){ c+=`<button class="btn bp bs rec-stage" data-id="${p.id}" data-stage="member">✓ Accept as Member</button><button class="btn bg bs rec-stage" data-id="${p.id}" data-stage="applicant">← Applicant</button>`; }
+      if(_canKick) c+=`<button class="btn bd bs rec-reject" data-id="${p.id}">Reject</button>`;
+      c+=`</div>`;
+      if(notes.length){
+        c+=`<div style="margin-top:8px;border-top:1px solid var(--bd);padding-top:6px">`;
+        notes.slice(-2).reverse().forEach(n=>{ c+=`<div style="font-size:11px;color:var(--t2);margin-bottom:3px"><span style="color:var(--ac);font-weight:600">${esc(n.user||"?")}</span> <span style="color:var(--tm)">${fmtD(n.date)}</span>: ${esc(n.text||"")}</div>`; });
+        c+=`</div>`;
+      }
+      c+=`</div>`;
+    });
+    c+=`</div>`; return c;
+  };
+  h+=col("Applicants",applicants,'applicant');
+  h+=col("Trials",trials,'trial');
+  return h;
+}
+function modalRecruitNote(pid){
+  if(!hasPerm(currentUser,'manage_recruitment'))return;
+  const p=G.p.find(x=>x.id===pid); if(!p)return;
+  openModal("Recruitment Notes — "+esc(p.name||""),body=>{
+    const notes=(p.recruitNotes||[]);
+    body.innerHTML=`<div style="max-height:260px;overflow-y:auto;margin-bottom:10px">${notes.length?notes.slice().reverse().map(n=>`<div style="border-bottom:1px solid var(--bd);padding:6px 0;font-size:12px"><div style="color:var(--tm);font-size:10px;margin-bottom:2px"><span style="color:var(--ac);font-weight:600">${esc(n.user||"?")}</span> · ${fmtD(n.date)}</div>${esc(n.text||"")}</div>`).join(""):`<div style="color:var(--tm);font-size:12px">No notes yet.</div>`}</div><div class="fg"><label class="fl">Add a note</label><textarea class="inp" id="rec-note-text" maxlength="1000" placeholder="Observation, vouch, concern..."></textarea></div><div class="actions" style="margin-top:12px"><button class="btn bg" onclick="closeModal()">Close</button><button class="btn bp" id="rec-note-save">Add Note</button></div>`;
+    setTimeout(()=>document.getElementById("rec-note-save").addEventListener("click",()=>{
+      const t=document.getElementById("rec-note-text").value.trim(); if(!t)return;
+      const cur=D.p.find(x=>x.id===pid); if(!cur){toast("Member was removed elsewhere.","error");closeModal();render();return;}
+      cur.recruitNotes=cur.recruitNotes||[]; cur.recruitNotes.push({id:uid(),user:currentUser?.displayName||currentUser?.username||"?",date:new Date().toISOString(),text:t});
+      addLog("Recruit Note",cur.name); persist(); closeModal(); render(); toast("Note added.");
+    }),0);
+  });
+}
+// Apply the active recipe category sub-tab + known/unknown filter together (profile Recipes tab).
+// Category hides whole skill-group cards; known/unknown hides individual recipe items.
+function applyRecipeFilters(){
+  const cat=window._recipeCatFilter||"all";
+  const kf=window._recipeKnownFilter||"all";
+  document.querySelectorAll("[data-skill-group]").forEach(grp=>{
+    const sk=grp.dataset.skillGroup;
+    const catMatch=(cat==="all"||cat===sk);
+    let anyVisible=false;
+    grp.querySelectorAll(".recipe-item").forEach(item=>{
+      const known=!!item.querySelector("input")?.checked;
+      const show=catMatch&&(kf==="all"||(kf==="known"?known:!known));
+      item.style.display=show?"":"none";
+      if(show)anyVisible=true;
+    });
+    grp.style.display=catMatch&&anyVisible?"":"none";
+  });
+}
 function tSiteProfile(){
   if(!currentUser) return `<div class="card">${empty("🔐","Sign in required","Please sign in to view your profile.")}</div>`;
 
@@ -4909,7 +5167,7 @@ function tSiteProfile(){
 
   // ── Stats row ───────────────────────────────────────────
   h += `<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-bottom:18px">
-    ${stat("Recipes Known",`${knownCount}/${allRecipes.length}`,"var(--grn)")}
+    <div class="card" style="animation:fadeIn .25s both"><div class="sv" style="color:var(--grn)"><span id="recipe-known-stat">${knownCount}</span>/${allRecipes.length}</div><div class="sl">Recipes Known</div></div>
     ${stat("Saved Builds",myBuilds.length,"var(--ac)")}
     ${stat("Characters",linkedPlayers.length,"var(--blu)")}
     ${stat("Guild",linkedGuilds.length?"In Guild":"None",linkedGuilds.length?"var(--org)":"var(--tm)")}
@@ -4927,12 +5185,27 @@ function tSiteProfile(){
     const pct=allRecipes.length?Math.round(knownCount/allRecipes.length*100):0;
     h+=`<div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:600">${knownCount} / ${allRecipes.length} recipes known</span>
-        <span style="font-size:12px;color:var(--ac);font-weight:600">${pct}%</span>
+        <span id="recipe-known-heading" style="font-size:13px;font-weight:600">${knownCount} / ${allRecipes.length} recipes known</span>
+        <span id="recipe-pct-site" style="font-size:12px;color:var(--ac);font-weight:600">${pct}%</span>
       </div>
       <div class="pb"><div class="pf" id="recipe-progress-site" style="width:${pct}%;background:${pct===100?"var(--grn)":"var(--ac)"}"></div></div>
       <div style="font-size:11px;color:var(--tm);margin-top:8px">This recipe list is account-wide and follows you across tools.</div>
     </div>`;
+    // Category sub-tabs — focus on one crafting category at a time (Weapon Forging, etc.)
+    // Order by display name; "other"/legacy categories sort to the end by their label.
+    const orderedSkills=Object.keys(bySkill).sort((a,b)=>(SKILL_NAMES[a]||a).localeCompare(SKILL_NAMES[b]||b));
+    let activeCat=window._recipeCatFilter||"all";
+    if(activeCat!=="all"&&!bySkill[activeCat])activeCat="all";
+    window._recipeCatFilter=activeCat;
+    window._recipeKnownFilter="all"; // known/unknown buttons render as "All" on each render
+    const catChip=(cat,label,active)=>`<button class="btn recipe-cat-btn" data-cat="${esc(cat)}" style="padding:4px 12px;border-radius:14px;font-size:11px;font-weight:600;border:1px solid ${active?"var(--ac)":"var(--bd)"};background:${active?"var(--ac)":"var(--bgi)"};color:${active?"#fff":"var(--tm)"};font-family:inherit;cursor:pointer">${label}</button>`;
+    h+=`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">`;
+    h+=catChip("all",`All (${knownCount}/${allRecipes.length})`,activeCat==="all");
+    orderedSkills.forEach(sk=>{
+      const skKnown=bySkill[sk].filter(r=>knownIds.has(String(r.id))).length;
+      h+=catChip(sk,`${esc(SKILL_NAMES[sk]||sk)} (${skKnown}/${bySkill[sk].length})`,activeCat===sk);
+    });
+    h+=`</div>`;
     h+=`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <div style="display:flex;gap:2px;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px">
         <button class="btn recipe-filter-btn" data-filter="all" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:var(--ac);color:#fff;font-family:inherit">All</button>
@@ -4940,9 +5213,14 @@ function tSiteProfile(){
         <button class="btn recipe-filter-btn" data-filter="unknown" style="padding:3px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;background:transparent;color:var(--tm);font-family:inherit">✕ Unknown</button>
       </div>
     </div>`;
-    Object.entries(bySkill).sort(([a],[b])=>a.localeCompare(b)).forEach(([sk,recipes])=>{
+    if(!allRecipes.length){
+      h+=`<div class="card">${empty("📜","No recipes in the database yet","Recipes added in the Item Database or synced from Item Search will appear here, grouped by category.")}</div>`;
+    }
+    orderedSkills.forEach(sk=>{
+      const recipes=bySkill[sk];
       const skKnown=recipes.filter(r=>knownIds.has(String(r.id))).length;
-      h+=`<div class="card" style="margin-bottom:10px" data-skill-group="${sk}">
+      const catShown=activeCat==="all"||activeCat===sk;
+      h+=`<div class="card" style="margin-bottom:10px${catShown?"":";display:none"}" data-skill-group="${esc(sk)}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em">${esc(SKILL_NAMES[sk]||sk)}</span>
           <span style="font-size:11px;color:var(--tm)">${skKnown}/${recipes.length}</span>
@@ -5160,7 +5438,7 @@ function tGoldRequestManage(){
   return h;
 }
 
-function tLeaderboards(){const gd=topN("Donate Gold","gold",20),id=topN("Donated","item",20);const dh=G.p.map(p=>({id:p.id,name:p.name,value:pGold(p.id).debt})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);const ma=(()=>{const m={};G.gt.forEach(t=>{m[t.playerId]=(m[t.playerId]||0)+1});G.it.forEach(t=>{m[t.playerId]=(m[t.playerId]||0)+1});return Object.entries(m).map(([k,v])=>({id:k,name:pN(k),value:v})).sort((a,b)=>b.value-a.value)})();const tabs=[{k:"gold-donors",l:"Gold Donors"},{k:"item-donors",l:"Item Donors"},{k:"most-active",l:"Most Active"},{k:"debt-holders",l:"Debts"}];const cur=F.lbTab==="gold-donors"?gd:F.lbTab==="item-donors"?id:F.lbTab==="most-active"?ma:dh;const unit=F.lbTab==="gold-donors"?"g":F.lbTab==="item-donors"?" items":F.lbTab==="most-active"?" tx":"g";const bc=F.lbTab==="debt-holders"?"var(--red)":"var(--ac)";const mx=cur[0]?.value||1;let h=`<div class="ph"><div class="pt">Leaderboards</div></div><div class="tb">${tabs.map(t=>`<div class="ti${F.lbTab===t.k?" a":""}" data-lbtab="${t.k}">${t.l}</div>`).join("")}</div>`;if(!cur.length)return h+`<div class="card">${empty("🏆","No data yet","")}</div>`;h+=`<div class="card">`;cur.forEach((e,i)=>{h+=`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;${i<cur.length-1?"border-bottom:1px solid var(--bd)":""}"><span style="width:22px;text-align:center;font-size:11px;color:${i<3?"var(--ac)":"var(--tm)"};font-weight:${i<3?600:400}">#${i+1}</span><span class="plink" data-pid="${e.id}" style="flex:0 0 140px;font-weight:500;cursor:pointer;color:var(--ac);font-size:12px">${e.name}</span><div style="flex:1">${bar(e.value,mx,bc)}</div><span style="font-weight:600;font-size:12px;min-width:60px;text-align:right;color:${bc}">${fmt(e.value)}${unit}</span></div>`});h+=`</div>`;return h}
+function tLeaderboards(){const gd=topN("Donate Gold","gold",20),id=topN("Donated","item",20);const dh=G.p.map(p=>({id:p.id,name:p.name,value:pGold(p.id).debt})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);const ma=(()=>{const m={};G.gt.forEach(t=>{m[t.playerId]=(m[t.playerId]||0)+1});G.it.forEach(t=>{m[t.playerId]=(m[t.playerId]||0)+1});return Object.entries(m).map(([k,v])=>({id:k,name:pN(k),value:v})).sort((a,b)=>b.value-a.value)})();const cb=G.p.map(p=>({id:p.id,name:p.name,value:contributionScore(p.id).score})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value).slice(0,20);const tabs=[{k:"contributors",l:"Contributors"},{k:"gold-donors",l:"Gold Donors"},{k:"item-donors",l:"Item Donors"},{k:"most-active",l:"Most Active"},{k:"debt-holders",l:"Debts"}];const cur=F.lbTab==="contributors"?cb:F.lbTab==="gold-donors"?gd:F.lbTab==="item-donors"?id:F.lbTab==="most-active"?ma:dh;const unit=F.lbTab==="contributors"?" pts":F.lbTab==="gold-donors"?"g":F.lbTab==="item-donors"?" items":F.lbTab==="most-active"?" tx":"g";const bc=F.lbTab==="debt-holders"?"var(--red)":"var(--ac)";const mx=cur[0]?.value||1;let h=`<div class="ph"><div class="pt">Leaderboards</div></div><div class="tb">${tabs.map(t=>`<div class="ti${F.lbTab===t.k?" a":""}" data-lbtab="${t.k}">${t.l}</div>`).join("")}</div>`;if(!cur.length)return h+`<div class="card">${empty("🏆","No data yet","")}</div>`;h+=`<div class="card">`;cur.forEach((e,i)=>{h+=`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;${i<cur.length-1?"border-bottom:1px solid var(--bd)":""}"><span style="width:22px;text-align:center;font-size:11px;color:${i<3?"var(--ac)":"var(--tm)"};font-weight:${i<3?600:400}">#${i+1}</span><span class="plink" data-pid="${e.id}" style="flex:0 0 140px;font-weight:500;cursor:pointer;color:var(--ac);font-size:12px">${e.name}</span><div style="flex:1">${bar(e.value,mx,bc)}</div><span style="font-weight:600;font-size:12px;min-width:60px;text-align:right;color:${bc}">${fmt(e.value)}${unit}</span></div>`});h+=`</div>`;return h}
 
 function tActivity(){const f=feed().filter(e=>{if(F.actF==="All")return true;if(F.actF==="Gold")return e.type.includes("Gold");return["Borrowed","Returned","Donated"].includes(e.type)});let h=`<div class="ph"><div class="pt">Activity</div><select class="inp" id="factf" style="width:110px">${["All","Gold","Items"].map(o=>`<option${F.actF===o?" selected":""}>${o}</option>`).join("")}</select></div>`;if(!f.length)return h+`<div class="card">${empty("📋","No activity","")}</div>`;h+=`<div class="card">`;f.slice(0,50).forEach((e,i)=>{h+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;${i<49?"border-bottom:1px solid var(--bd)":""}">${dot(e.type)}<span style="font-size:10px;color:var(--tm);min-width:68px">${fmtD(e.date)}</span><span style="font-size:12px;flex:1;color:var(--t2)">${e.text}</span>${txB(e.type)}</div>`});h+=`</div>`;return h}
 
@@ -5669,6 +5947,20 @@ if(currentGuildId){
   });
   h+=`</div>`;
   h+=`</div>`;
+  // At-a-glance permission matrix (roles × capabilities)
+  h+=`<details class="card" style="margin-bottom:12px"><summary style="cursor:pointer;font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">▦ Permission Matrix — every role at a glance</summary>`;
+  h+=`<div style="overflow-x:auto;margin-top:10px"><table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr><th style="text-align:left;padding:4px 8px;position:sticky;left:0;background:var(--bg1)">Capability</th>${_roles.map(r=>`<th style="padding:4px 6px;text-align:center;white-space:nowrap"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${esc(r.color||'#7d8590')};margin-right:3px;vertical-align:middle"></span>${esc(r.name)}</th>`).join("")}</tr></thead><tbody>`;
+  CAPABILITY_GROUPS.forEach(grp=>{
+    h+=`<tr><td colspan="${_roles.length+1}" style="padding:7px 8px 2px;font-weight:600;color:var(--ac);font-size:10px;text-transform:uppercase;letter-spacing:.05em">${grp.label}</td></tr>`;
+    grp.caps.forEach(cap=>{
+      h+=`<tr style="border-top:1px solid var(--bd)"><td style="padding:4px 8px;color:var(--t2);position:sticky;left:0;background:var(--bg1)" title="${esc(cap)}">${esc(CAPABILITIES[cap]||cap)}</td>`;
+      _roles.forEach(r=>{ const has=Array.isArray(r.permissions)&&r.permissions.includes(cap); h+=`<td style="text-align:center;padding:4px 6px;color:${has?'var(--grn)':'var(--bd)'};font-weight:${has?700:400}">${has?'✓':'·'}</td>`; });
+      h+=`</tr>`;
+    });
+  });
+  h+=`</tbody></table></div>`;
+  if(_legacyMode) h+=`<div style="font-size:11px;color:var(--org);margin-top:8px">⚠ Legacy mode is ON — the live system uses factory-default permissions, not the custom edits shown here.</div>`;
+  h+=`</details>`;
 } else if(isSiteAdmin()){
   h+=`<div class="card" style="margin-bottom:12px;color:var(--tm);font-size:12px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🛡 Roles &amp; Permissions</div>Roles are per-guild — switch into a guild to manage its roles.</div>`;
 }
@@ -5699,7 +5991,7 @@ if(isSiteAdmin()){
 }
 
 if(isSiteAdmin()){
-h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Storage (${kb} KB)</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" id="export-btn">Export</button><button class="btn bg" id="import-btn">Import</button><input type="file" id="import-file" accept=".json" style="display:none"></div><div style="font-size:11px;color:var(--tm);margin-top:8px">💡 Backup includes all treasury data <em>and</em> the full crafting database (items, resources, XP tables).</div></div>`;
+h+=`<div class="card" style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Storage (${kb} KB)</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" id="export-html-btn">⬇ Export as HTML (data baked in)</button><button class="btn bg" id="export-btn">Export JSON</button><button class="btn bg" id="import-btn">Import JSON</button><input type="file" id="import-file" accept=".json" style="display:none"></div><div style="font-size:11px;color:var(--tm);margin-top:8px">💡 <strong>Export as HTML</strong> downloads a ready-to-upload <code>index.html</code> with all your data baked in — upload it to the host and the data goes with it. JSON Export/Import is a plain data backup.</div></div>`;
 h+=`<div class="card" style="border-color:rgba(229,83,75,.25)"><div style="font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Danger Zone</div><button class="btn bd" id="reset-btn">Delete Guild Data</button></div>`;
 }else{
 h+=`<div class="card" style="border-color:rgba(229,83,75,.25)"><div style="font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Danger Zone</div><button class="btn bd" id="reset-btn">Delete Guild Data</button></div>`;
@@ -5709,7 +6001,7 @@ return h}
 // ═══════════════════════════════════════════════════════════
 // FORM MODALS
 // ═══════════════════════════════════════════════════════════
-function modalPlayer(e){if(!hasPerm(currentUser,'manage_members'))return;e=e||{};openModal(e.id?"Edit Member":"Add Member",body=>{const tH=currentGuildCfg().tags.map(t=>`<label style="display:inline-flex;align-items:center;gap:4px;margin:3px;cursor:pointer;font-size:12px"><input type="checkbox" class="tag-cb" value="${esc(t)}"${(e.tags||[]).includes(t)?" checked":""}>${esc(t)}</label>`).join("");body.innerHTML=`<div class="fg"><label class="fl">Name *</label><input class="inp" id="mf-name" value="${esc(e.name||"")}"></div><div class="fg"><label class="fl">Discord</label><input class="inp" id="mf-disc" value="${esc(e.discord||"")}"></div><div class="fg"><label class="fl">Rank</label><select class="inp" id="mf-rank">${currentGuildCfg().ranks.map(r=>`<option${(e.rank||currentGuildCfg().ranks[currentGuildCfg().ranks.length-1])===r?" selected":""}>${esc(r)}</option>`).join("")}</select></div><div class="fg"><label class="fl">Status</label><select class="inp" id="mf-status"><option${(e.status||"Active")==="Active"?" selected":""}>Active</option><option${e.status==="Inactive"?" selected":""}>Inactive</option></select></div><div class="fg"><label class="fl">Tags</label><div>${tH||'<span style="color:var(--tm);font-size:12px">Add tags in Settings</span>'}</div></div><div class="fg"><label class="fl">Notes</label><textarea class="inp" id="mf-notes" maxlength="2000">${esc(e.notes||"")}</textarea></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Add"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const name=document.getElementById("mf-name").value.trim();if(!name){toast("Name required","error");return}const tags=[...document.querySelectorAll(".tag-cb:checked")].map(c=>c.value);if(e.id){const p=D.p.find(x=>x.id===e.id);if(!p){toast("Record was removed elsewhere — changes not saved.","error");closeModal();render();return}p.name=name;p.discord=document.getElementById("mf-disc").value;p.rank=document.getElementById("mf-rank").value;p.status=document.getElementById("mf-status").value;p.notes=document.getElementById("mf-notes").value;p.tags=tags;addLog("Member Edited",name)}else{D.p.push({id:uid(),name,discord:document.getElementById("mf-disc").value,rank:document.getElementById("mf-rank").value,joinDate:new Date().toISOString().slice(0,10),notes:document.getElementById("mf-notes").value,status:document.getElementById("mf-status").value,tags,guildId:currentGuildId});addLog("Member Added",name)}persist();closeModal();render();toast(e.id?"Updated!":"Added!")}),0)})}
+function modalPlayer(e){if(!hasPerm(currentUser,'manage_members'))return;e=e||{};openModal(e.id?"Edit Member":"Add Member",body=>{const tH=currentGuildCfg().tags.map(t=>`<label style="display:inline-flex;align-items:center;gap:4px;margin:3px;cursor:pointer;font-size:12px"><input type="checkbox" class="tag-cb" value="${esc(t)}"${(e.tags||[]).includes(t)?" checked":""}>${esc(t)}</label>`).join("");body.innerHTML=`<div class="fg"><label class="fl">Name *</label><input class="inp" id="mf-name" value="${esc(e.name||"")}"></div><div class="fg"><label class="fl">Discord</label><input class="inp" id="mf-disc" value="${esc(e.discord||"")}"></div><div class="fg"><label class="fl">Rank</label><select class="inp" id="mf-rank">${currentGuildCfg().ranks.map(r=>`<option${(e.rank||currentGuildCfg().ranks[currentGuildCfg().ranks.length-1])===r?" selected":""}>${esc(r)}</option>`).join("")}</select></div><div class="fg"><label class="fl">Status</label><select class="inp" id="mf-status"><option${(e.status||"Active")==="Active"?" selected":""}>Active</option><option${e.status==="Inactive"?" selected":""}>Inactive</option></select></div><div class="fg"><label class="fl">Recruitment Stage</label><select class="inp" id="mf-stage">${RECRUIT_STAGES.map(s=>`<option value="${s.k}"${stageOf(e)===s.k?" selected":""}>${s.l}</option>`).join("")}</select></div><div class="fg"><label class="fl">Main account <span style="color:var(--tm);font-weight:400">(set if this is an alt)</span></label><select class="inp" id="mf-main"><option value="">— None (this is a main) —</option>${mainCandidates(e).map(c=>`<option value="${c.id}"${e.mainId===c.id?" selected":""}>${esc(c.name||"")}</option>`).join("")}</select></div><div class="fg"><label class="fl">Tags</label><div>${tH||'<span style="color:var(--tm);font-size:12px">Add tags in Settings</span>'}</div></div><div class="fg"><label class="fl">Notes</label><textarea class="inp" id="mf-notes" maxlength="2000">${esc(e.notes||"")}</textarea></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-save">${e.id?"Save":"Add"}</button></div>`;setTimeout(()=>document.getElementById("mf-save").addEventListener("click",()=>{const name=document.getElementById("mf-name").value.trim();if(!name){toast("Name required","error");return}const tags=[...document.querySelectorAll(".tag-cb:checked")].map(c=>c.value);if(e.id){const p=D.p.find(x=>x.id===e.id);if(!p){toast("Record was removed elsewhere — changes not saved.","error");closeModal();render();return}p.name=name;p.discord=document.getElementById("mf-disc").value;p.rank=document.getElementById("mf-rank").value;p.status=document.getElementById("mf-status").value;p.notes=document.getElementById("mf-notes").value;p.tags=tags;p.recruitStage=document.getElementById("mf-stage").value;p.mainId=document.getElementById("mf-main").value||null;addLog("Member Edited",name)}else{D.p.push({id:uid(),name,discord:document.getElementById("mf-disc").value,rank:document.getElementById("mf-rank").value,joinDate:new Date().toISOString().slice(0,10),notes:document.getElementById("mf-notes").value,status:document.getElementById("mf-status").value,tags,recruitStage:document.getElementById("mf-stage").value,mainId:document.getElementById("mf-main").value||null,guildId:currentGuildId});addLog("Member Added",name)}persist();closeModal();render();toast(e.id?"Updated!":"Added!")}),0)})}
 
 function modalGenerateInvite(){
   if(!hasPerm(currentUser,'manage_invites'))return;
@@ -5981,10 +6273,16 @@ if(!craftItems.length){
 // Craft-data save helpers. Silent when not signed in (boot-time seed writes are
 // expected to fail in that state — seed data re-applies from constants on every load).
 function _quietSaveFail(name){return e=>{if(e.code==="NO_TOKEN")return;console.error(name+" failed:",e);};}
-function saveCraftItems(){if(!loadAuthToken())return;_pushToKV("gv_custom_items",craftItems).catch(_quietSaveFail("saveCraftItems"));}
-function saveCraftSkillXpTables(){if(!loadAuthToken())return;_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(_quietSaveFail("saveCraftSkillXpTables"));}
-function savePlayerXpTable(){if(!loadAuthToken())return;_pushToKV("gv_player_xp_table",playerXpTable).catch(_quietSaveFail("savePlayerXpTable"));}
-function saveCraftResources(){if(!loadAuthToken())return;_pushToKV("gv_resources",craftResources).catch(_quietSaveFail("saveCraftResources"));}
+function saveCraftItems(){
+  saveLocalSnapshot();// durable local copy first — survives refresh even with no auth/cloud
+  // Surface real cloud failures (but not when running locally, where the local copy is
+  // the source of truth) so hosted users aren't left thinking a write went through.
+  if(!loadAuthToken()){if(!isLocalMode()){try{_showSaveErrorIndicator();}catch(e){}}return;}
+  return _pushToKV("gv_custom_items",craftItems).catch(e=>{_quietSaveFail("saveCraftItems")(e);if(e&&e.code!=="NO_TOKEN"&&!isLocalMode()){try{_showSaveErrorIndicator();}catch(_){}}});
+}
+function saveCraftSkillXpTables(){saveLocalSnapshot();if(!loadAuthToken())return;_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(_quietSaveFail("saveCraftSkillXpTables"));}
+function savePlayerXpTable(){saveLocalSnapshot();if(!loadAuthToken())return;_pushToKV("gv_player_xp_table",playerXpTable).catch(_quietSaveFail("savePlayerXpTable"));}
+function saveCraftResources(){saveLocalSnapshot();if(!loadAuthToken())return;_pushToKV("gv_resources",craftResources).catch(_quietSaveFail("saveCraftResources"));}
 const normRecipeName=name=>(name||"").trim().toLowerCase();
 function removeRecipeIdsFromPlayers(ids){
   const idSet=new Set((ids||[]).map(String));
@@ -6011,7 +6309,9 @@ function syncRecipeEntryFromVendorItem(vi){
   const existing=craftItems.find(i=>i.isRecipe&&normRecipeName(i.name)===normRecipeName(name));
   if(existing){
     let changed=false;
-    if(!existing.vendorSynced){existing.vendorSynced=true;changed=true;}
+    // Do NOT flag a pre-existing recipe as vendorSynced. Recipes added in the Recipe
+    // Database must survive even if the shop entry that references them is deleted —
+    // only recipes auto-created from a shop entry (below) are purgeable.
     if((!existing.skill||existing.skill==="other")&&inferredSkill!=="other"){existing.skill=inferredSkill;changed=true;}
     if((!existing.requiredLevel||existing.requiredLevel<=1)&&inferredLevel>1){existing.requiredLevel=inferredLevel;changed=true;}
     if((!existing.craftTimeSeconds||existing.craftTimeSeconds<30)&&inferredTime>=30){existing.craftTimeSeconds=inferredTime;changed=true;}
@@ -6040,12 +6340,16 @@ function isCraftedItem(name){const item=findItemByName(name);return item&&!item.
 
 // Memoized XP-to-level cache — invalidated when skill tables change
 const _xpCache={};
-(function syncVendorRecipesOnLoad(){
+// Fold every Item-Shop recipe (vendorItems with itemType "Recipe") into the
+// shared recipe catalog, deduped by normalized name, and drop vendor-synced
+// recipes whose shop entry is gone. Must run AFTER KV data loads (see initKvSync) —
+// at script-parse time D.vendorItems/craftItems are still empty.
+function syncVendorRecipesOnLoad(){
   let changed=false;
   D.vendorItems.forEach(vi=>{if(syncRecipeEntryFromVendorItem(vi))changed=true;});
   if(purgeMissingVendorSyncedRecipes())changed=true;
   if(changed)saveCraftItems();
-})();
+}
 function craftGetXPForLevel(lv,skill){
   if(lv<=1)return 0;
   const key=(skill||"")+":"+lv;
@@ -6190,60 +6494,11 @@ function craftFmtNum(n){if(n>=1e6)return(n/1e6).toFixed(1)+"M";if(n>=1e3)return(
 function pgShopSearch(){
   const q=(window._shopSearchQ||"").toLowerCase().trim();
   const cityFilter=window._shopCityFilter||"all";
-  let results=[];
-  if(q.length>=2){
-    D.vendorItems.forEach(vi=>{
-      if(!vi.itemName.toLowerCase().includes(q))return;
-      const vendor=D.vendors.find(v=>v.id===vi.vendorId);
-      const city=vendor?D.cities.find(c=>c.id===vendor.cityId):null;
-      if(cityFilter!=="all"&&(!city||city.id!==cityFilter))return;
-      const typeFilter=window._shopTypeFilter||"all";
-      if(typeFilter!=="all"&&vi.itemType!==typeFilter)return;
-      results.push({vi,vendor,city});
-    });
-  }
   const totalCities=D.cities.length,totalVendors=D.vendors.length,totalItems=D.vendorItems.length;
   let h=`<div class="ph"><div class="pt">Item Search</div></div>`;
   h+=`<div class="cg" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-bottom:16px">${stat("Cities",totalCities,"var(--ac)")}${stat("Vendors",totalVendors,"var(--blu)")}${stat("Items Tracked",totalItems,"var(--grn)")}</div>`;
   h+=`<div class="card" style="margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="sb" style="flex:1;min-width:200px"><span style="color:var(--tm)">🔍</span><input id="shop-search-input" type="text" placeholder="Search for an item, recipe, or resource..." value="${esc(window._shopSearchQ||"")}" autocomplete="off"></div><select class="inp" id="shop-city-filter" style="width:160px"><option value="all">All Cities</option>${D.cities.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}"${cityFilter===c.id?" selected":""}>${esc(c.name||"")}</option>`).join("")}</select><select class="inp" id="shop-type-filter" style="width:130px"><option value="all">All Types</option>${SHOP_ITEM_TYPES.map(t=>`<option value="${t}"${(window._shopTypeFilter||"all")===t?" selected":""}>${t}</option>`).join("")}</select></div>${q.length>0&&q.length<2?`<div style="font-size:11px;color:var(--tm);margin-top:8px">Type at least 2 characters to search</div>`:""}</div>`;
-  h+=`<div id="shop-results">`;
-  if(q.length>=2){
-    if(!results.length){
-      h+=`<div class="card">${empty("🔍","No results found",`No vendors sell "${esc(q)}"${cityFilter!=="all"?" in this city":""}.`)}</div>`;
-    }else{
-      h+=`<div style="font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${results.length} result${results.length!==1?"s":""} for "${esc(q)}"</div>`;
-      const byCityId={};
-      results.forEach(r=>{const cid=r.city?.id||"unknown";if(!byCityId[cid])byCityId[cid]=[];byCityId[cid].push(r);});
-      Object.values(byCityId).forEach(group=>{
-        const city=group[0].city;
-        h+=`<div class="card" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd)"><span style="font-size:16px">🏘️</span><div><div style="font-weight:600;font-size:14px">${city?esc(city.name||""):"Unknown City"}</div>${city?.region?`<div style="font-size:11px;color:var(--tm)">${esc(city.region)}</div>`:""}</div></div>`;
-        const byVendor={};
-        group.forEach(r=>{const vid=r.vendor?.id||"?";if(!byVendor[vid])byVendor[vid]=[];byVendor[vid].push(r);});
-        Object.values(byVendor).forEach(vgroup=>{
-          const vendor=vgroup[0].vendor;
-          h+=`<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:12px">🧑‍💼</span><span style="font-weight:600;font-size:12px;color:var(--t2)">${vendor?esc(vendor.name||""):"Unknown Vendor"}</span>${vendor?.type?`<span class="badge bac" style="font-size:10px">${esc(vendor.type)}</span>`:""}</div>`;
-          vgroup.forEach(r=>{
-            const vi=r.vi;
-            h+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;margin-bottom:4px">${shopTypeTag(vi.itemType)}<div style="font-weight:500;font-size:13px;flex:1">${esc(vi.itemName||"")}</div><div style="font-size:13px;font-weight:600;color:var(--org);white-space:nowrap">${vi.price>0?vi.price.toLocaleString()+" "+esc(vi.currency||"g"):"Free"}</div>${vi.notes?`<div style="font-size:11px;color:var(--tm);white-space:nowrap">${esc(vi.notes)}</div>`:""}</div>`;
-          });
-          h+=`</div>`;
-        });
-        h+=`</div>`;
-      });
-    }
-  }else{
-    if(!D.cities.length){
-      h+=`<div class="card">${empty("🏘️","No cities added yet","Ask an admin or contributor to add cities and vendors.")}</div>`;
-    }else{
-      h+=`<div style="font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Browse by City</div>`;
-      D.cities.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(city=>{
-        const cityVendors=D.vendors.filter(v=>v.cityId===city.id);
-        const cityItems=D.vendorItems.filter(vi=>cityVendors.some(v=>v.id===vi.vendorId));
-        h+=`<div class="card" style="margin-bottom:8px;cursor:pointer;transition:border-color .15s" id="city-browse-${city.id}"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">🏘️</span><div style="flex:1"><div style="font-weight:600;font-size:13px">${esc(city.name||"")}</div>${city.region?`<div style="font-size:11px;color:var(--tm)">${esc(city.region)}</div>`:""}</div><div style="text-align:right"><div style="font-size:12px;color:var(--ac);font-weight:600">${cityVendors.length} vendor${cityVendors.length!==1?"s":""}</div><div style="font-size:11px;color:var(--tm)">${cityItems.length} items</div></div></div></div>`;
-      });
-    }
-  }
-  h+=`</div>`;// end #shop-results
+  h+=`<div id="shop-results">`+shopBuildResults()+`</div>`;// rendered by shopBuildResults (single source of truth)
   return h;
 }
 
@@ -6324,15 +6579,19 @@ if(!canManageDatabase())return;e=e||{};
 function modalShopItem(e,vendorId){
 if(!canManageDatabase())return;e=e||{};
   const vid=vendorId||e.vendorId;
+  // Map of recipe-database recipes by lowercased name, so picking one in the shop
+  // form auto-links it (type → Recipe) and shows its skill/level data.
+  const recipeByLc=new Map(craftItems.filter(i=>i.isRecipe).map(i=>[i.name.toLowerCase(),i]));
   const knownItems=[...new Set([...craftItems.map(i=>i.name),...D.vendorItems.map(i=>i.itemName)])].sort();
   openModal(e.id?"Edit Item":"Add Item",body=>{
     const curPType=e.priceType||"currency";
     const cOpts=[{v:"currency",l:"💰 Currency"},{v:"tokens",l:"🎟️ Valley Tokens"},{v:"champions",l:"🏆 Champions Guild Tokens"},{v:"frontier",l:"🌄 Frontier Pass Tokens"},{v:"contribution",l:"⭐ Contribution Points"},{v:"free",l:"🆓 Free"}];
-    body.innerHTML=`<datalist id="shop-item-dl">${knownItems.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    body.innerHTML=`<datalist id="shop-item-dl">${knownItems.map(n=>{const r=recipeByLc.get(n.toLowerCase());return `<option value="${esc(n)}">${r?"📜 "+esc(SKILL_NAMES[r.skill]||r.skill||"Recipe"):""}</option>`;}).join("")}</datalist>
       <div style="display:grid;grid-template-columns:1fr 160px;gap:8px">
         <div class="fg"><label class="fl">Item Name *</label><input class="inp" id="mf-si-name" value="${esc(e.itemName||"")}" placeholder="e.g., Iron Sword Recipe" list="shop-item-dl" autocomplete="off"></div>
         <div class="fg"><label class="fl">Item Type</label><select class="inp" id="mf-si-type"><option value="">— None —</option>${SHOP_ITEM_TYPES.map(t=>`<option value="${t}"${(e.itemType||"")===(t)?" selected":""}>${t}</option>`).join("")}</select></div>
       </div>
+      <div id="mf-si-recipe-hint" style="display:none;font-size:11px;color:var(--ac);background:var(--acg);border:1px solid rgba(127,109,242,.3);border-radius:4px;padding:6px 10px;margin-bottom:10px"></div>
       <div class="fg"><label class="fl">Price Type</label><div style="display:flex;gap:6px;flex-wrap:wrap" id="mf-si-ptype-row">${cOpts.map(o=>`<label style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--bgi);border:2px solid ${curPType===o.v?"var(--ac)":"var(--bd)"};border-radius:4px;cursor:pointer;font-size:12px;user-select:none" class="mf-si-ptype" data-val="${o.v}"><input type="radio" name="mf-si-ptype" value="${o.v}"${curPType===o.v?" checked":""} style="display:none">${o.l}</label>`).join("")}</div></div>
       <div id="mf-si-currency-fields" style="${curPType==="currency"?"":"display:none"}">
         <div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Currency Amounts</div>
@@ -6348,6 +6607,29 @@ if(!canManageDatabase())return;e=e||{};
       </div>
       <div class="fg"><label class="fl">Notes</label><input class="inp" id="mf-si-notes" value="${esc(e.notes||"")}" placeholder="e.g., Requires reputation, limited stock..."></div>
       <div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="mf-si-save">${e.id?"Save":"Add Item"}</button></div>`;
+    // Recipe linkage: when the typed/selected name matches a recipe in the database,
+    // auto-set the type to "Recipe" and show its skill/level info.
+    setTimeout(()=>{
+      const nameInput=document.getElementById("mf-si-name");
+      const typeSelect=document.getElementById("mf-si-type");
+      const recipeHint=document.getElementById("mf-si-recipe-hint");
+      const checkRecipe=()=>{
+        const r=recipeByLc.get((nameInput?.value||"").trim().toLowerCase());
+        if(r){
+          // Only auto-set the type if the user hasn't chosen one yet.
+          if(typeSelect&&!typeSelect.value)typeSelect.value="Recipe";
+          if(recipeHint){
+            recipeHint.style.display="block";
+            recipeHint.innerHTML=`📜 Linked to recipe database — <strong>${esc(SKILL_NAMES[r.skill]||r.skill||"")}</strong> • Min Lv ${r.requiredLevel||1}${r.maxLevel?` • Max Lv ${r.maxLevel}`:""}`;
+          }
+        }else if(recipeHint){
+          recipeHint.style.display="none";
+        }
+      };
+      nameInput?.addEventListener("input",checkRecipe);
+      nameInput?.addEventListener("change",checkRecipe);
+      checkRecipe();
+    },0);
     // Price type toggle
     setTimeout(()=>{
       body.querySelectorAll(".mf-si-ptype").forEach(lbl=>{
@@ -6498,7 +6780,7 @@ function getCraftItemDuplicateGroups(){
   craftItems.forEach((item,idx)=>{
     const key=(item.name||"").toLowerCase().trim()+"||"+
       (item.isRecipe?"recipe":item.isResource?"resource":item.isFood?"food":item.isPotion?"potion":"craft")+"||"+
-      (item.skill||"");
+      (item.isRecipe?"":(item.skill||""));// recipes are unique by name alone, regardless of skill
     if(!groups[key])groups[key]={key,name:item.name||"",entries:[]};
     groups[key].entries.push({item,idx});
   });
@@ -6854,24 +7136,35 @@ if(!canManageDatabase())return;
 function shopBuildResults(){
   const q=(window._shopSearchQ||"").toLowerCase().trim();
   const cityFilter=window._shopCityFilter||"all";
+  const typeFilter=window._shopTypeFilter||"all";
+  // "Browse mode": no search query, but a type and/or city filter is active.
+  // Lets users pick a type (e.g. Recipe) and list every matching item in the DB.
+  const browseMode=q.length<2&&(typeFilter!=="all"||cityFilter!=="all");
+  const listMode=q.length>=2||browseMode;
   let results=[];
-  if(q.length>=2){
+  if(listMode){
     D.vendorItems.forEach(vi=>{
-      if(!vi.itemName.toLowerCase().includes(q))return;
+      if(q.length>=2&&!vi.itemName.toLowerCase().includes(q))return;
       const vendor=D.vendors.find(v=>v.id===vi.vendorId);
       const city=vendor?D.cities.find(c=>c.id===vendor.cityId):null;
       if(cityFilter!=="all"&&(!city||city.id!==cityFilter))return;
-      const typeFilter=window._shopTypeFilter||"all";
       if(typeFilter!=="all"&&vi.itemType!==typeFilter)return;
       results.push({vi,vendor,city});
     });
+    results.sort((a,b)=>(a.vi.itemName||"").localeCompare(b.vi.itemName||""));
   }
   let h="";
-  if(q.length>=2){
+  if(listMode){
     if(!results.length){
-      h+=`<div class="card">${empty("🔍","No results found",`No vendors sell "${esc(q)}"${cityFilter!=="all"?" in this city":""}.`)}</div>`;
+      const desc=q.length>=2
+        ?`No vendors sell "${esc(q)}"${cityFilter!=="all"?" in this city":""}.`
+        :`No ${typeFilter!=="all"?esc(typeFilter.toLowerCase())+" ":""}items found${cityFilter!=="all"?" in this city":""}.`;
+      h+=`<div class="card">${empty("🔍","No results found",desc)}</div>`;
     }else{
-      h+=`<div style="font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${results.length} result${results.length!==1?"s":""} for "${esc(q)}"</div>`;
+      const heading=q.length>=2
+        ?`${results.length} result${results.length!==1?"s":""} for "${esc(q)}"`
+        :`${results.length} ${typeFilter!=="all"?esc(typeFilter):"item"}${results.length!==1?"s":""}${cityFilter!=="all"?" in this city":""}`;
+      h+=`<div style="font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${heading}</div>`;
       const byCityId={};
       results.forEach(r=>{const cid=r.city?.id||"unknown";if(!byCityId[cid])byCityId[cid]=[];byCityId[cid].push(r);});
       Object.values(byCityId).forEach(group=>{
@@ -6917,9 +7210,9 @@ function shopUpdateResults(){
       window._shopCityFilter=el.id.replace("city-browse-","");
       const sel=document.getElementById("shop-city-filter");
       if(sel)sel.value=window._shopCityFilter;
-      window._shopSearchQ=" ";
+      window._shopSearchQ="";
       const inp=document.getElementById("shop-search-input");
-      if(inp)inp.value=" ";
+      if(inp)inp.value="";
       shopUpdateResults();
     });
   });
@@ -6993,7 +7286,7 @@ function initShopBindings(){
     shopUpdateResults();
   });
   document.querySelectorAll("[id^='city-browse-']").forEach(el=>{
-    el.addEventListener("click",()=>{window._shopCityFilter=el.id.replace("city-browse-","");window._shopSearchQ=" ";render();});
+    el.addEventListener("click",()=>{window._shopCityFilter=el.id.replace("city-browse-","");window._shopSearchQ="";render();});
   });
   document.querySelectorAll(".shop-city-row").forEach(row=>{
     row.addEventListener("click",e=>{if(e.target.closest("button"))return;window._shopSelCity=row.dataset.cityId;window._shopSelVendor=null;render();});
@@ -7783,7 +8076,84 @@ function pgCraftResCalc(){
   return h;
 }
 
-function pgCraftItemDB(){
+// Recipe Database is the same page in "recipes" mode — recipes only, no items.
+function pgRecipeDB(){ return pgCraftItemDB('recipes'); }
+// A recipe is "incomplete" when a required parameter is still blank. Returns the
+// list of missing field labels (empty = fully filled out).
+function recipeMissingFields(item){
+  if(!item||!item.isRecipe)return [];
+  const missing=[];
+  if(!item.skill||!SKILL_NAMES[item.skill])missing.push("Skill");
+  if(!item.requiredLevel||item.requiredLevel<1)missing.push("Min Level");
+  if(!item.maxLevel||item.maxLevel<1)missing.push("Max XP Level");
+  return missing;
+}
+// Reconcile the Item Shop with the Recipe Database: find shop entries that are
+// recipes (typed "Recipe", or whose name contains "recipe") but have no matching
+// recipe-database entry, and let the user import them with a skill category.
+function modalImportShopRecipes(){
+  if(!canManageDatabase())return;
+  const existingNames=new Set(craftItems.filter(i=>i.isRecipe).map(i=>normRecipeName(i.name)));
+  const byNorm=new Map();
+  D.vendorItems.forEach(vi=>{
+    const nm=(vi.itemName||"").trim();
+    if(!nm)return;
+    const norm=normRecipeName(nm);
+    if(existingNames.has(norm))return; // already in the recipe DB
+    const typed=vi.itemType==="Recipe";
+    const looksLikeRecipe=nm.toLowerCase().includes("recipe");
+    if(!typed&&!looksLikeRecipe)return;
+    if(!byNorm.has(norm)){
+      const crafted=craftItems.find(i=>!i.isRecipe&&!i.isResource&&normRecipeName(i.name)===norm);
+      byNorm.set(norm,{name:nm,norm,typed,inferredSkill:crafted?.skill||"other",viIds:[]});
+    }
+    const c=byNorm.get(norm);
+    c.viIds.push(vi.id);
+    if(typed)c.typed=true;
+  });
+  const candidates=[...byNorm.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  openModal("Import Recipes from Item Shop",body=>{
+    if(!candidates.length){
+      body.innerHTML=`<div style="text-align:center;padding:24px 16px"><div style="font-size:30px;margin-bottom:10px">✅</div><div style="font-weight:600;margin-bottom:6px">Nothing to import</div><div style="font-size:12px;color:var(--tm)">Every recipe sold in the Item Shop is already in the Recipe Database.</div></div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Close</button></div>`;
+      return;
+    }
+    const skillSel=(sel)=>Object.entries(SKILL_NAMES).map(([k,v])=>`<option value="${k}"${k===sel?" selected":""}>${v}</option>`).join("");
+    let h=`<div style="font-size:12px;color:var(--tm);margin-bottom:12px">Found <strong style="color:var(--t1)">${candidates.length}</strong> shop ${candidates.length===1?"entry":"entries"} not in the Recipe Database. Pick a skill category for each and import. Imported recipes are also tagged as "Recipe" in the shop so they stay linked.</div>`;
+    h+=`<div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px" id="imp-list">`;
+    candidates.forEach((c,i)=>{
+      h+=`<label style="display:grid;grid-template-columns:auto 1fr 170px;gap:8px;align-items:center;padding:8px 10px;background:var(--bgi);border:1px solid var(--bd);border-radius:4px;cursor:pointer">
+        <input type="checkbox" class="imp-chk" data-i="${i}" checked style="width:14px;height:14px;accent-color:var(--ac)">
+        <div style="min-width:0"><div style="font-size:13px;font-weight:600">📜 ${esc(c.name)}</div><div style="font-size:10px;color:${c.typed?"var(--tm)":"var(--org)"}">${c.typed?"Shop type: Recipe":"⚠ Not typed as Recipe — matched by name"}</div></div>
+        <select class="inp imp-skill" data-i="${i}" style="font-size:12px" onclick="event.stopPropagation()">${skillSel(c.inferredSkill!=="other"?c.inferredSkill:"weapon_forging")}</select>
+      </label>`;
+    });
+    h+=`</div>`;
+    h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px"><div><button class="btn bg bs" id="imp-all">Select All</button><button class="btn bg bs" id="imp-none">Select None</button></div><div class="actions" style="margin:0"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="imp-do">Import Selected</button></div></div>`;
+    body.innerHTML=h;
+    body.querySelector("#imp-all")?.addEventListener("click",()=>body.querySelectorAll(".imp-chk").forEach(c=>c.checked=true));
+    body.querySelector("#imp-none")?.addEventListener("click",()=>body.querySelectorAll(".imp-chk").forEach(c=>c.checked=false));
+    body.querySelector("#imp-do")?.addEventListener("click",()=>{
+      const checks=[...body.querySelectorAll(".imp-chk:checked")];
+      if(!checks.length){toast("Select at least one recipe","error");return;}
+      let added=0,n=0;
+      checks.forEach(chk=>{
+        const i=parseInt(chk.dataset.i);const c=candidates[i];if(!c)return;
+        // Final dedupe guard so we never create a second entry.
+        if(craftItems.some(it=>it.isRecipe&&normRecipeName(it.name)===c.norm))return;
+        const skill=body.querySelector(`.imp-skill[data-i="${i}"]`)?.value||"other";
+        craftItems.push({id:Date.now()+(n++),name:c.name,isRecipe:true,isResource:false,skill,requiredLevel:1,maxLevel:null,materials:{},xpByLevel:{},baseXP:0,craftTimeSeconds:0});
+        added++;
+        // Tag the shop entries as "Recipe" so future syncs keep them linked.
+        c.viIds.forEach(id=>{const vi=D.vendorItems.find(v=>v.id===id);if(vi&&vi.itemType!=="Recipe")vi.itemType="Recipe";});
+      });
+      if(added){saveCraftItems();persist();addLog("Recipes Imported",`${added} from shop`);}
+      closeModal();render();toast(added?`Imported ${added} recipe${added!==1?"s":""} from the shop!`:"Those recipes already exist");
+    });
+  });
+}
+function pgCraftItemDB(mode){
+  const recipeMode=mode==='recipes';
+  window._cdbMode=recipeMode?'recipes':'items';
   const skillOpts=Object.entries(SKILL_NAMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   // Combine all items as material options
   const allMats=craftItems.filter(i=>!i.isRecipe).map(i=>{
@@ -7791,30 +8161,30 @@ function pgCraftItemDB(){
     return{name:i.name,type:i.isResource?(hasMats?'processed':'resource'):'craft'};
   }).sort((a,b)=>a.name.localeCompare(b.name));
   const matOpts=allMats.map(m=>`<option value="${m.name}">${m.name}${m.type==='craft'?' [Crafted]':m.type==='processed'?' [Processed]':''}</option>`).join("");
-  let h=`<div class="ph"><div class="pt">Item & Resource Database</div>${canManageDatabase()?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:""}</div>`;
+  let h=`<div class="ph"><div class="pt">${recipeMode?"Recipe Database":"Item & Resource Database"}</div>${(!recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:(recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="recipe-import-shop-btn">🔄 Import from Item Shop</button></div>`:""}</div>`;
   // Add/Edit form
   if(canManageDatabase()){
     h+=`<div class="card" style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Add / Edit Entry</div>`;
     // Type toggle
-    h+=`<div class="fg" style="margin-bottom:10px"><label class="fl">Entry Type</label><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">`;
-    h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid var(--ac);border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="craft" id="cdb-type-craft"><input type="radio" name="cdb-type" value="craft" checked style="display:none"><span style="font-weight:500;font-size:12px">⚒️ Crafted Item</span></label>`;
+    h+=`<div class="fg" style="margin-bottom:10px${recipeMode?";display:none":""}"><label class="fl">Entry Type</label><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">`;
+    h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid ${recipeMode?"var(--bd)":"var(--ac)"};border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="craft" id="cdb-type-craft"><input type="radio" name="cdb-type" value="craft"${recipeMode?"":" checked"} style="display:none"><span style="font-weight:500;font-size:12px">⚒️ Crafted Item</span></label>`;
     h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid var(--bd);border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="resource" id="cdb-type-resource"><input type="radio" name="cdb-type" value="resource" style="display:none"><span style="font-weight:500;font-size:12px">🪨 Resource</span></label>`;
-    h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid var(--bd);border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="recipe" id="cdb-type-recipe"><input type="radio" name="cdb-type" value="recipe" style="display:none"><span style="font-weight:500;font-size:12px">📜 Recipe</span></label>`;
+    h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid ${recipeMode?"var(--ac)":"var(--bd)"};border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="recipe" id="cdb-type-recipe"><input type="radio" name="cdb-type" value="recipe"${recipeMode?" checked":""} style="display:none"><span style="font-weight:500;font-size:12px">📜 Recipe</span></label>`;
     h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid var(--bd);border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="food" id="cdb-type-food"><input type="radio" name="cdb-type" value="food" style="display:none"><span style="font-weight:500;font-size:12px">🍖 Food</span></label>`;
     h+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bgi);border:2px solid var(--bd);border-radius:4px;cursor:pointer;flex:1" class="cdb-type-opt" data-type="potion" id="cdb-type-potion"><input type="radio" name="cdb-type" value="potion" style="display:none"><span style="font-weight:500;font-size:12px">⚗️ Potion</span></label>`;
     h+=`</div></div>`;
     // Name
     h+=`<div class="fg"><label class="fl">Name</label><input class="inp" id="cdb-name" placeholder="e.g., Iron Longsword or Leather"></div>`;
     // Crafted item fields
-    h+=`<div id="cdb-craft-fields"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Required Level</label><input class="inp" type="number" id="cdb-reqlv" min="1" max="100" value="1"></div><div class="fg"><label class="fl">Craft Time (sec)</label><input class="inp" type="number" id="cdb-time" min="1" value="5"></div></div></div>`;
+    h+=`<div id="cdb-craft-fields"${recipeMode?' style="display:none"':''}><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Required Level</label><input class="inp" type="number" id="cdb-reqlv" min="1" max="100" value="1"></div><div class="fg"><label class="fl">Craft Time (sec)</label><input class="inp" type="number" id="cdb-time" min="1" value="5"></div></div></div>`;
     // Recipe-only fields (shown when type=recipe)
-    h+=`<div id="cdb-recipe-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-recipe-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Minimum Level</label><input class="inp" type="number" id="cdb-recipe-minlv" min="1" max="100" value="1"></div></div></div>`;
+    h+=`<div id="cdb-recipe-fields" style="${recipeMode?'':'display:none'}"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-recipe-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Min Level (craft)</label><input class="inp" type="number" id="cdb-recipe-minlv" min="1" max="100" value="1"></div><div class="fg"><label class="fl">Max Level (XP)</label><input class="inp" type="number" id="cdb-recipe-maxlv" min="1" max="100" placeholder="e.g. 100"></div></div></div>`;
     // Food fields (shown when type=food)
     h+=`<div id="cdb-food-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px"><div class="fg"><label class="fl">Nourishment Value</label><input class="inp" type="number" id="cdb-food-nourishment" min="0" placeholder="e.g. 300"></div><div class="fg"><label class="fl">Food Quality (1-10)</label><input class="inp" type="number" id="cdb-food-quality" min="1" max="10" placeholder="e.g. 6"></div><div class="fg"><label class="fl">Time to Cold (min)</label><input class="inp" type="number" id="cdb-food-cold" min="0" placeholder="e.g. 240"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-food-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Min Crafting Level</label><input class="inp" type="number" id="cdb-food-minlv" min="0" max="100" value="0"></div></div></div>`;
     // Potion fields (shown when type=potion)
     h+=`<div id="cdb-potion-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div class="fg"><label class="fl">Skill Type</label><select class="inp" id="cdb-pot-skill">${skillOpts}</select></div><div class="fg"><label class="fl">Min Crafting Level</label><input class="inp" type="number" id="cdb-pot-minlv" min="0" max="100" value="0"></div></div><div style="font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⚗️ Effects</div><div id="cdb-effect-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div><div style="display:grid;grid-template-columns:1fr 80px 100px auto;gap:6px;align-items:center;margin-bottom:4px"><input class="inp" id="cdb-eff-name" placeholder="Effect name..." list="cdb-eff-list" style="font-size:12px"><datalist id="cdb-eff-list"></datalist><input class="inp" id="cdb-eff-strength" type="number" min="0" step="0.1" placeholder="%" style="font-size:12px;text-align:center" title="Strength %"><input class="inp" id="cdb-eff-duration" placeholder="e.g. 15 min" style="font-size:12px" title="Duration"><button class="btn bg bs" id="cdb-add-effect" style="font-size:11px;white-space:nowrap">+ Add</button></div><div style="font-size:10px;color:var(--tm)">Type a new effect name to create it, or pick one from the autocomplete list.</div></div>`;
     // Materials
-    h+=`<div id="cdb-mats-section"><div class="fg"><label class="fl">Materials <span style="font-weight:400;color:var(--tm)">(leave empty for raw resources)</span></label><div style="display:grid;grid-template-columns:1fr 70px auto;gap:6px;margin-bottom:4px;align-items:center"><select class="inp" id="cdb-mat-sel"><option value="">Select material...</option>${matOpts}</select><input class="inp" type="number" id="cdb-mat-qty" min="1" value="1" placeholder="Qty" style="text-align:center"><button class="btn bg bs" id="cdb-add-mat">+ Add</button></div><div style="font-size:10px;color:var(--tm);margin-bottom:8px">After adding, expand each material to add up to 4 alternate swap options with their own quantities.</div>`;
+    h+=`<div id="cdb-mats-section"${recipeMode?' style="display:none"':''}><div class="fg"><label class="fl">Materials <span style="font-weight:400;color:var(--tm)">(leave empty for raw resources)</span></label><div style="display:grid;grid-template-columns:1fr 70px auto;gap:6px;margin-bottom:4px;align-items:center"><select class="inp" id="cdb-mat-sel"><option value="">Select material...</option>${matOpts}</select><input class="inp" type="number" id="cdb-mat-qty" min="1" value="1" placeholder="Qty" style="text-align:center"><button class="btn bg bs" id="cdb-add-mat">+ Add</button></div><div style="font-size:10px;color:var(--tm);margin-bottom:8px">After adding, expand each material to add up to 4 alternate swap options with their own quantities.</div>`;
     h+=`<div id="cdb-mats-list" style="border:1px solid var(--bd);border-radius:4px;padding:6px;background:var(--bgi);min-height:32px">`;
     const mEntries=Object.entries(craftCurMats);
     if(!mEntries.length) h+=`<div style="color:var(--tm);font-size:11px;text-align:center;padding:6px">No materials added</div>`;
@@ -7829,7 +8199,7 @@ function pgCraftItemDB(){
     h+=`</div></div>`;
     h+=`</div>`;
     // XP Grid
-    h+=`<div id="cdb-xp-section" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px"><label class="fl" style="margin:0">XP Values (Lv 1-100)</label><div style="display:flex;gap:6px;align-items:center"><input class="inp" type="number" id="cdb-qbase" placeholder="Base XP" style="width:90px;padding:3px 6px"><input class="inp" type="number" id="cdb-qgrow" placeholder="Growth%" value="0" style="width:70px;padding:3px 6px"><button class="btn bg bs" id="cdb-qfill">Fill</button><button class="btn bg bs" id="cdb-qclear">Clear</button></div></div>`;
+    h+=`<div id="cdb-xp-section" style="margin-bottom:10px${recipeMode?";display:none":""}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px"><label class="fl" style="margin:0">XP Values (Lv 1-100)</label><div style="display:flex;gap:6px;align-items:center"><input class="inp" type="number" id="cdb-qbase" placeholder="Base XP" style="width:90px;padding:3px 6px"><input class="inp" type="number" id="cdb-qgrow" placeholder="Growth%" value="0" style="width:70px;padding:3px 6px"><button class="btn bg bs" id="cdb-qfill">Fill</button><button class="btn bg bs" id="cdb-qclear">Clear</button></div></div>`;
     h+=`<div style="font-size:10px;color:var(--tm);margin-bottom:8px;margin-top:-4px">Quick fill: Enter base XP, then growth %. 0% = flat XP.</div>`;
     h+=`<div style="max-height:250px;overflow-y:auto;border:1px solid var(--bd);border-radius:4px;background:var(--bgi);padding:2px"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:1px">`;
     for(let lv=1;lv<=100;lv++){h+=`<div style="display:flex;flex-direction:column;background:var(--bg2);padding:3px"><label style="font-size:9px;color:var(--blu)">Lv ${lv}</label><input class="inp cdb-xp" data-level="${lv}" type="number" min="0" placeholder="0" style="padding:2px 4px;font-size:11px;text-align:center"></div>`}
@@ -7878,22 +8248,28 @@ function pgCraftItemDB(){
     h+=`<div style="display:flex;gap:8px"><button class="btn bp" id="cdb-save" style="flex:2">💾 Save</button><button class="btn bg" id="cdb-clear">Clear Form</button></div>`;
     h+=`</div>`;
   }
+  // Incomplete-recipe flag: recipes missing skill, min level, or max XP level.
+  const _recipeIncomplete=recipeMode?craftItems.filter(i=>i.isRecipe&&recipeMissingFields(i).length).length:0;
+  if(recipeMode&&_recipeIncomplete>0){
+    h+=`<div class="card" style="margin-bottom:12px;border-color:var(--yl);background:var(--yld);display:flex;align-items:center;gap:10px"><span style="font-size:18px">⚠</span><div style="font-size:12px;color:var(--t2)"><strong style="color:var(--yl)">${_recipeIncomplete} recipe${_recipeIncomplete!==1?"s":""}</strong> still ${_recipeIncomplete!==1?"need":"needs"} details (skill, min level, or max XP level). Use the <strong>⚠ Needs Info</strong> filter below to review them.</div></div>`;
+  }
   // Saved entries list
   h+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em">Saved Entries</div><div style="display:flex;gap:6px;align-items:center"><div style="display:flex;gap:2px;flex-wrap:wrap;background:var(--bgi);border:1px solid var(--bd);border-radius:5px;padding:2px" id="cdb-type-btns">
   <button class="cdb-type-btn a" data-val="all" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--ac);color:#fff;font-family:inherit;transition:all .12s">All</button>
   ${Object.entries(SKILL_NAMES).map(([k,v])=>`<button class="cdb-type-btn" data-val="skill:${k}" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">${v}</button>`).join("")}
-  <button class="cdb-type-btn" data-val="resource" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">📦 Resources</button>
-  <button class="cdb-type-btn" data-val="recipe" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">📜 Recipes</button>
+  ${recipeMode?`<button class="cdb-type-btn" data-val="incomplete" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--yl);font-family:inherit;transition:all .12s">⚠ Needs Info${_recipeIncomplete?` (${_recipeIncomplete})`:""}</button>`:`<button class="cdb-type-btn" data-val="resource" style="padding:4px 10px;border-radius:3px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--tm);font-family:inherit;transition:all .12s">📦 Resources</button>`}
 </div></div></div>
   <div class="sb" style="margin-bottom:10px"><span style="color:var(--tm);padding:0 2px">🔍</span><input type="text" id="cdb-search-inp" placeholder="Search entries by name, skill, material…" autocomplete="off" value="${esc(window._cdbSearchQ||'')}"><button id="cdb-search-clear" style="display:${window._cdbSearchQ?'inline':'none'};background:none;border:none;color:var(--tm);cursor:pointer;font-size:11px;padding:0 4px" title="Clear search">✕</button></div>`;
   h+=`<div id="cdb-list">`;
   const _cdbQ=(window._cdbSearchQ||"").toLowerCase().trim();
-  const _itemsToShow=!craftItems.length?[]:craftItems.filter((item,idx)=>{
+  // Recipe Database shows only recipes; Item Database shows everything except recipes.
+  const _baseItems=craftItems.filter(item=>recipeMode?!!item.isRecipe:!item.isRecipe);
+  const _itemsToShow=_baseItems.filter(item=>{
     if(!_cdbQ)return true;
     const hay=[item.name,item.skill?SKILL_NAMES[item.skill]:"",item.isResource?"resource":"",item.isRecipe?"recipe":"",item.isFood?"food":"",item.isPotion?"potion":"",Object.keys(item.materials||{}).join(" ")].join(" ").toLowerCase();
     return hay.includes(_cdbQ);
   });
-  if(!craftItems.length) h+=`<div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">No entries saved yet.</div></div>`;
+  if(!_baseItems.length) h+=`<div class="empty"><div class="empty-ico">${recipeMode?"📜":"📦"}</div><div class="empty-sub">No ${recipeMode?"recipes":"entries"} saved yet.</div></div>`;
   else if(_cdbQ&&!_itemsToShow.length) h+=`<div class="empty"><div class="empty-ico">🔍</div><div class="empty-title">No results</div><div class="empty-sub">No entries match "${esc(_cdbQ)}"</div></div>`;
   else _itemsToShow.forEach((item)=>{const idx=craftItems.indexOf(item);
     const xpLvs=Object.keys(item.xpByLevel||{}).length;
@@ -7907,7 +8283,9 @@ function pgCraftItemDB(){
     }else if(item.isResource){
       h+=`<div class="cdb-entry" data-type="resource" data-skill="" style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 10px;background:var(--bgi);border:1px solid ${hasMats?'var(--blu)':'var(--bd)'};border-radius:4px;margin-bottom:4px"><div><div style="font-weight:600;font-size:13px">${esc(item.name||"")}${hasMats?' <span style="color:var(--blu);font-size:9px">⚙</span>':''}</div><div style="font-size:11px;color:var(--tm)">${hasMats?Object.entries(item.materials).map(([n,v])=>{const q=craftMatQty(v);const alts=craftMatAlts(v);return `${esc(n)} ×${q}`+(alts.length?` (or: ${alts.map(a=>esc(a.name)+' ×'+a.qty).join(', ')})`:'')}  ).join(', '):'Raw resource'}</div></div><span class="badge" style="background:var(--blu);color:#fff;white-space:nowrap">Resource</span><span style="font-size:11px;color:var(--grn)">${xpLvs} XP</span>${canManageDatabase()?`<div style="display:flex;gap:3px"><button class="btn bg bs cdb-edit" data-idx="${idx}">✎</button><button class="btn bd bs cdb-del" data-idx="${idx}">✕</button></div>`:""}</div>`;
     }else if(item.isRecipe){
-      h+=`<div class="cdb-entry" data-type="recipe" data-skill="${esc(item.skill||"")}" style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 10px;background:var(--bgi);border:1px solid var(--org);border-radius:4px;margin-bottom:4px"><div><div style="font-weight:600;font-size:13px">📜 ${esc(item.name||"")}</div><div style="font-size:11px;color:var(--tm)">Min Lv ${item.requiredLevel||1} • ${esc(SKILL_NAMES[item.skill]||item.skill||"")}</div></div><span class="badge bor" style="white-space:nowrap">Recipe</span>${canManageDatabase()?`<div style="display:flex;gap:3px"><button class="btn bg bs cdb-edit" data-idx="${idx}">✎</button><button class="btn bd bs cdb-del" data-idx="${idx}">✕</button></div>`:""}</div>`;
+      const miss=recipeMissingFields(item);
+      const incomplete=miss.length>0;
+      h+=`<div class="cdb-entry" data-type="recipe" data-skill="${esc(item.skill||"")}"${incomplete?' data-incomplete="1"':''} style="display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 10px;background:var(--bgi);border:1px solid ${incomplete?"var(--yl)":"var(--org)"};border-radius:4px;margin-bottom:4px"><div><div style="font-weight:600;font-size:13px">📜 ${esc(item.name||"")}${incomplete?` <span title="Needs: ${esc(miss.join(", "))}" style="color:var(--yl);font-size:11px">⚠</span>`:""}</div><div style="font-size:11px;color:var(--tm)">Min Lv ${item.requiredLevel||1}${item.maxLevel?` • Max Lv ${item.maxLevel}`:""} • ${esc(SKILL_NAMES[item.skill]||item.skill||"")}${incomplete?` <span style="color:var(--yl)">• Needs: ${esc(miss.join(", "))}</span>`:""}</div></div><span class="badge ${incomplete?"byl":"bor"}" style="white-space:nowrap">${incomplete?"⚠ Incomplete":"Recipe"}</span>${canManageDatabase()?`<div style="display:flex;gap:3px"><button class="btn bg bs cdb-edit" data-idx="${idx}">✎</button><button class="btn bd bs cdb-del" data-idx="${idx}">✕</button></div>`:""}</div>`;
     }else{
       // Build weapon stats snippet for display
       const ws=item.weaponStats;
@@ -8279,10 +8657,12 @@ function initCraftBindings(){
     const tm=document.getElementById("cdb-time");if(tm)tm.value=5;
     const rs=document.getElementById("cdb-recipe-skill");if(rs)rs.selectedIndex=0;
     const rml=document.getElementById("cdb-recipe-minlv");if(rml)rml.value=1;
+    const rmxl=document.getElementById("cdb-recipe-maxlv");if(rmxl)rmxl.value="";
     document.querySelectorAll(".cdb-xp").forEach(i=>i.value="");
     render();toast("Form cleared");
   });
-  ab("cdb-save",()=>{
+  ab("cdb-save",async()=>{
+    const _editItem=window._craftEditItem;
     window._craftEditItem=null;
     const name=document.getElementById("cdb-name")?.value.trim();
     const typeVal=document.querySelector('input[name="cdb-type"]:checked')?.value||'craft';
@@ -8297,12 +8677,51 @@ function initCraftBindings(){
     // Recipe-specific fields
     const recipeSkill=document.getElementById("cdb-recipe-skill")?.value;
     const recipeMinLv=parseInt(document.getElementById("cdb-recipe-minlv")?.value)||1;
+    const recipeMaxLv=parseInt(document.getElementById("cdb-recipe-maxlv")?.value)||0;
     if(isRecipeEntry){
-      // Only match existing recipes (not crafted items with same name)
-      const existing=craftItems.findIndex(i=>i.name.toLowerCase()===name.toLowerCase()&&i.isRecipe===true);
-      if(existing!==-1){if(!confirm(`Replace existing recipe "${name}"?`))return;craftItems.splice(existing,1)}
-      craftItems.push({id:Date.now(),name,isRecipe:true,isResource:false,skill:recipeSkill,requiredLevel:recipeMinLv,materials:{},xpByLevel:{},baseXP:0,craftTimeSeconds:0});
-      saveCraftItems();addLog("Recipe Added",name);render();toast(`"${name}" saved!`);return;
+      // Dedupe by normalized name (trim + case-insensitive) so the same recipe can
+      // never have two entries. If it already exists, update it in place — this keeps
+      // its id, preserving every player's "known recipe" tracking. No duplicate is made.
+      const norm=normRecipeName(name);
+      const existing=craftItems.find(i=>i.isRecipe&&normRecipeName(i.name)===norm);
+      let snapshot=null,target=null;
+      if(existing){
+        snapshot={...existing};
+        existing.name=name;existing.skill=recipeSkill;existing.requiredLevel=recipeMinLv;existing.maxLevel=recipeMaxLv||null;existing.isResource=false;
+        target=existing;
+      }else{
+        // Reuse the original id when editing an existing recipe (it was spliced out by the
+        // edit action) so the recipe keeps a stable identity across edits.
+        const recipeId=(_editItem&&_editItem.isRecipe)?_editItem.id:Date.now();
+        target={id:recipeId,name,isRecipe:true,isResource:false,skill:recipeSkill,requiredLevel:recipeMinLv,maxLevel:recipeMaxLv||null,materials:{},xpByLevel:{},baseXP:0,craftTimeSeconds:0};
+        craftItems.push(target);
+      }
+      // Always keep a durable local copy first so a refresh never loses the recipe.
+      saveLocalSnapshot();
+      if(isLocalMode()){
+        // Local-first: the local snapshot is the source of truth here. Try the cloud
+        // opportunistically (if signed in) but never block on it or roll back.
+        if(loadAuthToken())_pushToKV("gv_custom_items",craftItems).catch(()=>{});
+        addLog(existing?"Recipe Updated":"Recipe Added",name);render();
+        toast(existing?`"${name}" updated (saved locally).`:`"${name}" saved locally!`);return;
+      }
+      // Hosted: persist to the cloud and WAIT for confirmation before clearing the form,
+      // so a failed/expired-session write can never silently lose the recipe. On failure
+      // we roll back the in-memory change and keep the form intact so nothing is retyped.
+      try{
+        await _pushToKV("gv_custom_items",craftItems);
+      }catch(err){
+        if(existing&&snapshot){Object.assign(existing,snapshot);}
+        else{const i=craftItems.indexOf(target);if(i>=0)craftItems.splice(i,1);}
+        saveLocalSnapshot();// keep the local copy consistent with the rollback
+        const expired=err&&(err.code==="NO_TOKEN"||err.code==="AUTH_EXPIRED");
+        toast(expired
+          ?"Your session expired — sign in again, then click Save. Your recipe is still in the form."
+          :"Couldn't save — check your connection and click Save again. Your recipe is still in the form.","error");
+        return;
+      }
+      addLog(existing?"Recipe Updated":"Recipe Added",name);render();
+      toast(existing?`"${name}" updated — no duplicate created.`:`"${name}" saved!`);return;
     }
     // Food entry
     if(isFoodEntry){
@@ -8419,6 +8838,7 @@ function initCraftBindings(){
         setTimeout(()=>{
           const rs=document.getElementById("cdb-recipe-skill");if(rs)rs.value=it.skill||"weapon_forging";
           const rl=document.getElementById("cdb-recipe-minlv");if(rl)rl.value=it.requiredLevel||1;
+          const rml=document.getElementById("cdb-recipe-maxlv");if(rml)rml.value=it.maxLevel||"";
         },10);
       }else if(!it.isResource){
         const sk=document.getElementById("cdb-skill");if(sk)sk.value=it.skill;
@@ -8462,7 +8882,8 @@ function initCraftBindings(){
       if(typeVal==='all'){show=true;}
       else if(typeVal==='resource'){show=t==='resource';}
       else if(typeVal==='recipe'){show=t==='recipe';}
-      else if(typeVal.startsWith('skill:')){const sk=typeVal.slice(6);show=t==='craft'&&s===sk;}
+      else if(typeVal==='incomplete'){show=el.dataset.incomplete==='1';}
+      else if(typeVal.startsWith('skill:')){const sk=typeVal.slice(6);show=(window._cdbMode==='recipes'?t==='recipe':t==='craft')&&s===sk;}
       else{show=t===typeVal;}
       if(show&&q){show=name.includes(q)||el.textContent.toLowerCase().includes(q);}
       el.style.display=show?'grid':'none';
@@ -9216,7 +9637,8 @@ function pgDatabaseHome(){
   h+=`<div class="cg" style="margin-bottom:16px">${stat("Craft Entries",craftItems.length,"var(--ac)")}${stat("Shop Entries",D.vendorItems.length,"var(--org)")}${stat("Item DB Duplicates",itemDupeGroups.length,"var(--red)")}${stat("Shop Duplicates",shopDupeGroups.length,"var(--red)")}</div>`;
   h+=`<div class="card" style="margin-bottom:14px"><div style="font-size:12px;color:var(--tm);margin-bottom:12px">All database management is grouped here so admins can maintain shared data from one place.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">`;
   [
-    {page:"craft-items",title:"Item Database",desc:"Crafted items, resources, recipes, food, and potions."},
+    {page:"craft-items",title:"Item Database",desc:"Crafted items, resources, food, and potions."},
+    {page:"recipe-db",title:"Recipe Database",desc:"Craftable recipes, organized by skill category."},
     {page:"shop-cities",title:"Shop Entry Database",desc:"Cities, vendors, and shop listings."},
     {page:"craft-xp-editor",title:"Skill XP Tables",desc:"Shared XP tables used by the crafting tools."},
     {page:"player-xp-editor",title:"Character XP Table",desc:"Character level XP progression."}
@@ -9273,6 +9695,7 @@ function renderSidebar(){
   const oReq=G.requests.filter(r=>r.status==="Open").length,oOrd=G.orders.filter(o=>o.status!=="Complete"&&o.status!=="Cancelled").length,upEv=G.events.filter(e=>e.date>=new Date().toISOString().slice(0,10)).length,annC=G.announcements.length;
   const pendingGoldReq=G.goldRequests.filter(r=>r.status==="Pending").length;
   const pendingAppsCount=isAdmin()?D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending").length:0;
+  const recruitCount=isAdmin()?(G.p.filter(p=>stageOf(p)==='applicant'||stageOf(p)==='trial').length+D.users.filter(u=>u.guildId===currentGuildId&&u.status==="pending").length):0;
   // Header
   const roleLabel=currentUser?.role==="guild_leader"?"Guild Leader":currentUser?.role==="site_admin"?"Site Admin":currentUser?.role==="contributor"?"Contributor":currentUser?.role==="officer"?"Officer":"Member";
   const userInitial=(currentUser?.displayName||currentUser?.username||"?").charAt(0).toUpperCase();
@@ -9343,7 +9766,7 @@ function renderSidebar(){
       let sec;
       if(isAdmin()){
         const binCount=Array.isArray(D.deletedBin)?D.deletedBin.length:0;
-        sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length}]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null},{k:"recently-deleted",l:"Recently Deleted",i:"🗑️",c:binCount||null}]}];
+        sec=[{t:"General",items:[{k:"dashboard",l:"Dashboard",i:"⊞"},{k:"players",l:"Members",i:"⊕",c:G.p.length},...(hasPerm(currentUser,'manage_recruitment')?[{k:"recruitment",l:"Recruitment",i:"🎯",c:recruitCount||null}]:[])]},{t:"Ledgers",items:[{k:"gold",l:"Gold",i:"◉",c:G.gt.length},{k:"itemtx",l:"Items",i:"⚔",c:G.it.length},{k:"bank",l:"Bank",i:"▣",c:G.items.length}]},{t:"Gold Requests",items:[{k:"gold-request",l:"Request Gold",i:"💰"},{k:"gold-request-manage",l:"Manage Requests",i:"📥",c:pendingGoldReq||null}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"},{k:"activity",l:"Activity",i:"◈"},{k:"audit",l:"Audit Log",i:"📝"}]},{t:"System",items:[{k:"settings",l:"Settings",i:"⚙",c:pendingAppsCount||null},{k:"recently-deleted",l:"Recently Deleted",i:"🗑️",c:binCount||null}]}];
       } else {
         sec=[{t:"Gold",items:[{k:"gold-request",l:"Request Gold",i:"💰"}]},{t:"Operations",items:[{k:"events",l:"Events",i:"📅",c:upEv||null},{k:"orders",l:"Orders",i:"🔨",c:oOrd||null},{k:"requests",l:"Material Requests",i:"📋",c:oReq||null}]},{t:"Analytics",items:[{k:"leaderboards",l:"Leaderboards",i:"◆"}]}];
       }
@@ -9369,7 +9792,7 @@ function renderSidebar(){
       h+=`<div class="ns"><div class="nst">System</div>`;
       h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">📈</span>Skill XP Tables</div>`;
       h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">🧍</span>Character XP Table</div>`;
-      h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📝</span>Item Database${craftItems.length?`<span class="cnt">${craftItems.length}</span>`:""}</div>`;
+      h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📝</span>Item Database${craftItems.filter(i=>!i.isRecipe).length?`<span class="cnt">${craftItems.filter(i=>!i.isRecipe).length}</span>`:""}</div>`;
       h+=`</div>`;
     }
   } else if(activeTool==="charbuilder"){
@@ -9390,9 +9813,12 @@ function renderSidebar(){
     }
   } else if(activeTool==="database"){
     const dupeCount=getDatabaseDuplicateGroups().length;
+    const _itemDbCount=craftItems.filter(i=>!i.isRecipe).length;
+    const _recipeDbCount=craftItems.filter(i=>i.isRecipe).length;
     h+=`<div class="ns"><div class="nst">Database</div>`;
     h+=`<div class="ni${pg==="db-home"||pg==="dashboard"?" a":""}" data-page="db-home"><span style="font-size:13px;width:16px;text-align:center">DB</span>Overview</div>`;
-    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📝</span>Item Database${craftItems.length?`<span class="cnt">${craftItems.length}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="craft-items"?" a":""}" data-page="craft-items"><span style="font-size:13px;width:16px;text-align:center">📝</span>Item Database${_itemDbCount?`<span class="cnt">${_itemDbCount}</span>`:""}</div>`;
+    h+=`<div class="ni${pg==="recipe-db"?" a":""}" data-page="recipe-db"><span style="font-size:13px;width:16px;text-align:center">📜</span>Recipe Database${_recipeDbCount?`<span class="cnt">${_recipeDbCount}</span>`:""}</div>`;
     h+=`<div class="ni${pg==="shop-cities"?" a":""}" data-page="shop-cities"><span style="font-size:13px;width:16px;text-align:center">🏘️</span>Shop Entry DB${D.vendorItems.length?`<span class="cnt">${D.vendorItems.length}</span>`:""}</div>`;
     h+=`<div class="ni${pg==="craft-xp-editor"?" a":""}" data-page="craft-xp-editor"><span style="font-size:13px;width:16px;text-align:center">📈</span>Skill XP Tables</div>`;
     h+=`<div class="ni${pg==="player-xp-editor"?" a":""}" data-page="player-xp-editor"><span style="font-size:13px;width:16px;text-align:center">🧍</span>Character XP Table</div>`;
@@ -9487,7 +9913,7 @@ function render(){
       m.innerHTML=pgWiki();
       initWikiBindings(()=>render());
     } else {
-      const pages={dashboard:tDash,players:tPlayers,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage,"admin-guilds-list":tAdminGuildList,"recently-deleted":tRecentlyDeleted,"site-activity-feed":tSiteActivityFeed};
+      const pages={dashboard:tDash,players:tPlayers,recruitment:tRecruitment,"player-detail":tPlayerDetail,"site-profile":tSiteProfile,gold:tGold,itemtx:tItemTx,bank:tBank,events:tEvents,orders:tOrders,requests:tRequests,leaderboards:tLeaderboards,activity:tActivity,audit:tAudit,settings:tSettings,"gold-request":tGoldRequest,"gold-request-manage":tGoldRequestManage,"admin-guilds-list":tAdminGuildList,"recently-deleted":tRecentlyDeleted,"site-activity-feed":tSiteActivityFeed};
       // For non-admins, restrict to allowed pages
       if(!isAdmin()&&!memberPages.includes(pg)){
         m.innerHTML=tGoldRequest();
@@ -9536,10 +9962,10 @@ function render(){
       return;
     }
     if(pg==="dashboard")pg="db-home";
-    const dpg={"db-home":pgDatabaseHome,"craft-items":pgCraftItemDB,"shop-cities":pgShopCities,"craft-xp-editor":pgCraftXpEditor,"player-xp-editor":pgPlayerXpEditor,"database-duplicates":pgDatabaseDuplicates,"item-database-duplicates":pgItemDatabaseDuplicates};
+    const dpg={"db-home":pgDatabaseHome,"craft-items":pgCraftItemDB,"recipe-db":pgRecipeDB,"shop-cities":pgShopCities,"craft-xp-editor":pgCraftXpEditor,"player-xp-editor":pgPlayerXpEditor,"database-duplicates":pgDatabaseDuplicates,"item-database-duplicates":pgItemDatabaseDuplicates};
     m.innerHTML=(dpg[pg]||pgDatabaseHome)();
     if(pg==="shop-cities")initShopBindings();
-    if(pg==="craft-items")initCraftBindings();
+    if(pg==="craft-items"||pg==="recipe-db")initCraftBindings();
     if(pg==="craft-xp-editor")initCraftXpEditorBindings();
     if(pg==="player-xp-editor")initPlayerXpEditorBindings();
   } else if(activeTool==="wiki"){
@@ -9593,6 +10019,7 @@ function bindAll(){
   bindOnce(document.getElementById("global-settings-btn"),"click","global-settings",()=>{activeTool="treasury";pg="settings";render();});
   bindOnce(document.getElementById("shopdb-dupe-page-btn"),"click","shopdb-dupe-page",()=>modalShopEntryDuplicates());
   bindOnce(document.getElementById("itemdb-dupe-page-btn"),"click","itemdb-dupe-page",()=>modalItemDatabaseDuplicates());
+  bindOnce(document.getElementById("recipe-import-shop-btn"),"click","recipe-import-shop",()=>modalImportShopRecipes());
 
   // Filters
   const bS=(id,key)=>{const el=document.getElementById(id);if(el)el.addEventListener("change",()=>{F[key]=el.value;render()})};
@@ -9620,6 +10047,7 @@ function bindAll(){
   ab("add-req-btn",()=>modalRequest());ab("add-req-btn2",()=>modalRequest());
   ab("add-ann-btn",()=>modalAnnouncement());ab("add-ann-btn2",()=>modalAnnouncement());
   ab("add-user-btn",()=>modalUser());
+  ab("rec-add-applicant",()=>modalPlayer({recruitStage:'applicant'}));
 
   // audit-BR-16: row-action listeners migrated from per-render forEach to one
   // delegated click listener on `document`, attached once via bindOnce. Net win:
@@ -9643,11 +10071,52 @@ function bindAll(){
         D.it = D.it.filter(t=>t.playerId!==p.id);
         D.gear = D.gear.filter(g=>g.playerId!==p.id);
         if(D.playerRecipes) delete D.playerRecipes[p.id];
+        D.p.forEach(x=>{ if(x.mainId===p.id) x.mainId=null; });
         D.p = D.p.filter(x=>x.id!==p.id);
         addLog("Deleted", p.name);
         persist();
         if(pg==="player-detail") pg="players";
         render(); toast("Deleted!");
+      });
+      return;
+    }
+    // Recruitment pipeline
+    if((m = t.closest(".rec-vote"))){
+      e.stopPropagation();
+      if(!hasPerm(currentUser,'manage_recruitment')) return;
+      const p = D.p.find(x=>x.id===m.dataset.id);
+      if(p && currentUser){
+        p.recruitVotes = p.recruitVotes || {};
+        const val = parseInt(m.dataset.v);
+        if(p.recruitVotes[currentUser.id]===val) delete p.recruitVotes[currentUser.id];
+        else p.recruitVotes[currentUser.id]=val;
+        persist(); render();
+      }
+      return;
+    }
+    if((m = t.closest(".rec-note"))){ e.stopPropagation(); modalRecruitNote(m.dataset.id); return; }
+    if((m = t.closest(".rec-stage"))){
+      e.stopPropagation();
+      if(!hasPerm(currentUser,'manage_recruitment')) return;
+      const p = D.p.find(x=>x.id===m.dataset.id);
+      if(p){ const ns=m.dataset.stage; p.recruitStage=ns; addLog("Recruit Stage",`${p.name} → ${ns}`); persist(); render(); toast(`Moved to ${stageMeta(ns).l}.`); }
+      return;
+    }
+    if((m = t.closest(".rec-reject"))){
+      e.stopPropagation();
+      if(!hasPerm(currentUser,'kick_member')) return;
+      const p = D.p.find(x=>x.id===m.dataset.id);
+      if(p) confirmAction(`Reject and remove ${p.name}? (Restorable from Recently Deleted.)`, () => {
+        if(!hasPerm(currentUser,'kick_member')) return;
+        softDelete('p', p);
+        D.gt = D.gt.filter(t=>t.playerId!==p.id);
+        D.it = D.it.filter(t=>t.playerId!==p.id);
+        D.gear = D.gear.filter(g=>g.playerId!==p.id);
+        if(D.playerRecipes) delete D.playerRecipes[p.id];
+        D.p.forEach(x=>{ if(x.mainId===p.id) x.mainId=null; });
+        D.p = D.p.filter(x=>x.id!==p.id);
+        addLog("Recruit Rejected", p.name);
+        persist(); render(); toast("Rejected.");
       });
       return;
     }
@@ -9857,12 +10326,23 @@ function bindAll(){
       const knownCount=(profile.recipeIds||[]).length;
       const pct=allRecipes.length?Math.round(knownCount/allRecipes.length*100):0;
       const pf=document.getElementById("recipe-progress-site");if(pf){pf.style.width=pct+"%";pf.style.background=pct===100?"var(--grn)":"var(--ac)";}
+      const heading=document.getElementById("recipe-known-heading");if(heading)heading.textContent=`${knownCount} / ${allRecipes.length} recipes known`;
+      const pctEl=document.getElementById("recipe-pct-site");if(pctEl)pctEl.textContent=`${pct}%`;
+      const knownStat=document.getElementById("recipe-known-stat");if(knownStat)knownStat.textContent=knownCount;
       document.querySelectorAll(".tb .ti").forEach(ti=>{if(ti.dataset.tab==="recipes")ti.textContent=`Recipes (${knownCount}/${allRecipes.length})`;});
+      // Refresh per-skill group counters AND the matching category chips (e.g. "Other (1/39)").
+      const groupCounts={};
       document.querySelectorAll("[data-skill-group]").forEach(grp=>{
         const kn=grp.querySelectorAll("input:checked").length;
         const tot=grp.querySelectorAll(".recipe-item").length;
+        groupCounts[grp.dataset.skillGroup]={kn,tot};
         const counter=grp.querySelector("span[style*='color:var(--tm)']");
         if(counter)counter.textContent=`${kn}/${tot}`;
+      });
+      document.querySelectorAll(".recipe-cat-btn").forEach(btn=>{
+        const cat=btn.dataset.cat;
+        if(cat==="all"){btn.textContent=`All (${knownCount}/${allRecipes.length})`;}
+        else{const c=groupCounts[cat];if(c)btn.textContent=`${SKILL_NAMES[cat]||cat} (${c.kn}/${c.tot})`;}
       });
     });
   });
@@ -9917,23 +10397,26 @@ function bindAll(){
       });
     });
   });
-  // Recipe filter buttons
+  // Recipe category sub-tabs (one per crafting category)
+  document.querySelectorAll(".recipe-cat-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      window._recipeCatFilter=btn.dataset.cat;
+      document.querySelectorAll(".recipe-cat-btn").forEach(b=>{
+        const on=b.dataset.cat===btn.dataset.cat;
+        b.style.background=on?"var(--ac)":"var(--bgi)";
+        b.style.color=on?"#fff":"var(--tm)";
+        b.style.borderColor=on?"var(--ac)":"var(--bd)";
+      });
+      applyRecipeFilters();
+    });
+  });
+  // Recipe known/unknown filter
   document.querySelectorAll(".recipe-filter-btn").forEach(btn=>{
     btn.addEventListener("click",()=>{
       document.querySelectorAll(".recipe-filter-btn").forEach(b=>{b.style.background="transparent";b.style.color="var(--tm)";});
       btn.style.background="var(--ac)";btn.style.color="#fff";
-      const filter=btn.dataset.filter;
-      document.querySelectorAll(".recipe-item").forEach(item=>{
-        const known=item.querySelector("input")?.checked;
-        if(filter==="all")item.style.display="";
-        else if(filter==="known")item.style.display=known?"":"none";
-        else item.style.display=known?"none":"";
-      });
-      // Hide empty skill groups
-      document.querySelectorAll("[data-skill-group]").forEach(grp=>{
-        const visible=Array.from(grp.querySelectorAll(".recipe-item")).some(i=>i.style.display!=="none");
-        grp.style.display=visible?"":"none";
-      });
+      window._recipeKnownFilter=btn.dataset.filter;
+      applyRecipeFilters();
     });
   });
   // Profile: load build from profile tab
@@ -10002,7 +10485,19 @@ function bindAll(){
     // audit-FR-02 Phase B cutover: isAdmin → hasPerm('approve_applications')
     if(!hasPerm(currentUser,'approve_applications')){ toast("Permission required.","error"); return; }
     const u=D.users.find(x=>x.id===el.dataset.id);
-    if(u){u.status="active";addLog("User Approved",u.displayName);persist();render();toast(u.displayName+" approved!");}
+    if(u){
+      u.status="active";
+      // Ensure approved applicants appear in the Members roster: create a linked
+      // player record for their guild if one doesn't already exist.
+      const gid=u.guildId||currentGuildId;
+      const existing=D.p.find(x=>x.guildId===gid&&(x.userId===u.id||(x.name||"").toLowerCase()===(u.displayName||u.username||"").toLowerCase()));
+      if(!existing){
+        const cfg=(D.guilds.find(g=>g.id===gid)?.cfg)||currentGuildCfg();
+        const ranks=cfg.ranks||[];
+        D.p.push({id:uid(),name:u.displayName||u.username,discord:u.discord||"",rank:ranks[ranks.length-1]||"",joinDate:new Date().toISOString().slice(0,10),status:"Active",tags:[],recruitStage:"member",userId:u.id,guildId:gid});
+      } else if(!existing.userId){ existing.userId=u.id; }
+      addLog("User Approved",u.displayName);persist();render();toast(u.displayName+" approved & added to roster!");
+    }
   }));
   // Deny pending application
   document.querySelectorAll(".deny-user").forEach(el=>el.addEventListener("click",e=>{
@@ -10373,7 +10868,7 @@ function bindAll(){
       if(c){c.disabled=true;persist();render();toast("Invite disabled!");}
     });
   });
-  ab("export-btn",exportJSON);ab("import-btn",()=>document.getElementById("import-file")?.click());
+  ab("export-html-btn",exportHTML);ab("export-btn",exportJSON);ab("import-btn",()=>document.getElementById("import-file")?.click());
   document.getElementById("import-file")?.addEventListener("change",e=>{if(e.target.files[0])importJSON(e.target.files[0])});
   ab("reset-btn",()=>confirmAction("Delete guild data? This will remove all members, gold, items and logs for this guild.",()=>{
   const gid=currentGuildId;
