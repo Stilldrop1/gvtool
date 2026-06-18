@@ -562,6 +562,9 @@ function readEmbeddedData(){
 // parse-time/boot code (migrations, seeds, syncs) from pushing default/partial data and
 // clobbering the real database before it has even loaded.
 let _initLoaded=false;
+// True only when the craft catalog (gv_custom_items + sub-keys) fully loaded from the
+// cloud. Gates every craft-catalog write so a partial load can't overwrite the cloud.
+let _craftLoaded=false;
 function persist(){
   saveLocalSnapshot();// always keep a durable local copy (no auth/network needed)
   if(!_initLoaded)return;// don't write to the cloud before the first load finishes
@@ -687,13 +690,18 @@ async function initKvSync(){
     if(main&&typeof main==="object"){
       DKEYS.forEach(k=>{if(main[k]!==undefined)D[k]=main[k];});
     }
-    // Pull craft sub-keys
+    // Pull craft sub-keys. If ANY of these fetches fails, _craftLoaded stays false and
+    // all craft-catalog writes are blocked this session — otherwise a half-loaded
+    // catalog (e.g. an empty craftItems from a failed fetch) could overwrite the real
+    // one in the cloud. This is the same class of bug that was deleting recipes.
     _setLoadingMessage("Loading crafting catalog…");
-    try{const ciRaw=await _pullFromKV("gv_custom_items");if(ciRaw)craftItems=Array.isArray(ciRaw)?ciRaw:JSON.parse(ciRaw);}catch(e){}
-    try{const crRaw=await _pullFromKV("gv_resources");if(crRaw)craftResources=Array.isArray(crRaw)?crRaw:JSON.parse(crRaw);}catch(e){}
+    let _ciOk=true;
+    try{const ciRaw=await _pullFromKV("gv_custom_items");if(ciRaw)craftItems=Array.isArray(ciRaw)?ciRaw:JSON.parse(ciRaw);}catch(e){_ciOk=false;}
+    try{const crRaw=await _pullFromKV("gv_resources");if(crRaw)craftResources=Array.isArray(crRaw)?crRaw:JSON.parse(crRaw);}catch(e){_ciOk=false;}
     _setLoadingMessage("Loading XP tables…");
-    try{const xtRaw=await _pullFromKV("gv_skill_xp_tables");if(xtRaw)craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);}catch(e){}
-    try{const ptRaw=await _pullFromKV("gv_player_xp_table");if(ptRaw)playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);}catch(e){}
+    try{const xtRaw=await _pullFromKV("gv_skill_xp_tables");if(xtRaw)craftSkillXpTables=(typeof xtRaw==="object"&&!Array.isArray(xtRaw))?xtRaw:JSON.parse(xtRaw);}catch(e){_ciOk=false;}
+    try{const ptRaw=await _pullFromKV("gv_player_xp_table");if(ptRaw)playerXpTable=Array.isArray(ptRaw)?ptRaw:JSON.parse(ptRaw);}catch(e){_ciOk=false;}
+    _craftLoaded=_ciOk;
     loadedFrom="cloud";
   }catch(cloudErr){
     // Cloud unreachable — fall back to the local snapshot, then baked-in data, so the
@@ -6279,15 +6287,15 @@ function mergeSeedResourcesInMemory(){
 function _quietSaveFail(name){return e=>{if(e.code==="NO_TOKEN")return;console.error(name+" failed:",e);};}
 function saveCraftItems(){
   saveLocalSnapshot();// durable local copy first — survives refresh even with no auth/cloud
-  if(!_initLoaded)return;// never write to the cloud before the first load finishes
+  if(!_initLoaded||!_craftLoaded)return;// never write before the catalog fully loaded
   // Surface real cloud failures (but not when running locally, where the local copy is
   // the source of truth) so hosted users aren't left thinking a write went through.
   if(!loadAuthToken()){if(!isLocalMode()){try{_showSaveErrorIndicator();}catch(e){}}return;}
   return _pushToKV("gv_custom_items",craftItems).catch(e=>{_quietSaveFail("saveCraftItems")(e);if(e&&e.code!=="NO_TOKEN"&&!isLocalMode()){try{_showSaveErrorIndicator();}catch(_){}}});
 }
-function saveCraftSkillXpTables(){saveLocalSnapshot();if(!_initLoaded||!loadAuthToken())return;_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(_quietSaveFail("saveCraftSkillXpTables"));}
-function savePlayerXpTable(){saveLocalSnapshot();if(!_initLoaded||!loadAuthToken())return;_pushToKV("gv_player_xp_table",playerXpTable).catch(_quietSaveFail("savePlayerXpTable"));}
-function saveCraftResources(){saveLocalSnapshot();if(!_initLoaded||!loadAuthToken())return;_pushToKV("gv_resources",craftResources).catch(_quietSaveFail("saveCraftResources"));}
+function saveCraftSkillXpTables(){saveLocalSnapshot();if(!_initLoaded||!_craftLoaded||!loadAuthToken())return;_pushToKV("gv_skill_xp_tables",craftSkillXpTables).catch(_quietSaveFail("saveCraftSkillXpTables"));}
+function savePlayerXpTable(){saveLocalSnapshot();if(!_initLoaded||!_craftLoaded||!loadAuthToken())return;_pushToKV("gv_player_xp_table",playerXpTable).catch(_quietSaveFail("savePlayerXpTable"));}
+function saveCraftResources(){saveLocalSnapshot();if(!_initLoaded||!_craftLoaded||!loadAuthToken())return;_pushToKV("gv_resources",craftResources).catch(_quietSaveFail("saveCraftResources"));}
 const normRecipeName=name=>(name||"").trim().toLowerCase();
 function removeRecipeIdsFromPlayers(ids){
   const idSet=new Set((ids||[]).map(String));
@@ -8710,13 +8718,13 @@ function initCraftBindings(){
         addLog(existing?"Recipe Updated":"Recipe Added",name);render();
         toast(existing?`"${name}" updated (saved locally).`:`"${name}" saved locally!`);return;
       }
-      if(!_initLoaded){
-        // The live database wasn't reachable when the page loaded — refuse to write so a
-        // stale in-memory copy can't overwrite good cloud data. Roll back and warn.
+      if(!_initLoaded||!_craftLoaded){
+        // The live catalog wasn't fully loaded when the page opened — refuse to write so a
+        // stale/partial in-memory copy can't overwrite good cloud data. Roll back and warn.
         if(existing&&snapshot){Object.assign(existing,snapshot);}
         else{const i=craftItems.indexOf(target);if(i>=0)craftItems.splice(i,1);}
         saveLocalSnapshot();
-        toast("Can't save — the live database wasn't reachable when the page loaded. Refresh the page and try again.","error");
+        toast("Can't save — the recipe catalog wasn't fully loaded from the live database. Refresh the page and try again.","error");
         return;
       }
       // Hosted: persist to the cloud and WAIT for confirmation before clearing the form,
