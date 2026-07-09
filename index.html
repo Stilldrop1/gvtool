@@ -6917,6 +6917,79 @@ function getRenamedRecipeDuplicates(){
   });
   return pairs;
 }
+// Group Item-Shop listings named "Recipe: X" (a naming style some shop entries were
+// hand-entered with) by their stripped target name, so they can be bulk-renamed to
+// just "X" with item type forced to Recipe. Renaming the shop side alone would orphan
+// any matching Recipe Database entry from the sync (which matches by name) and spawn
+// a fresh duplicate stub — so each group also carries whether a Recipe DB entry needs
+// renaming to stay linked.
+function getShopRecipeNamePrefixFixes(){
+  const stripRecipeWord=name=>(name||"").replace(/^recipe\s*:?\s*/i,"").trim();
+  const groups=new Map();
+  D.vendorItems.forEach(vi=>{
+    const stripped=stripRecipeWord(vi.itemName);
+    if(!stripped||stripped===(vi.itemName||"").trim())return;
+    const key=normRecipeName(stripped);
+    if(!groups.has(key))groups.set(key,{newName:stripped,oldNames:new Set(),vendorItems:[],typeFixCount:0});
+    const g=groups.get(key);
+    g.oldNames.add((vi.itemName||"").trim());
+    g.vendorItems.push(vi);
+    if(vi.itemType!=="Recipe")g.typeFixCount++;
+  });
+  groups.forEach(g=>{
+    const newNorm=normRecipeName(g.newName);
+    g.alreadyLinked=!!craftItems.find(i=>i.isRecipe&&normRecipeName(i.name)===newNorm);
+    g.recipeToRename=null;
+    if(!g.alreadyLinked){
+      for(const oldName of g.oldNames){
+        const match=craftItems.find(i=>i.isRecipe&&normRecipeName(i.name)===normRecipeName(oldName));
+        if(match){g.recipeToRename=match;break;}
+      }
+    }
+  });
+  return [...groups.values()];
+}
+function fixShopRecipeNamePrefixes(groups){
+  let vendorItemsFixed=0,recipesRenamed=0;
+  groups.forEach(g=>{
+    g.vendorItems.forEach(vi=>{vi.itemName=g.newName;vi.itemType="Recipe";vendorItemsFixed++;});
+    if(!g.alreadyLinked&&g.recipeToRename){g.recipeToRename.name=g.newName;recipesRenamed++;}
+  });
+  return {vendorItemsFixed,recipesRenamed};
+}
+function modalFixShopRecipeNames(){
+  if(!canManageDatabase())return;
+  const groups=getShopRecipeNamePrefixFixes();
+  openModal("Fix \"Recipe:\" Shop Names",body=>{
+    if(!groups.length){
+      body.innerHTML=`<div class="card">${empty("✅","Nothing to fix","No shop listings start with a \"Recipe:\" prefix.")}</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Close</button></div>`;
+      return;
+    }
+    let h=`<div style="font-size:12px;color:var(--tm);margin-bottom:14px">Strips the "Recipe:" prefix from shop listing names and marks their item type as Recipe. The matching Recipe Database entry (if any) is renamed to match, so nothing gets orphaned or duplicated on the next sync.</div>`;
+    h+=`<div style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto" id="fsrn-list">`;
+    groups.forEach((g,i)=>{
+      h+=`<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--bd);border-radius:4px;cursor:pointer;background:var(--bgi)">
+        <input type="checkbox" class="fsrn-chk" data-i="${i}" checked>
+        <div style="flex:1;font-size:13px">
+          <span style="color:var(--tm);text-decoration:line-through">${esc([...g.oldNames].join(", "))}</span>
+          → <span style="font-weight:600;color:var(--grn)">${esc(g.newName)}</span>
+          <span style="font-size:11px;color:var(--tm);margin-left:6px">(${g.vendorItems.length} listing${g.vendorItems.length!==1?"s":""}${g.typeFixCount?`, ${g.typeFixCount} type fix${g.typeFixCount!==1?"es":""}`:""}${g.recipeToRename?", 1 recipe renamed":g.alreadyLinked?", recipe already linked":""})</span>
+        </div>
+      </label>`;
+    });
+    h+=`</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="fsrn-fix-btn">Fix Selected</button></div>`;
+    body.innerHTML=h;
+    body.querySelector("#fsrn-fix-btn")?.addEventListener("click",()=>{
+      const checked=[...body.querySelectorAll(".fsrn-chk:checked")].map(c=>groups[parseInt(c.dataset.i)]);
+      if(!checked.length){toast("Nothing selected","error");return;}
+      const result=fixShopRecipeNamePrefixes(checked);
+      saveCraftItems();
+      persist();
+      closeModal();render();
+      toast(`Fixed ${result.vendorItemsFixed} shop listing${result.vendorItemsFixed!==1?"s":""}, renamed ${result.recipesRenamed} recipe${result.recipesRenamed!==1?"s":""}.`);
+    });
+  });
+}
 function modalShopEntryDuplicates(){
   if(!canManageDatabase())return;
   const dupeGroups=getDatabaseDuplicateGroups();
@@ -8347,7 +8420,7 @@ function pgCraftItemDB(mode){
     return{name:i.name,type:i.isResource?(hasMats?'processed':'resource'):'craft'};
   }).sort((a,b)=>a.name.localeCompare(b.name));
   const matOpts=allMats.map(m=>`<option value="${m.name}">${m.name}${m.type==='craft'?' [Crafted]':m.type==='processed'?' [Processed]':''}</option>`).join("");
-  let h=`<div class="ph"><div class="pt">${recipeMode?"Recipe Database":"Item & Resource Database"}</div>${(!recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:(recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="recipe-rename-dupe-btn">⚠️ Check Recipe Duplicates</button><button class="btn bg" id="recipe-import-shop-btn">🔄 Import from Item Shop</button></div>`:""}</div>`;
+  let h=`<div class="ph"><div class="pt">${recipeMode?"Recipe Database":"Item & Resource Database"}</div>${(!recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:(recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="fix-shop-recipe-names-btn">🏷️ Fix "Recipe:" Shop Names</button><button class="btn bg" id="recipe-rename-dupe-btn">⚠️ Check Recipe Duplicates</button><button class="btn bg" id="recipe-import-shop-btn">🔄 Import from Item Shop</button></div>`:""}</div>`;
   // Add/Edit form
   if(canManageDatabase()){
     h+=`<div class="card" style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Add / Edit Entry</div>`;
@@ -10228,6 +10301,7 @@ function bindAll(){
   bindOnce(document.getElementById("itemdb-dupe-page-btn"),"click","itemdb-dupe-page",()=>modalItemDatabaseDuplicates());
   bindOnce(document.getElementById("recipe-import-shop-btn"),"click","recipe-import-shop",()=>modalImportShopRecipes());
   bindOnce(document.getElementById("recipe-rename-dupe-btn"),"click","recipe-rename-dupe",()=>modalRecipeRenameDuplicates());
+  bindOnce(document.getElementById("fix-shop-recipe-names-btn"),"click","fix-shop-recipe-names",()=>modalFixShopRecipeNames());
 
   // Filters
   const bS=(id,key)=>{const el=document.getElementById(id);if(el)el.addEventListener("change",()=>{F[key]=el.value;render()})};
