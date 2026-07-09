@@ -6887,6 +6887,36 @@ function getCraftItemDuplicateGroups(){
   });
   return Object.values(groups).filter(g=>g.entries.length>1).sort((a,b)=>b.entries.length-a.entries.length||a.name.localeCompare(b.name));
 }
+// Detect recipes likely duplicated by the rename-vs-vendor-sync bug: an incomplete,
+// vendor-synced stub (auto-created because a shop listing's name no longer matches any
+// recipe) sitting alongside a differently-named recipe that is clearly the real entry
+// for the same thing — its name is the stub's name with a leading/trailing "Recipe"
+// word stripped (e.g. "Beast Butchering" vs the stub "Recipe: Beast Butchering").
+function getRenamedRecipeDuplicates(){
+  const stripRecipeWord=name=>(name||"").replace(/^recipe\s*:?\s*/i,"").replace(/\s*recipe$/i,"").trim();
+  const recipes=craftItems.filter(i=>i.isRecipe);
+  const seen=new Set();
+  const pairs=[];
+  recipes.forEach(stub=>{
+    if(!stub.vendorSynced||!recipeMissingFields(stub).length)return;
+    const stripped=normRecipeName(stripRecipeWord(stub.name));
+    if(!stripped||stripped===normRecipeName(stub.name))return;
+    recipes.forEach(complete=>{
+      if(complete.id===stub.id)return;
+      if(normRecipeName(complete.name)!==stripped)return;
+      const key=[complete.id,stub.id].sort().join("|");
+      if(seen.has(key))return;
+      seen.add(key);
+      // High confidence: the "complete" side shows real, manually-entered data (not
+      // itself an untouched vendor-sync default) — safe to auto-resolve. If BOTH sides
+      // are still incomplete stubs, this is more likely two inconsistently-named shop
+      // listings for the same thing, not our rename bug — flag for manual review.
+      const highConfidence=!(complete.vendorSynced&&recipeMissingFields(complete).length>0);
+      pairs.push({complete,stub,highConfidence});
+    });
+  });
+  return pairs;
+}
 function modalShopEntryDuplicates(){
   if(!canManageDatabase())return;
   const dupeGroups=getDatabaseDuplicateGroups();
@@ -8199,6 +8229,51 @@ function recipeMissingFields(item){
   if(!item.maxLevel||item.maxLevel<1)missing.push("Max XP Level");
   return missing;
 }
+function modalRecipeRenameDuplicates(){
+  if(!canManageDatabase())return;
+  const pairs=getRenamedRecipeDuplicates();
+  openModal("Recipe Duplicates (Renamed)",body=>{
+    if(!pairs.length){
+      body.innerHTML=`<div class="card">${empty("✅","No renamed duplicates found","Every recipe's shop listing matches an entry in the database.")}</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Close</button></div>`;
+      return;
+    }
+    let h=`<div style="font-size:12px;color:var(--tm);margin-bottom:14px">These pairs look like the same recipe under two names — likely created when a recipe was renamed (e.g. to drop a "Recipe:" prefix), after which its shop listing's old name got auto-recreated as an incomplete stub. Checked pairs will retarget the shop listing(s) to the kept recipe's name, then delete the stub. <strong style="color:var(--yl)">Review low-confidence pairs yourself</strong> before merging — they're unchecked by default.</div>`;
+    h+=`<div style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto" id="rrd-list">`;
+    pairs.forEach((p,i)=>{
+      h+=`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid ${p.highConfidence?"var(--bd)":"var(--yl)"};border-radius:4px;cursor:pointer;background:var(--bgi)">
+        <input type="checkbox" class="rrd-chk" data-i="${i}"${p.highConfidence?" checked":""} style="margin-top:3px">
+        <div style="flex:1">
+          ${p.highConfidence?"":`<div style="font-size:11px;color:var(--yl);font-weight:600;margin-bottom:4px">⚠ Low confidence — both sides look incomplete, verify manually</div>`}
+          <div style="font-size:11px;color:var(--tm)">Keep:</div>
+          <div style="font-weight:600;font-size:13px;color:var(--grn)">📜 ${esc(p.complete.name)} <span style="font-weight:400;color:var(--tm);font-size:11px">— ${esc(SKILL_NAMES[p.complete.skill]||p.complete.skill||"no skill")}, Min Lv ${p.complete.requiredLevel||1}${p.complete.maxLevel?`, Max Lv ${p.complete.maxLevel}`:""}</span></div>
+          <div style="font-size:11px;color:var(--tm);margin-top:4px">Delete stub:</div>
+          <div style="font-weight:600;font-size:13px;color:var(--red)">📜 ${esc(p.stub.name)} <span style="font-weight:400;color:var(--tm);font-size:11px">— incomplete</span></div>
+        </div>
+      </label>`;
+    });
+    h+=`</div><div class="actions" style="margin-top:14px"><button class="btn bg" onclick="closeModal()">Cancel</button><button class="btn bp" id="rrd-fix-btn">Fix Selected</button></div>`;
+    body.innerHTML=h;
+    body.querySelector("#rrd-fix-btn")?.addEventListener("click",()=>{
+      const checked=[...body.querySelectorAll(".rrd-chk:checked")].map(c=>pairs[parseInt(c.dataset.i)]);
+      if(!checked.length){toast("Nothing selected","error");return;}
+      let vendorItemsRenamed=0;
+      checked.forEach(({complete,stub})=>{
+        const stubNorm=normRecipeName(stub.name);
+        D.vendorItems.forEach(vi=>{
+          if(vi.itemType==="Recipe"&&normRecipeName(vi.itemName)===stubNorm){vi.itemName=complete.name;vendorItemsRenamed++;}
+        });
+      });
+      const stubIds=checked.map(({stub})=>String(stub.id));
+      craftItems=craftItems.filter(i=>!stubIds.includes(String(i.id)));
+      removeRecipeIdsFromPlayers(stubIds);
+      pruneStaleRecipeIds();
+      saveCraftItems();
+      if(vendorItemsRenamed)persist();
+      closeModal();render();
+      toast(`Merged ${checked.length} duplicate${checked.length!==1?"s":""}!`);
+    });
+  });
+}
 // Reconcile the Item Shop with the Recipe Database: find shop entries that are
 // recipes (typed "Recipe", or whose name contains "recipe") but have no matching
 // recipe-database entry, and let the user import them with a skill category.
@@ -8272,7 +8347,7 @@ function pgCraftItemDB(mode){
     return{name:i.name,type:i.isResource?(hasMats?'processed':'resource'):'craft'};
   }).sort((a,b)=>a.name.localeCompare(b.name));
   const matOpts=allMats.map(m=>`<option value="${m.name}">${m.name}${m.type==='craft'?' [Crafted]':m.type==='processed'?' [Processed]':''}</option>`).join("");
-  let h=`<div class="ph"><div class="pt">${recipeMode?"Recipe Database":"Item & Resource Database"}</div>${(!recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:(recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="recipe-import-shop-btn">🔄 Import from Item Shop</button></div>`:""}</div>`;
+  let h=`<div class="ph"><div class="pt">${recipeMode?"Recipe Database":"Item & Resource Database"}</div>${(!recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="itemdb-dupe-page-btn">⚠️ Check Item DB Duplicates</button></div>`:(recipeMode&&canManageDatabase())?`<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bg" id="recipe-rename-dupe-btn">⚠️ Check Recipe Duplicates</button><button class="btn bg" id="recipe-import-shop-btn">🔄 Import from Item Shop</button></div>`:""}</div>`;
   // Add/Edit form
   if(canManageDatabase()){
     h+=`<div class="card" style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Add / Edit Entry</div>`;
@@ -8806,6 +8881,18 @@ function initCraftBindings(){
         const recipeId=(_editItem&&_editItem.isRecipe)?_editItem.id:uid();
         target={id:recipeId,name,isRecipe:true,isResource:false,skill:recipeSkill,requiredLevel:recipeMinLv,maxLevel:recipeMaxLv||null,materials:{},xpByLevel:{},baseXP:0,craftTimeSeconds:0};
         craftItems.push(target);
+      }
+      // If this edit renamed the recipe, retarget its shop listings to the new name too.
+      // Vendor-sync matches recipes to shop entries purely by normalized name — if only
+      // the recipe's name changes here, the next sync can no longer find this entry and
+      // creates a fresh "needs info" duplicate under the old name (the shop's name).
+      if(_editItem&&_editItem.isRecipe&&_editItem.name&&normRecipeName(_editItem.name)!==norm){
+        const oldNorm=normRecipeName(_editItem.name);
+        let renamedShopEntry=false;
+        D.vendorItems.forEach(vi=>{
+          if(vi.itemType==="Recipe"&&normRecipeName(vi.itemName)===oldNorm){vi.itemName=name;renamedShopEntry=true;}
+        });
+        if(renamedShopEntry)persist();
       }
       // Always keep a durable local copy first so a refresh never loses the recipe.
       saveLocalSnapshot();
@@ -10140,6 +10227,7 @@ function bindAll(){
   bindOnce(document.getElementById("shopdb-dupe-page-btn"),"click","shopdb-dupe-page",()=>modalShopEntryDuplicates());
   bindOnce(document.getElementById("itemdb-dupe-page-btn"),"click","itemdb-dupe-page",()=>modalItemDatabaseDuplicates());
   bindOnce(document.getElementById("recipe-import-shop-btn"),"click","recipe-import-shop",()=>modalImportShopRecipes());
+  bindOnce(document.getElementById("recipe-rename-dupe-btn"),"click","recipe-rename-dupe",()=>modalRecipeRenameDuplicates());
 
   // Filters
   const bS=(id,key)=>{const el=document.getElementById(id);if(el)el.addEventListener("change",()=>{F[key]=el.value;render()})};
